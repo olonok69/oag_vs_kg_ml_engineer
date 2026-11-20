@@ -8,6 +8,7 @@ material de partida para adoptar lo útil.
 
 | Ruta | Qué es |
 |---|---|
+| [`HANDOVER.md`](HANDOVER.md) | Traspaso completo: qué se hizo, fuentes, plan accionable y lo que necesita otro agente |
 | [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md) | El informe: qué es OAG (OG-RAG, Palantir, Medium), comparación con nuestro grafo, qué adoptar y cómo medirlo |
 | [`presentacion/OAG_vs_KG_Presentacion.pptx`](presentacion/OAG_vs_KG_Presentacion.pptx) | Deck de 18 slides, mismo estilo que los decks del curso |
 | [`presentacion/build_pptx_oag.py`](presentacion/build_pptx_oag.py) | Generador del deck (`pip install python-pptx && python presentacion/build_pptx_oag.py`) |
