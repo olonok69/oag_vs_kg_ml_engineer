@@ -40,7 +40,7 @@ Investigación sobre Ontology-Augmented Generation (OAG) frente al grafo de cono
 ## Presentación
 
 ```bash
-pip install python-pptx pillow cairosvg
+uv sync && source .venv/bin/activate          # entorno (ver demo/README.md)
 python docs/img/build_diagrams.py --png        # SVG + PNG de los diagramas, tras cambiar alguno
 python presentacion/build_pptx_oag.py          # deck ES
 python presentacion/build_pptx_oag.py --lang en   # deck EN (avisa de líneas sin traducir)
@@ -65,7 +65,7 @@ Cinco skills responden a la misma pregunta real sobre el mismo corpus:
 Preparación:
 
 ```bash
-pip install -r demo/requirements.txt
+uv sync && source .venv/bin/activate   # lanzar claude con el venv activo
 python demo/oag.py build     # tras cambiar el corpus o la ontología
 ```
 
