@@ -36,7 +36,7 @@ Informe completo: [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md). Deck: [`presentacion
    (se contaron tipos de nodo y de arista, ver §4), y `ai-agents-code-methodology/README.md`.
 2. **Investigación de OAG** con las tres fuentes que dio juan y búsqueda adicional (§3).
 3. **Comparación** en siete dimensiones y propuesta de adopción (§5).
-4. **Presentación** de 18 slides con el estilo de los decks del curso (paleta oscura, barra coral, eyebrow +
+4. **Presentación** de 18 slides (19 desde que se añadió «Qué es una ontología») con el estilo de los decks del curso (paleta oscura, barra coral, eyebrow +
    título, tarjetas numeradas, franja de conclusión). Generada por código, renderizada a PDF con LibreOffice y
    revisada visualmente.
 5. **Primera ubicación:** rama `claude/project-thread-oog8kb` de `claude_code_ml_engineer` (commit `356a646`,
@@ -214,7 +214,7 @@ Regla: si una relación no responde una pregunta del set de la línea base, fuer
 | `HANDOVER.md` | Este documento |
 | `docs/OAG_VS_KG.md` | Informe de investigación |
 | `presentacion/build_pptx_oag.py` | Generador del deck (python-pptx, idempotente) |
-| `presentacion/OAG_vs_KG_Presentacion.pptx` | Deck de 18 slides |
+| `presentacion/OAG_vs_KG_Presentacion.pptx` | Deck de 19 slides |
 | `reference/KNOWLEDGE_GRAPH.md` | Explicación del grafo de tickets |
 | `reference/knowledge-graph/` | Scripts, tests, diseño y grafo sanitizado (copia de `claude_code_ml_engineer/docs/`, 2026-11-20) |
 | `reference/templates/` | Plantillas de la metodología (la ontología implícita) |
