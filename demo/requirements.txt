@@ -1,0 +1,3 @@
+pyyaml>=6
+# opcional, para naive_rag.py --embed
+# sentence-transformers

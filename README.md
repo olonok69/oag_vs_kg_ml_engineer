@@ -12,6 +12,7 @@ material de partida para adoptar lo útil.
 | [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md) | El informe: qué es OAG (OG-RAG, Palantir, Medium), comparación con nuestro grafo, qué adoptar y cómo medirlo |
 | [`presentacion/OAG_vs_KG_Presentacion.pptx`](presentacion/OAG_vs_KG_Presentacion.pptx) | Deck de 19 slides, mismo estilo que los decks del curso |
 | [`presentacion/build_pptx_oag.py`](presentacion/build_pptx_oag.py) | Generador del deck (`pip install python-pptx && python presentacion/build_pptx_oag.py`) |
+| [`demo/`](demo/README.md) | Demo en directo: skills de Claude Code de Naive RAG a OAG sobre la memoria de tickets (datos en `data/`, fuera de git) |
 | [`reference/KNOWLEDGE_GRAPH.md`](reference/KNOWLEDGE_GRAPH.md) | Cómo funciona el grafo de tickets actual (`/kg`, `/kg-refresh`) |
 | [`reference/knowledge-graph/`](reference/knowledge-graph/) | Diseño, scripts, tests y el grafo construido (versión sanitizada): línea base para medir |
 | [`reference/templates/`](reference/templates/) | Plantillas de la metodología: la ontología implícita (ticket, sharp edges, follow-ups, test map…) |

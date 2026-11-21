@@ -1,0 +1,52 @@
+# Minimal ontology for the ticket memory (demo scope).
+# Written before extraction (schema-first). The extractor may only emit the classes and
+# relations declared here; anything else is rejected by validation and reported.
+# Derived from the methodology templates (ISSUE_NOTE, SHARP_EDGES, TEST_MAP), see HANDOVER.md, Phase A.
+
+classes:
+  Ticket:
+    description: A unit of work with its writeup (symptom, root cause, fix, tests).
+    id_pattern: '^(SST|TKT)-\d{3,5}$'
+    required: [id, source]
+  Invariant:
+    description: A load-bearing rule recorded in SHARP_EDGES ("do not break"), with its ticket of origin.
+    required: [id, text, source]
+  Component:
+    description: A functional area of the code. Declared here, not discovered, so that every
+      document maps to the same names.
+    required: [id]
+  Test:
+    description: A test file that pins a contract.
+    id_pattern: '^tests/test_[a-z0-9_]+\.py$'
+    required: [id]
+
+relations:
+  touches:      {from: Ticket,    to: Component, description: The ticket changes or diagnoses this component.}
+  guards:       {from: Invariant, to: Component, description: The invariant constrains this component.}
+  originates:   {from: Ticket,    to: Invariant, description: The invariant was introduced by this ticket.}
+  verified_by:  {from: Ticket,    to: Test,      description: The ticket's contract is pinned by this test.}
+  must_not_break: {from: Ticket,  to: Ticket,    description: The writeup names the other ticket as a regression to avoid.}
+
+# Components of the domain and the words that identify them in free text (altLabels).
+# This is the part a domain expert writes; it is what makes "letter end", "LETTER_END_*",
+# "end-of-letter" and get_letter_end the same thing.
+components:
+  letter_end_detection:
+    label: Letter-end detection
+    alt_labels: [get_letter_end, letter_end, LETTER_END, letter-end, letter end, end-of-letter,
+                 end of letter, _confirm_letter_end_via_lookahead, signature page, _is_signature_page_marker]
+  title_detection:
+    label: Provision title detection
+    alt_labels: [get_titles, is_potential_title, TITLE_LEN_MAX, title match, titles_l, glued title]
+  numbering:
+    label: Numbering and sub-clauses
+    alt_labels: [get_numbering_format, get_description_subsections, numbering, sub-clause, subsection]
+  letter_start:
+    label: Letter-start detection
+    alt_labels: [letter-start, letter start, LETTER_START, preamble]
+
+# Extraction rules (deterministic backbone, no LLM).
+extraction:
+  touches_min_mentions: 3          # a ticket touches a component if its writeup names it this often
+  must_not_break_cues: [do-not-break, do not break, regression, must not regress, regression-tested,
+                        guardrail, must stay, still pass]

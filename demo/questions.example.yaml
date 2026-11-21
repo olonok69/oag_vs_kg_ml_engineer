@@ -1,0 +1,18 @@
+# Copiar a data/questions.yaml y rellenar con una pregunta real del corpus (data/ no se sube a git).
+id: letter-end-runin
+pregunta: >
+  Tengo que arreglar un bug nuevo: en una side letter DOCX el marcador de fin de carta va
+  "run-in" (dentro de un párrafo, después de una cláusula), get_letter_end no lo detecta y el
+  bloque de firma acaba dentro de la última provisión. ¿Qué tickets anteriores e invariantes
+  tengo que respetar para no romper nada?
+# Texto de búsqueda (el corpus está en inglés).
+query: >
+  run-in letter-end marker missed by get_letter_end, signature block absorbed into the last
+  provision, letter end detection window, premature truncation
+# Token para /kg (GraphRAG) y semilla de OAG.
+topic: get_letter_end
+# El writeup del ticket real es la hoja de respuestas: se excluye de todas las técnicas.
+holdout: [TKT-NNN]
+holdout_files: [tkt-nnn__tkt-nnn.md]
+# Respuesta esperada: los "Guardrails / do-not-break" y la batería de regresión del writeup.
+esperado: [TKT-AAA, TKT-BBB, TKT-CCC]
