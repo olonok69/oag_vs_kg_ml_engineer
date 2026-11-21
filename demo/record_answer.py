@@ -3,12 +3,14 @@
 
     python demo/record_answer.py [--q <id>] <technique> "TKT-101, TKT-102 ..." [--tool-calls N] [--tokens N]
 
-technique: naive_rag | agentic_rag | graphrag | oag
+technique: naive_rag | agentic_rag | graphrag | oag, or a variant key from data/runs/<id>/
+(oag_v3_es, graphrag_es_sem, naive_rag_es_sem...)
 For agentic_rag this is also the retrieval result (Claude did the retrieval itself).
 """
 from __future__ import annotations
 
 import argparse
+import re
 import json
 import os
 
@@ -18,22 +20,25 @@ import lib
 def main() -> None:
     lib.utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("technique", choices=["naive_rag", "agentic_rag", "graphrag", "oag"])
+    ap.add_argument("technique", help="naive_rag, agentic_rag, graphrag, oag or a variant such as oag_v3_es")
     ap.add_argument("ids", help="ticket ids in the final answer, any separator")
     ap.add_argument("--tool-calls", type=int, default=0, help="tool calls Claude used to retrieve (agentic)")
     ap.add_argument("--tokens", type=int, default=0, help="approx tokens Claude read to retrieve (agentic)")
     lib.add_question_arg(ap)
     a = ap.parse_args()
+    if not re.fullmatch(r"(naive_rag|agentic_rag|graphrag|oag)[a-z0-9_]*", a.technique):
+        ap.error(f"unknown technique {a.technique!r}")
 
     q = lib.load_question(a.qid)
     found = lib.ticket_ids(a.ids, q)
     s = lib.print_score(q, found)
     payload = {"technique": a.technique, "answer": found, "answer_score": s}
-    if a.technique == "agentic_rag":
-        path = os.path.join(lib.run_dir(q), "agentic_rag.json")
-        payload.update({"technique": "Agentic RAG", "found": found, "score": s,
+    if a.technique.startswith("agentic_rag"):
+        path = os.path.join(lib.run_dir(q), f"{a.technique}.json")
+        name = "Agentic RAG" + (" en castellano" if "_es" in a.technique else "")
+        payload.update({"technique": name, "found": found, "score": s,
                         "context_tokens": a.tokens, "llm_calls_retrieval": a.tool_calls})
-        lib.save_run(q, "agentic_rag", payload)
+        lib.save_run(q, a.technique, payload)
     else:
         path = os.path.join(lib.run_dir(q), f"{a.technique}.json")
         run = {}

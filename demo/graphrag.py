@@ -12,7 +12,13 @@ Scope: by default only nodes whose source file is in data/corpus are kept, so
 the comparison with the other techniques uses the same documents. `--full`
 uses the whole graph (what /kg sees in the lambda repo).
 
-    python demo/graphrag.py [--q <id>] [--topic get_letter_end] [--hops 1] [--full] [--native]
+Seed resolution is lexical (exact name, then substring), like /kg. With
+--semantic the seed is the node whose label is closest in meaning to the topic
+(multilingual embeddings, demo/semantic.py), so a topic in Spanish can still
+land on an English node. --lang es uses the question's Spanish topic (`tema`).
+
+    python demo/graphrag.py [--q <id>] [--topic get_letter_end] [--hops 1] [--lang es] [--semantic]
+                            [--full] [--native]
 """
 from __future__ import annotations
 
@@ -67,6 +73,16 @@ def resolve(nodes: dict, links: list[dict], topic: str) -> str | None:
     return max(pool, key=lambda i: deg[i]) if pool else None
 
 
+def resolve_semantic(nodes: dict, topic: str, model: str | None = None, show: int = 5
+                     ) -> tuple[str | None, list[tuple[float, str]]]:
+    """Seed = the node whose label is most similar in meaning to the topic, plus the runners-up."""
+    import semantic  # optional dependency group `embed`
+    ids = sorted(nodes)
+    ranked = semantic.rank(topic, [nodes[i].get("label") or i for i in ids], model)
+    top = [(sim, ids[i]) for sim, i in ranked[:show]]
+    return (top[0][1] if top else None), top
+
+
 def main() -> None:
     lib.utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -74,12 +90,15 @@ def main() -> None:
     ap.add_argument("--hops", type=int, help="neighbourhood depth (default: the question's `hops`, else 1)")
     ap.add_argument("--full", action="store_true", help="whole graph instead of the demo corpus")
     ap.add_argument("--native", action="store_true", help="run data/kg/kg_query.sh (needs graphify)")
+    ap.add_argument("--semantic", action="store_true", help="resolve the seed by meaning, not by name")
+    ap.add_argument("--model", help="embedding model (default: demo/semantic.py DEFAULT_MODEL)")
     ap.add_argument("--quiet", action="store_true")
     lib.add_question_arg(ap)
+    lib.add_lang_arg(ap)
     a = ap.parse_args()
 
     q = lib.load_question(a.qid)
-    topic = a.topic or q.get("graph_topic") or q["topic"]
+    topic = a.topic or (lib.spanish_topic(q) if a.lang == "es" else q.get("graph_topic") or q["topic"])
     a.hops = a.hops or q.get("hops", 1)
 
     if a.native:
@@ -88,9 +107,23 @@ def main() -> None:
         return
 
     nodes, links = load_graph(q, a.full)
-    seed = resolve(nodes, links, topic)
+    candidates = []
+    if a.semantic:
+        seed, candidates = resolve_semantic(nodes, topic, a.model)
+    else:
+        seed = resolve(nodes, links, topic)
+    key = lib.run_key("graphrag" if a.hops == 1 else f"graphrag_{a.hops}h", a.lang, a.semantic)
+    name = f"GraphRAG (/kg, {a.hops} hop)" + (", semilla semántica" if a.semantic else "") \
+        + (" en castellano" if a.lang == "es" else "")
     if not seed:
-        raise SystemExit(f"No node matches {topic!r}. Try another --topic.")
+        if not a.quiet:
+            print(f"GRAPHRAG (/kg) | semilla: ninguna. Ningún nodo se llama {topic!r} ni lo contiene.")
+            print("La búsqueda es por nombre: sin semilla no hay vecindario ni lista de lectura.")
+        s = lib.print_score(q, [])
+        lib.save_run(q, key, {"technique": name, "hops": a.hops, "lang": a.lang, "topic": topic, "seed": None,
+                              "found": [], "score": s, "context_tokens": 0, "llm_calls_retrieval": 0,
+                              "sources": [], "themes": []})
+        return
 
     adj: dict[str, list[tuple[str, dict]]] = {}
     for e in links:
@@ -123,7 +156,12 @@ def main() -> None:
         generic = sum(c for r, c in rels.items() if r in ("references", "conceptually_related_to",
                                                           "semantically_similar_to", "relates_to"))
         print(f"GRAPHRAG (/kg) | {'grafo completo' if a.full else 'grafo restringido al corpus de la demo'}"
-              f" | {len(nodes)} nodos, {len(links)} aristas | semilla: {seed} | saltos: {a.hops}\n")
+              f" | {len(nodes)} nodos, {len(links)} aristas | tema: {topic!r} | semilla: {seed} | saltos: {a.hops}\n")
+        if candidates:
+            print("Semilla por similitud (coseno con la etiqueta del nodo):")
+            for sim, nid in candidates:
+                print(f"  {sim:.3f}  {nid}  ({nodes[nid].get('label', '')[:70]})")
+            print()
         print(context)
         print(f"\nLista de lectura ({len(reading)} ficheros): {', '.join(reading)}")
         print(f"Relaciones: {dict(rels.most_common())}")
@@ -135,8 +173,8 @@ def main() -> None:
         print(f"Contexto para el LLM: ~{lib.approx_tokens(context)} tokens, 0 llamadas LLM al consultar.")
         print(f"Tickets en el resultado: {', '.join(found) or '-'}")
     s = lib.print_score(q, found)
-    key = "graphrag" if a.hops == 1 else f"graphrag_{a.hops}h"
-    lib.save_run(q, key, {"technique": f"GraphRAG (/kg, {a.hops} hop)", "hops": a.hops, "found": found, "score": s,
+    lib.save_run(q, key, {"technique": name, "hops": a.hops, "lang": a.lang, "topic": topic, "seed": seed,
+                          "found": found, "score": s,
                               "context_tokens": lib.approx_tokens(context), "llm_calls_retrieval": 0,
                               "sources": reading, "themes": themes})
 

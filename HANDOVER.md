@@ -1,7 +1,7 @@
 # Traspaso: OAG vs grafo de conocimiento de tickets
 
 > **Para quién:** cualquier persona o agente que continúe este trabajo, aquí o en otro proyecto.
-> **Fecha:** 2026-11-20, actualizado el 2026-11-21. **Estado:** investigación, presentación (31 slides, ES y EN), guía
+> **Fecha:** 2026-11-20, actualizado el 2026-11-21. **Estado:** investigación, presentación (32 slides, ES y EN), guía
 > y demo en directo terminadas; la adopción (Fases A–D) no ha empezado. La demo deja las dos primeras preguntas
 > del Paso 0 y una ontología mínima de partida.
 > Léelo entero antes de tocar nada: la sección 6 tiene las reglas que no se pueden romper.
@@ -48,13 +48,22 @@ Informe completo: [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md). Deck: [`presentacion
    `/demo-graphrag`, `/demo-oag`, `/demo-compare`) sobre el corpus completo de `/kg` (452 ficheros), con los
    datos reales en `data/` (fuera de git) y entorno con uv. Ver `demo/README.md`.
 7. **Guía de la demo y diagramas** en ES y EN (`docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md`, `docs/img/`) y deck
-   bilingüe de 31 slides con la Parte 4 (la demo).
+   bilingüe con la Parte 4 (la demo); 32 slides desde el punto 9.
 8. **Dos escenarios** (decisión de juan): el objetivo no es demostrar que OAG siempre gana, sino enseñar dónde
    gana cada técnica y si merece la pena adoptarla. Pregunta A (reglas sobre un componente modelado): gana
    OAG con el esquema v2 (100 % de recall, 15 tickets frente a 53 de GraphRAG a dos saltos). Pregunta B
    (explorar un área que la ontología no modela): gana GraphRAG (83 % de recall y temas por comunidades;
    OAG no devuelve nada). La v2 de la ontología (restricción de componente y relación `calls`) se escribió
    tras ver el fallo de la v1 y así se cuenta. Detalle en la sección 6 de `docs/GUIA_DEMO.md`.
+9. **Pregunta en castellano y capa semántica** (a raíz de una duda de juan: la pregunta está en castellano y el
+   corpus en inglés). Las dos preguntas tienen una versión en castellano llano sin nombres de código
+   (`--lang es`). Sin capa semántica fallan Naive RAG, GraphRAG y OAG. Se añade `demo/semantic.py` (embeddings
+   multilingües `paraphrase-multilingual-MiniLM-L12-v2`, CPU): Naive RAG `--embed`, semilla de GraphRAG
+   `--semantic` y componentes de OAG `--semantic`, y la ontología v3 con sinónimos en castellano. Con cualquiera
+   de los dos arreglos OAG recupera en la pregunta A lo mismo que en inglés (100 % / 47 %); GraphRAG llega a la
+   zona correcta pero no al nodo central (59 % en B frente al 83 %). El umbral semántico de OAG (0,42) está
+   calibrado con estas dos preguntas. El entorno cloud necesitó permitir huggingface.co, `*.hf.co`,
+   download.pytorch.org y download-r2.pytorch.org.
 
 ---
 
@@ -232,7 +241,7 @@ Regla: si una relación no responde una pregunta del set de la línea base, fuer
 | `docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md` | Guía de la presentación y la demo (ES, EN) |
 | `docs/img/` | Diagramas SVG y PNG, generados por `build_diagrams.py` |
 | `presentacion/build_pptx_oag.py` | Generador del deck (python-pptx, idempotente; `--lang en` para inglés) |
-| `presentacion/OAG_vs_KG_Presentacion.pptx` | Deck de 31 slides (ES); `OAG_vs_KG_Presentation_EN.pptx` (EN) |
+| `presentacion/OAG_vs_KG_Presentacion.pptx` | Deck de 32 slides (ES); `OAG_vs_KG_Presentation_EN.pptx` (EN) |
 | `demo/`, `.claude/skills/demo-*` | Scripts, ontología mínima (`demo/oag/ontology.yaml`) y skills de la demo |
 | `reference/KNOWLEDGE_GRAPH.md` | Explicación del grafo de tickets |
 | `reference/knowledge-graph/` | Scripts, tests, diseño y grafo sanitizado (copia de `claude_code_ml_engineer/docs/`, 2026-11-20) |

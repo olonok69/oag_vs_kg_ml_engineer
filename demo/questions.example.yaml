@@ -9,6 +9,13 @@ questions:
     "run-in" (dentro de un párrafo, después de una cláusula), get_letter_end no lo detecta y el
     bloque de firma acaba dentro de la última provisión. ¿Qué tickets anteriores e invariantes
     tengo que respetar para no romper nada?
+  # La misma pregunta en castellano llano, sin nombres de código ni términos en inglés (--lang es).
+  pregunta_llana: >
+    Tengo que arreglar un bug nuevo: en una carta complementaria en DOCX el marcador de fin de carta
+    va dentro de un párrafo, después de una cláusula. No se detecta y el bloque de firma acaba dentro
+    de la última provisión. ¿Qué tickets anteriores e invariantes tengo que respetar para no romper nada?
+  # Tema en castellano para GraphRAG con --lang es.
+  tema: detección del fin de carta
   # Texto de búsqueda (el corpus está en inglés).
   query: >
     run-in letter-end marker missed by get_letter_end, signature block absorbed into the last
@@ -26,6 +33,12 @@ questions:
   pregunta: >
     Empiezo a trabajar en el extractor del memo de comentarios (comment memo) y no lo conozco.
     ¿Qué tickets anteriores tratan de él y en qué temas se agrupan?
+  pregunta_llana: >
+    Empiezo a trabajar en el extractor del memo de comentarios y no lo conozco. ¿Qué tickets
+    anteriores tratan de él y en qué temas se agrupan?
+  tema: extractor del memo de comentarios
+  # Saltos de GraphRAG por defecto: la exploración necesita el vecindario ampliado.
+  hops: 2
   query: >
     comment memo extractor chains turns queries responses Q/R typing table mode doc mode
   topic: comment memo

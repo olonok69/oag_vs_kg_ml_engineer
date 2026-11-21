@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Naive RAG: chunk, vectorise, top-k by cosine similarity.
 
-Vectoriser: TF-IDF (pure Python, deterministic, offline). It stands in for an
-embedding model; with --embed and sentence-transformers installed it uses
-all-MiniLM-L6-v2 instead. Either way the retrieval unit is a text chunk with
-no notion of tickets, symbols or relations.
+Vectoriser: TF-IDF (pure Python, deterministic, offline). It matches words, so
+a question in Spanish over an English corpus finds almost nothing. With --embed
+it uses multilingual sentence embeddings instead (demo/semantic.py), which
+compare meaning across languages. Either way the retrieval unit is a text chunk
+with no notion of tickets, symbols or relations.
 
-    python demo/naive_rag.py [--k 5] [--chunk-words 180] [--embed] [--query "..."]
+    python demo/naive_rag.py [--q <id>] [--k 5] [--chunk-words 180] [--embed] [--lang es] [--query "..."]
 """
 from __future__ import annotations
 
@@ -58,13 +59,9 @@ def tfidf_rank(chunks: list[dict], query: str) -> list[tuple[float, dict]]:
     return sorted(scored, key=lambda x: -x[0])
 
 
-def embed_rank(chunks: list[dict], query: str) -> list[tuple[float, dict]]:
-    from sentence_transformers import SentenceTransformer, util  # optional dependency
-    model = SentenceTransformer("all-MiniLM-L6-v2")
-    emb = model.encode([c["text"] for c in chunks], convert_to_tensor=True, normalize_embeddings=True)
-    qe = model.encode(query, convert_to_tensor=True, normalize_embeddings=True)
-    sims = util.cos_sim(qe, emb)[0].tolist()
-    return sorted(zip(sims, chunks), key=lambda x: -x[0])
+def embed_rank(chunks: list[dict], query: str, model: str | None = None) -> list[tuple[float, dict]]:
+    import semantic  # optional dependency group `embed`
+    return [(s, chunks[i]) for s, i in semantic.rank(query, [c["text"] for c in chunks], model)]
 
 
 def main() -> None:
@@ -73,24 +70,27 @@ def main() -> None:
     ap.add_argument("--k", type=int, default=5)
     ap.add_argument("--chunk-words", type=int, default=180)
     ap.add_argument("--overlap", type=int, default=30)
-    ap.add_argument("--embed", action="store_true", help="use sentence-transformers instead of TF-IDF")
+    ap.add_argument("--embed", action="store_true", help="multilingual embeddings instead of TF-IDF")
+    ap.add_argument("--model", help="embedding model (default: demo/semantic.py DEFAULT_MODEL)")
     ap.add_argument("--query", help="override the query from data/questions.yaml")
     ap.add_argument("--quiet", action="store_true", help="only print the score")
     lib.add_question_arg(ap)
+    lib.add_lang_arg(ap)
     a = ap.parse_args()
 
     q = lib.load_question(a.qid)
-    query = a.query or q["query"]
+    query = a.query or (lib.spanish_question(q) if a.lang == "es" else q["query"])
     docs = lib.load_corpus(q)
     chunks = [c for d in docs for c in chunk(d, a.chunk_words, a.overlap)]
-    ranked = (embed_rank if a.embed else tfidf_rank)(chunks, query)[: a.k]
+    ranked = (embed_rank(chunks, query, a.model) if a.embed else tfidf_rank(chunks, query))[: a.k]
 
     context = "\n\n".join(f"[{i}] {c['source']} (word {c['pos']})\n{c['text']}" for i, (_, c) in enumerate(ranked, 1))
     found = lib.ticket_ids(context, q)
 
     if not a.quiet:
         print(f"NAIVE RAG | {len(docs)} documentos -> {len(chunks)} chunks de ~{a.chunk_words} palabras"
-              f" | vectorizador: {'embeddings' if a.embed else 'TF-IDF'} | top-{a.k}")
+              f" | vectorizador: {'embeddings multilingües' if a.embed else 'TF-IDF'} | top-{a.k}"
+              f"{' | pregunta en castellano' if a.lang == 'es' else ''}")
         print(f"Query: {query.strip()}\n")
         for i, (s, c) in enumerate(ranked, 1):
             print(f"--- [{i}] score {s:.3f}  {c['source']} (palabra {c['pos']})")
@@ -99,7 +99,8 @@ def main() -> None:
         print(f"Contexto para el LLM: ~{lib.approx_tokens(context)} tokens, {a.k} trozos, 0 relaciones.")
         print(f"Tickets que aparecen en el contexto: {', '.join(found) or '-'}")
     s = lib.print_score(q, found)
-    lib.save_run(q, "naive_rag", {"technique": "Naive RAG", "found": found, "score": s,
+    name = "Naive RAG" + (" (embeddings)" if a.embed else "") + (" en castellano" if a.lang == "es" else "")
+    lib.save_run(q, lib.run_key("naive_rag", a.lang, a.embed), {"technique": name, "lang": a.lang, "found": found, "score": s,
                                "context_tokens": lib.approx_tokens(context), "llm_calls_retrieval": 0,
                                "sources": sorted({c["source"] for _, c in ranked})})
 

@@ -1,4 +1,4 @@
-# Minimal ontology for the ticket memory (demo scope). Version 2.
+# Minimal ontology for the ticket memory (demo scope). Version 3.
 # Written before extraction (schema-first). The extractor may only emit the classes and
 # relations declared here; anything else is rejected by validation and reported.
 # Derived from the methodology templates (ISSUE_NOTE, SHARP_EDGES, TEST_MAP), see HANDOVER.md, Phase A.
@@ -38,6 +38,13 @@ constraints:
       invariant that guards, one of the question's components. Without it, a writeup that touches the
       component drags in regressions from unrelated areas (numbering, PDF).
 
+# Labels in other languages, matched only against the question (the corpus is in English).
+# v3 adds Spanish labels so that a question asked in Spanish without code names still maps to components.
+labels:
+  alt_labels_es:
+    since: 3
+    description: Spanish names of each component. Cheap to write and to review; covers only the words listed.
+
 # Components of the domain and the words that identify them in free text (altLabels).
 # This is the part a domain expert writes; it is what makes "letter end", "LETTER_END_*",
 # "end-of-letter" and get_letter_end the same thing.
@@ -49,15 +56,21 @@ components:
     # The letter-end look-ahead matches the next provision title with get_titles (an invariant in SHARP_EDGES
     # invariant), so invariants that pin get_titles can break when letter-end detection changes.
     calls: {title_detection: [get_titles]}
+    alt_labels_es: [fin de carta, final de carta, final de la carta, fin de la carta, página de firma,
+                    página de firmas]
   title_detection:
     label: Provision title detection
     alt_labels: [get_titles, is_potential_title, TITLE_LEN_MAX, title match, titles_l, glued title]
+    alt_labels_es: [título de provisión, títulos de provisión, títulos de las provisiones, detección de títulos,
+                    título pegado]
   numbering:
     label: Numbering and sub-clauses
     alt_labels: [get_numbering_format, get_description_subsections, numbering, sub-clause, subsection]
+    alt_labels_es: [numeración, subcláusula, subapartado]
   letter_start:
     label: Letter-start detection
     alt_labels: [letter-start, letter start, LETTER_START, preamble]
+    alt_labels_es: [inicio de carta, inicio de la carta, principio de la carta, preámbulo]
 
 # Extraction rules (deterministic backbone, no LLM).
 extraction:

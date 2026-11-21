@@ -13,9 +13,9 @@ material de partida para adoptar lo útil.
 | [`docs/GUIA_DEMO.md`](docs/GUIA_DEMO.md) / [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md) | Guía para presentar la demo (ES / EN): qué es OAG, conceptos, pipelines, la demo con dos escenarios, la evaluación, dónde gana cada técnica y si merece la pena |
 | [`docs/GUIA_TECNICA.md`](docs/GUIA_TECNICA.md) / [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) | Guía técnica de la demo (ES / EN): qué ejecuta cada skill, en qué fichero y función, qué lee y qué escribe |
 | [`docs/img/`](docs/img/) | Diagramas SVG (ES y EN) de la guía y PNG para el deck, generados con `build_diagrams.py` |
-| [`presentacion/OAG_vs_KG_Presentacion.pptx`](presentacion/OAG_vs_KG_Presentacion.pptx) / [`OAG_vs_KG_Presentation_EN.pptx`](presentacion/OAG_vs_KG_Presentation_EN.pptx) | Deck de 31 slides en castellano e inglés, mismo estilo que los decks del curso |
+| [`presentacion/OAG_vs_KG_Presentacion.pptx`](presentacion/OAG_vs_KG_Presentacion.pptx) / [`OAG_vs_KG_Presentation_EN.pptx`](presentacion/OAG_vs_KG_Presentation_EN.pptx) | Deck de 32 slides en castellano e inglés, mismo estilo que los decks del curso |
 | [`presentacion/build_pptx_oag.py`](presentacion/build_pptx_oag.py) | Generador del deck (`python presentacion/build_pptx_oag.py [--lang en]`) |
-| [`demo/`](demo/README.md) | Demo en directo: skills de Claude Code de Naive RAG a OAG sobre la memoria de tickets, con dos preguntas (una de reglas, otra de exploración); datos en `data/`, fuera de git |
+| [`demo/`](demo/README.md) | Demo en directo: skills de Claude Code de Naive RAG a OAG sobre la memoria de tickets, con dos preguntas (una de reglas, otra de exploración), también en castellano llano con capa semántica; datos en `data/`, fuera de git |
 | [`reference/KNOWLEDGE_GRAPH.md`](reference/KNOWLEDGE_GRAPH.md) | Cómo funciona el grafo de tickets actual (`/kg`, `/kg-refresh`) |
 | [`reference/knowledge-graph/`](reference/knowledge-graph/) | Diseño, scripts, tests y el grafo construido (versión sanitizada): línea base para medir |
 | [`reference/templates/`](reference/templates/) | Plantillas de la metodología: la ontología implícita (ticket, sharp edges, follow-ups, test map…) |
@@ -26,8 +26,9 @@ de esos ficheros apuntan a su repo de origen.
 ## Siguientes pasos (hoja de ruta del informe)
 
 Lo que ha enseñado la demo: OAG gana en preguntas de reglas sobre componentes modelados y GraphRAG en
-preguntas de exploración. La adopción tiene sentido por partes y solo para lo primero (ver la sección 8 de
-`docs/GUIA_DEMO.md`).
+preguntas de exploración. Si la pregunta llega en castellano y sin nombres de código, las tres técnicas
+deterministas fallan hasta añadir una capa semántica (sinónimos en la ontología o embeddings multilingües). La
+adopción tiene sentido por partes y solo para lo primero (ver las secciones 6 y 8 de `docs/GUIA_DEMO.md`).
 
 1. **Línea base**: set de 15–20 preguntas con respuesta conocida y recall del grafo actual. Las dos de la
    demo son las primeras; `demo/compare.py` sirve de arnés.

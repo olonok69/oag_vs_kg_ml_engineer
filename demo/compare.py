@@ -6,7 +6,14 @@
 For every question in data/questions.yaml (or only --q), re-runs Naive RAG,
 GraphRAG (/kg) at one and two hops and OAG with schema v1 and v2, then reads
 data/runs/<id>/*.json (Agentic RAG and Claude's recorded answers come from
-/demo-agentic-rag and record_answer.py). Writes data/runs/compare.md.
+/demo-agentic-rag and record_answer.py).
+
+A second table asks the same question in plain Spanish (--lang es), first with
+word matching only and then with the semantic layer (multilingual embeddings,
+demo/semantic.py) or Spanish labels in the ontology (schema v3). The semantic
+rows need the `embed` group; without it they show as not run.
+
+Writes data/runs/compare.md.
 """
 from __future__ import annotations
 
@@ -25,12 +32,37 @@ ORDER = [
     ("graphrag_2h", "GraphRAG (/kg, 2 saltos)", "vecindario ampliado"),
     ("oag_v1", "OAG, esquema v1", "hechos tipados, primera ontología"),
     ("oag", "OAG, esquema v2", "hechos tipados, ontología corregida"),
+    ("naive_rag_sem", "Naive RAG, embeddings", "trozos por similitud de significado"),
 ]
 
 
-def run(qid: str, script: list[str]) -> None:
-    subprocess.run([sys.executable, os.path.join(lib.ROOT, "demo", script[0]), *script[1:], "--q", qid, "--quiet"],
-                   check=True, stdout=subprocess.DEVNULL)
+def order_es(q: dict) -> list[tuple[str, str, str]]:
+    g = "graphrag" if q.get("hops", 1) == 1 else f"graphrag_{q['hops']}h"
+    h = f"{q.get('hops', 1)} salto{'s' if q.get('hops', 1) > 1 else ''}"
+    return [
+        ("naive_rag_es", "Naive RAG, TF-IDF", "coincidencia de palabras"),
+        ("naive_rag_es_sem", "Naive RAG, embeddings", "similitud de significado"),
+        ("agentic_rag_es", "Agentic RAG", "Claude traduce, busca y lee en bucle"),
+        (f"{g}_es", f"GraphRAG ({h}), semilla por nombre", "el tema tiene que llamarse como un nodo"),
+        (f"{g}_es_sem", f"GraphRAG ({h}), semilla por similitud", "el nodo más parecido al tema"),
+        ("oag_es", "OAG v2, etiquetas en inglés", "componentes por coincidencia de palabras"),
+        ("oag_v3_es", "OAG v3, etiquetas en castellano", "sinónimos escritos en la ontología"),
+        ("oag_es_sem", "OAG v2, componentes por similitud", "componentes por significado"),
+    ]
+
+
+def has_embed() -> bool:
+    try:
+        import sentence_transformers  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+def run(qid: str, script: list[str], check: bool = True) -> bool:
+    r = subprocess.run([sys.executable, os.path.join(lib.ROOT, "demo", script[0]), *script[1:], "--q", qid, "--quiet"],
+                       check=check, stdout=subprocess.DEVNULL)
+    return r.returncode == 0
 
 
 def f1(s: dict) -> float:
@@ -38,11 +70,11 @@ def f1(s: dict) -> float:
     return 2 * r * p / (r + p) if r + p else 0.0
 
 
-def table(q: dict) -> str:
+def table(q: dict, order: list[tuple[str, str, str]]) -> str:
     head = ("| Técnica | Qué devuelve | Recall | Precisión | F1 | IDs | Tokens de contexto "
             "| LLM al recuperar | Recall respuesta Claude |")
     rows = [head, "|" + "---|" * 9]
-    for key, name, what in ORDER:
+    for key, name, what in order:
         p = os.path.join(lib.run_dir(q), f"{key}.json")
         if not os.path.exists(p):
             rows.append(f"| {name} | {what} | - | - | - | - | - | - | sin ejecutar |")
@@ -52,7 +84,7 @@ def table(q: dict) -> str:
         s = r.get("score", {})
         ans = r.get("answer_score")
         llm = r.get("llm_calls_retrieval", 0)
-        llm_txt = f"{llm} pasos" if key == "agentic_rag" else str(llm)
+        llm_txt = f"{llm} pasos" if key.startswith("agentic_rag") else str(llm)
         ans_txt = "{:.0%}".format(ans["recall"]) if ans else "-"
         rows.append(f"| {name} | {what} | {s.get('recall', 0):.0%} | {s.get('precision', 0):.0%} | {f1(s):.2f} "
                     f"| {s.get('found', 0)} | ~{r.get('context_tokens', 0)} | {llm_txt} | {ans_txt} |")
@@ -78,9 +110,22 @@ def main() -> None:
                                check=True, stdout=subprocess.DEVNULL)
             run(q["id"], ["oag.py", "query", "--schema", "1"])
             run(q["id"], ["oag.py", "query", "--schema", "2"])
-        t = table(q)
+            hops = str(q.get("hops", 1))
+            run(q["id"], ["naive_rag.py", "--lang", "es"])
+            run(q["id"], ["graphrag.py", "--lang", "es", "--hops", hops])
+            run(q["id"], ["oag.py", "query", "--lang", "es"])
+            run(q["id"], ["oag.py", "query", "--lang", "es", "--schema", "3"])
+            if has_embed():
+                run(q["id"], ["naive_rag.py", "--embed"], check=False)
+                run(q["id"], ["naive_rag.py", "--embed", "--lang", "es"], check=False)
+                run(q["id"], ["graphrag.py", "--semantic", "--lang", "es", "--hops", hops], check=False)
+                run(q["id"], ["oag.py", "query", "--semantic", "--lang", "es"], check=False)
+        t = table(q, ORDER)
+        t_es = table(q, order_es(q))
         block = (f"## {q['id']}\n\n{q.get('scenario', '')}\n\n{q['pregunta'].strip()}\n\n"
-                 f"Respuesta esperada ({len(q['esperado'])}): {', '.join(q['esperado'])}\n\n{t}\n")
+                 f"Respuesta esperada ({len(q['esperado'])}): {', '.join(q['esperado'])}\n\n{t}\n\n"
+                 f"### En castellano llano, sin nombres de código\n\n{lib.spanish_question(q)}\n\n"
+                 f"Tema para GraphRAG: {lib.spanish_topic(q)}\n\n{t_es}\n")
         print(block)
         out.append(block)
     print("Recall y precisión se miden contra la respuesta esperada. F1 resume las dos. Un ID extra no siempre"

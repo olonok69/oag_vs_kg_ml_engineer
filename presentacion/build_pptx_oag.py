@@ -626,7 +626,7 @@ def build():
     s, pg = new()
     divider(s, 4, "La demo", "Cinco skills de Claude Code, dos preguntas reales y la misma vara de medir.",
             ["OAG en la demo", "Cómo evaluamos", "Dos preguntas, dos ganadores", "De OAG v1 a v2",
-             "Dónde gana cada técnica", "¿Merece la pena en nuestro caso?"], page=pg)
+             "La pregunta en castellano", "Dónde gana cada técnica", "¿Merece la pena en nuestro caso?"], page=pg)
 
     s, pg = new()
     diagram(s, "demo_oag_pipeline", page=pg)
@@ -685,6 +685,25 @@ def build():
                   accent=GREEN)
     takeaway(s, "v2 se escribió después de ver el fallo: es evolución del esquema y hay que validarla con preguntas nuevas.")
 
+    # ---- Pregunta en castellano llano
+    s, pg = new()
+    base(s, "Parte 4 · La pregunta en castellano", "Corpus en inglés, pregunta sin nombres de código", page=pg)
+    table(s, 0.7, 1.95, [4.4, 2.2, 2.2, 3.1],
+          [["Técnica", "Pregunta A (R / P)", "Pregunta B (R / P)", "Qué compara con la pregunta"],
+           ["Naive RAG, TF-IDF", "14% / 25%", "0% / 0%", "Palabras"],
+           ["Naive RAG, embeddings", "43% / 38%", "10% / 50%", "Significado"],
+           ["GraphRAG, semilla por nombre", "0%", "0%", "Nombre del nodo"],
+           ["GraphRAG, semilla por similitud", "43% / 75%", "59% / 25%", "Significado de la etiqueta"],
+           ["OAG v2, etiquetas en inglés", "0%", "0%", "Sinónimos en inglés"],
+           ["OAG v3, sinónimos en castellano", "100% / 47%", "0%", "Sinónimos en castellano"],
+           ["OAG v2, componentes por similitud", "100% / 47%", "0%", "Significado del componente"]],
+          row_h=0.4, size=10.5)
+    text(s, 0.7, 5.72, 11.9, 0.5,
+         [[R("Sin capa semántica caen las tres, en silencio. GraphRAG llega a la zona correcta, no al nodo central. "
+             "Modelo multilingüe pequeño en CPU; el umbral de OAG está calibrado con estas dos preguntas.",
+             10.5, FAINT, False)]])
+    takeaway(s, "El idioma solo afecta al primer paso: con seis sinónimos o un modelo pequeño, OAG responde igual que en inglés.")
+
     s, pg = new()
     diagram(s, "when_to_use", page=pg)
 
@@ -696,17 +715,20 @@ def build():
            ["«Qué reglas, tickets o tests protegen este componente»", "OAG", "Hechos tipados con su porqué; poco ruido; validable antes del LLM"],
            ["«Qué hay sobre esta área y cómo se organiza»", "GraphRAG (/kg)", "Descubre estructura sin esquema previo y agrupa en temas"],
            ["«Dónde se menciona este identificador»", "Naive RAG o búsqueda", "Barato e inmediato; no necesita estructura"],
-           ["«Investiga este problema nuevo»", "Agentic RAG", "Planifica y vuelve a buscar; caro y variable"]],
-          row_h=0.62, size=11.5)
+           ["«Investiga este problema nuevo»", "Agentic RAG", "Planifica y vuelve a buscar; caro y variable"],
+           ["Cualquiera, en castellano y sin nombres de código", "La misma + capa semántica",
+            "Sinónimos en la ontología o embeddings multilingües"]],
+          row_h=0.56, size=11.5)
     takeaway(s, "OAG no sustituye a GraphRAG: lo completa. Uno descubre la estructura; el otro la fija como contrato.")
 
     # ---- Merece la pena
     s, pg = new()
     base(s, "Parte 4 · ¿Merece la pena?", "Sí, por partes y solo para las preguntas de reglas", page=pg)
     panel_bullets(s, 0.7, 2.0, 3.85, 3.3, "Lo que ha costado",
-                  ["Ontología de ~60 líneas: 4 clases, 6 relaciones, 1 restricción, 4 componentes",
+                  ["Ontología de ~70 líneas: 4 clases, 6 relaciones, 1 restricción, 4 componentes",
                    "Sale en buena parte de las plantillas (ISSUE_NOTE, SHARP_EDGES, TEST_MAP)",
-                   "Extracción determinista: 0 llamadas LLM"], accent=GREEN)
+                   "Extracción determinista: 0 llamadas LLM",
+                   "Preguntas en castellano: sinónimos o un modelo pequeño en CPU"], accent=GREEN)
     panel_bullets(s, 4.75, 2.0, 3.85, 3.3, "Lo que no compensa",
                   ["Modelar todo el dominio «por completitud»",
                    "Sustituir /kg: explorar lo sigue haciendo mejor el grafo",

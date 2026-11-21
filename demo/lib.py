@@ -38,6 +38,25 @@ def add_question_arg(ap) -> None:
                     help="question id in data/questions.yaml (default: the file's `default`)")
 
 
+def add_lang_arg(ap) -> None:
+    ap.add_argument("--lang", choices=["en", "es"], default="en",
+                    help="es: ask in Spanish without code names (pregunta_llana, tema), as a user would")
+
+
+def spanish_question(q: dict) -> str:
+    """The question in plain Spanish: pregunta_llana if the file has it, else pregunta."""
+    return (q.get("pregunta_llana") or q["pregunta"]).strip()
+
+
+def spanish_topic(q: dict) -> str:
+    return (q.get("tema") or spanish_question(q)).strip()
+
+
+def run_key(base: str, lang: str = "en", semantic: bool = False) -> str:
+    """naive_rag, naive_rag_sem, naive_rag_es, naive_rag_es_sem, ..."""
+    return base + ("_es" if lang == "es" else "") + ("_sem" if semantic else "")
+
+
 def list_questions(path: str = QUESTIONS) -> list[dict]:
     """All questions. data/questions.yaml holds either one question or `questions: [...]`."""
     try:
