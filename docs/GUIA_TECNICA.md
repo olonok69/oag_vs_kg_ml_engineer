@@ -1,7 +1,8 @@
 # Guía técnica de la demo: qué se ejecuta y dónde está
 
 > English version: [TECHNICAL_GUIDE.md](TECHNICAL_GUIDE.md). Guía para presentar la demo:
-> [GUIA_DEMO.md](GUIA_DEMO.md). Referencia rápida de uso: [`demo/README.md`](../demo/README.md).
+> [GUIA_DEMO.md](GUIA_DEMO.md). Cómo ejecutarla en Claude Code: [EJECUTAR_DEMO.md](EJECUTAR_DEMO.md).
+> Referencia rápida de uso: [`demo/README.md`](../demo/README.md).
 
 Esta guía explica, paso a paso, qué ejecuta cada skill de la demo, en qué fichero y función está cada paso,
 qué lee y qué escribe. Está pensada para quien quiera modificar la demo, reproducirla en otro repo o llevar
@@ -56,8 +57,8 @@ versión CPU, que se instala desde el índice de PyTorch para no traer CUDA). Si
 [`demo/requirements.txt`](../demo/requirements.txt).
 
 ```bash
-uv sync && source .venv/bin/activate     # activar antes de lanzar claude: las skills llaman a `python`
-uv sync --group embed                    # opcional: capa semántica (apartado 8)
+uv sync --group embed                    # con la capa semántica (apartado 8); uv sync a secas la deja fuera
+source .venv/bin/activate                # activar antes de lanzar claude: las skills llaman a `python`
 ```
 
 **Datos.** Todo lo real vive en `data/`, que está en [`.gitignore`](../.gitignore). Las rutas se definen en

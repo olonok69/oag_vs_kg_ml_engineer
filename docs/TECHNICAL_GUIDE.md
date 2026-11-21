@@ -1,7 +1,8 @@
 # Demo technical guide: what runs and where it lives
 
 > Versión en castellano: [GUIA_TECNICA.md](GUIA_TECNICA.md). Guide to presenting the demo:
-> [DEMO_GUIDE.md](DEMO_GUIDE.md). Quick usage reference: [`demo/README.md`](../demo/README.md).
+> [DEMO_GUIDE.md](DEMO_GUIDE.md). How to run it in Claude Code: [RUN_DEMO.md](RUN_DEMO.md).
+> Quick usage reference: [`demo/README.md`](../demo/README.md).
 
 This guide explains, step by step, what each demo skill runs, which file and function holds each step, and what
 it reads and writes. It is meant for anyone who wants to change the demo, reproduce it in another repo or take a
@@ -56,8 +57,8 @@ torch, installed from the PyTorch index so that it does not pull CUDA). Without 
 [`demo/requirements.txt`](../demo/requirements.txt) is enough.
 
 ```bash
-uv sync && source .venv/bin/activate     # activate before starting claude: the skills call `python`
-uv sync --group embed                    # optional: semantic layer (section 8)
+uv sync --group embed                    # with the semantic layer (section 8); a plain uv sync leaves it out
+source .venv/bin/activate                # activate before starting claude: the skills call `python`
 ```
 
 **Data.** Everything real lives in `data/`, which is in [`.gitignore`](../.gitignore). The paths are defined in

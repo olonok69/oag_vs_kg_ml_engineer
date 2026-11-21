@@ -1,9 +1,15 @@
 ---
 name: demo-oag
 description: Demo paso 4. Responde la pregunta de la demo con OAG, hechos tipados extraídos y validados contra una ontología mínima. Usar cuando se pida /demo-oag o mostrar OAG.
+argument-hint: "[letter-end-runin | comment-memo-landscape] [--lang es]"
 ---
 
 # Demo: OAG (Ontology-Augmented Generation)
+
+Cómo ejecutar los scripts: desde la raíz del repo, con el venv activo, exactamente `python demo/<script>.py ...`,
+sin `cd`, sin encadenar comandos con `&&` y sin rutas a `.venv`. Así una sola aprobación («no volver a
+preguntar» para `python demo/...`) cubre toda la demo. Si `python` no existe, el venv no está activo: dilo y
+para, en lugar de probar otras rutas.
 
 Pregunta: la demo tiene dos escenarios en `data/questions.yaml` (`letter-end-runin`, donde se espera
 que gane OAG, y `comment-memo-landscape`, donde se espera que gane GraphRAG). Si la skill se invoca con

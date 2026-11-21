@@ -374,7 +374,7 @@ ES = dict(
     kg_note="Fuente: KG_PROCEDURES.md y EXTRACTION_PROMPT del repo lambda; reference/KNOWLEDGE_GRAPH.md.",
     do_eyebrow="Demo", do_title="OAG en la demo: ontología primero, hechos después",
     do_steps=[
-        ("ontology.yaml", "4 clases, 5 relaciones, componentes con sinónimos y reglas de extracción."),
+        ("ontology.yaml", "4 clases, 6 relaciones, componentes con sinónimos (inglés y castellano) y reglas de extracción."),
         ("Extracción", "Parser determinista: títulos, tablas de invariantes, citas, tests y sinónimos."),
         ("Validación", "Se rechaza lo que el esquema no permite (p. ej. menciones genéricas) y se informa."),
         ("facts.json", "Nodos y aristas tipados, cada uno con su fichero fuente."),
@@ -471,7 +471,7 @@ EN = dict(
     kg_note="Source: KG_PROCEDURES.md and EXTRACTION_PROMPT in the lambda repo; reference/KNOWLEDGE_GRAPH.md.",
     do_eyebrow="Demo", do_title="OAG in the demo: ontology first, facts second",
     do_steps=[
-        ("ontology.yaml", "4 classes, 5 relations, components with synonyms and extraction rules."),
+        ("ontology.yaml", "4 classes, 6 relations, components with synonyms (English and Spanish) and extraction rules."),
         ("Extraction", "Deterministic parser: titles, invariant tables, citations, tests and synonyms."),
         ("Validation", "Whatever the schema does not allow is rejected (e.g. generic mentions) and reported."),
         ("facts.json", "Typed nodes and edges, each with its source file."),

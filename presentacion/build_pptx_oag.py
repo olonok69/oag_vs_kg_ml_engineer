@@ -628,6 +628,31 @@ def build():
             ["OAG en la demo", "Cómo evaluamos", "Dos preguntas, dos ganadores", "De OAG v1 a v2",
              "La pregunta en castellano", "Dónde gana cada técnica", "¿Merece la pena en nuestro caso?"], page=pg)
 
+    # ---- Cómo ejecutarla
+    s, pg = new()
+    base(s, "Parte 4 · Cómo ejecutarla", "La demo en Claude Code, paso a paso", page=pg)
+    code(s, 0.7, 2.3, 5.55, 3.55,
+         ["# una vez, en la terminal (WSL)",
+          "git pull",
+          "uv sync --group embed",
+          "source .venv/bin/activate",
+          "python demo/oag.py build --q letter-end-runin",
+          "python demo/oag.py build --q comment-memo-landscape",
+          "python demo/compare.py",
+          "claude"], title="1 · Preparación")
+    code(s, 6.5, 2.3, 6.15, 3.55,
+         ["# pregunta A: reglas (gana OAG)",
+          "/demo-naive-rag    /demo-agentic-rag",
+          "/demo-graphrag     /demo-oag",
+          "# pregunta B: exploración (gana GraphRAG)",
+          "/demo-graphrag comment-memo-landscape",
+          "/demo-oag comment-memo-landscape",
+          "# en castellano llano (opcional)",
+          "/demo-oag letter-end-runin --lang es",
+          "# cierre",
+          "/demo-compare"], title="2 · Dentro de Claude Code")
+    takeaway(s, "/clear antes de cada skill y aprobar una vez «python demo/...»: cada técnica responde solo con lo suyo.")
+
     s, pg = new()
     diagram(s, "demo_oag_pipeline", page=pg)
 

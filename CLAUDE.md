@@ -29,6 +29,7 @@ Investigación sobre Ontology-Augmented Generation (OAG) frente al grafo de cono
 | `HANDOVER.md` | Traspaso completo: pregunta, fuentes, comparación, plan (Paso 0 y Fases A a D), reglas |
 | `docs/OAG_VS_KG.md` | Informe de investigación |
 | `docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md` | Guía de la demo en ES y EN |
+| `docs/EJECUTAR_DEMO.md`, `docs/RUN_DEMO.md` | Cómo ejecutar la demo en Claude Code: comandos y qué debe salir |
 | `docs/GUIA_TECNICA.md`, `docs/TECHNICAL_GUIDE.md` | Guía técnica de la demo (qué se ejecuta y dónde), con enlaces al código |
 | `docs/img/build_diagrams.py` | Generador de los diagramas: SVG para las guías y PNG para el deck |
 | `presentacion/build_pptx_oag.py` | Generador del deck (python-pptx). El `.pptx` se regenera desde aquí; no editarlo a mano |
@@ -71,10 +72,10 @@ semántica (`demo/semantic.py`, embeddings multilingües) se activa con `--embed
 en GraphRAG y OAG; necesita `uv sync --group embed` y, la primera vez, acceso a huggingface.co y `*.hf.co`.
 La ontología v3 (`--schema 3`) añade sinónimos en castellano sin modelo.
 
-Preparación:
+Preparación (detalle y guion completo en `docs/EJECUTAR_DEMO.md`):
 
 ```bash
-uv sync && source .venv/bin/activate   # lanzar claude con el venv activo
+uv sync --group embed && source .venv/bin/activate   # lanzar claude con el venv activo
 python demo/oag.py build --q letter-end-runin         # tras cambiar el corpus o la ontología
 python demo/oag.py build --q comment-memo-landscape
 ```
@@ -85,6 +86,10 @@ sirve de hoja de respuestas se excluye de todas las técnicas (`holdout`).
 
 Si cambias el código de la demo, actualiza los enlaces a líneas (`#L`) de `docs/GUIA_TECNICA.md` y
 `docs/TECHNICAL_GUIDE.md`.
+
+Las skills ejecutan siempre `python demo/<script>.py` desde la raíz (sin `cd` ni rutas a `.venv`), para que
+una sola aprobación del permiso cubra toda la demo. Si cambias una skill, mantén esa forma y actualiza las
+cifras esperadas de `docs/EJECUTAR_DEMO.md` y `docs/RUN_DEMO.md` si cambian los resultados.
 
 Durante una skill de la demo, responde solo con lo que haya recuperado esa técnica. No uses lo que sepas
 del proyecto ni leas los ficheros excluidos.
