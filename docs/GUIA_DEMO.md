@@ -148,6 +148,7 @@ Detalle técnico en `demo/README.md`.
 ```bash
 git pull
 uv sync && source .venv/bin/activate
+uv sync --group embed        # opcional: capa semántica (pregunta en castellano)
 python demo/oag.py build --q letter-end-runin
 python demo/oag.py build --q comment-memo-landscape
 python demo/compare.py        # comprobación rápida de que todo responde
@@ -195,7 +196,14 @@ Pregunta B:
 |---|---|---|
 | `/demo-graphrag comment-memo-landscape` | Vecinos del extractor a dos saltos y los temas (comunidades con nombre) | Nadie ha modelado esta área y el grafo la encuentra y la agrupa |
 | `/demo-oag comment-memo-landscape` | La consulta sin componentes y sin hechos | OAG solo ve lo que su esquema declara. Para cubrir el área hay que modelarla primero |
-| `/demo-compare` | Las dos tablas | Dónde gana cada una, con sus límites |
+| `/demo-compare` | Las tablas en inglés y en castellano llano | Dónde gana cada una, con sus límites |
+
+Pregunta en castellano llano (opcional, apartado 6):
+
+| Skill | Qué enseñar | Qué decir |
+|---|---|---|
+| `/demo-oag --lang es` | Sin componentes con v2; con v3 o `--semantic`, los mismos hechos que en inglés | El idioma solo afecta al primer paso: reconocer de qué componente se habla |
+| `/demo-graphrag --lang es --semantic` | Los candidatos a semilla con su similitud | El modelo encuentra la zona; el nodo central lo sigue eligiendo quien conoce el dominio |
 
 ![OAG en la demo](img/demo_oag_pipeline.es.svg)
 
@@ -286,6 +294,72 @@ Cómo leerlos:
   fallo. La evaluación seria es el Paso 0 del `HANDOVER.md`: entre 15 y 20 preguntas con respuesta
   conocida, mezclando los dos tipos.
 
+### La misma pregunta en castellano llano: la capa semántica
+
+El corpus está en inglés y las tres técnicas deterministas comparan palabras: TF-IDF en Naive RAG, nombres
+de nodo en GraphRAG y sinónimos de la ontología en OAG. Las preguntas de arriba funcionan porque llevan
+identificadores (`get_letter_end`, «comment memo») y porque los scripts buscan con una versión en inglés
+(`query`, `topic`). Para ver qué pasa cuando alguien pregunta como habla, cada pregunta tiene una versión
+en castellano llano, sin nombres de código (`pregunta_llana`), y un tema en castellano para GraphRAG
+(`tema`). Todos los scripts aceptan `--lang es`.
+
+Después se añade una capa semántica: un modelo de embeddings multilingüe
+(`paraphrase-multilingual-MiniLM-L12-v2`, unos 470 MB, funciona en CPU) que coloca «fin de carta» cerca de
+«letter end». Cada técnica lo usa solo en el paso donde compara la pregunta con el corpus:
+
+- **Naive RAG** ordena los trozos por similitud de significado (`--embed`).
+- **GraphRAG** elige la semilla por similitud con las etiquetas de los nodos (`--semantic`).
+- **OAG** elige los componentes por similitud con sus etiquetas (`--semantic`). La alternativa sin modelo
+  es escribir sinónimos en castellano en la ontología (esquema v3, `--schema 3`).
+
+**Pregunta A en castellano llano** (7 esperados):
+
+| Técnica | Recall | Precisión | F1 | IDs |
+|---|---|---|---|---|
+| Naive RAG, TF-IDF | 14 % | 25 % | 0,18 | 4 |
+| Naive RAG, embeddings | 43 % | 38 % | 0,40 | 8 |
+| GraphRAG (1 salto), semilla por nombre | 0 % | - | 0 | 0 |
+| GraphRAG (1 salto), semilla por similitud | 43 % | 75 % | 0,55 | 4 |
+| OAG v2, etiquetas en inglés | 0 % | - | 0 | 0 |
+| OAG v3, etiquetas en castellano | 100 % | 47 % | 0,64 | 15 |
+| OAG v2, componentes por similitud | 100 % | 47 % | 0,64 | 15 |
+
+**Pregunta B en castellano llano** (29 esperados):
+
+| Técnica | Recall | Precisión | F1 | IDs |
+|---|---|---|---|---|
+| Naive RAG, TF-IDF | 0 % | 0 % | 0 | 3 |
+| Naive RAG, embeddings | 10 % | 50 % | 0,17 | 6 |
+| GraphRAG (2 saltos), semilla por nombre | 0 % | - | 0 | 0 |
+| GraphRAG (2 saltos), semilla por similitud | 59 % | 25 % | 0,35 | 68 |
+| OAG (v2, v3 o por similitud) | 0 % | - | 0 | 0 |
+
+Cómo leerlos:
+
+- **Sin capa semántica, las tres técnicas caen.** GraphRAG no encuentra ningún nodo que se llame «detección
+  del fin de carta» y OAG no reconoce ningún componente. Es un fallo silencioso: ninguna avisa de que no ha
+  entendido la pregunta, simplemente no devuelve nada.
+- **En la pregunta A, OAG se recupera entero con cualquiera de los dos arreglos**: seis sinónimos en
+  castellano en el YAML o el modelo eligiendo el componente. Una vez identificado el componente, el resto
+  de OAG no depende del idioma y los hechos son los mismos que en inglés.
+- **GraphRAG con semilla semántica cae en la zona correcta, pero no en el mejor nodo.** En A elige
+  `letter-end look-ahead` en lugar de `get_letter_end`; en B, «Comment memo upload and extraction» (similitud
+  0,89) en lugar de `CommentMemoExtractor`, y se queda en 59 % frente al 83 % de la semilla elegida a mano.
+  El modelo entiende el tema; saber cuál es el nodo central sigue siendo conocimiento del dominio.
+- **Los embeddings no son mejores en todo.** En castellano, Naive RAG mejora claramente; en inglés, en la
+  pregunta A, los embeddings dan 57 % frente al 71 % de TF-IDF (en la B, 28 % frente a 10 %). En un corpus
+  técnico lleno de identificadores, la coincidencia exacta de palabras pesa.
+- **En la pregunta B, OAG sigue vacío también con la capa semántica, y es lo correcto.** El umbral impide
+  asociar el memo de comentarios a un componente que no lo es (la similitud máxima es 0,35). La capa
+  semántica no crea conocimiento que la ontología no tiene.
+- **El umbral de OAG (0,42) está calibrado con estas dos preguntas**: es el punto medio entre el componente
+  correcto (0,47) y el mejor incorrecto (0,38) de la pregunta A. Con tan pocos datos es un ajuste a medida;
+  con el set del Paso 0 habría que fijarlo con preguntas no vistas. Los sinónimos de v3 no tienen ese
+  problema, pero solo cubren las palabras que alguien ha escrito.
+
+Coste: el modelo se descarga una vez y los embeddings del corpus se guardan en caché (`data/cache/`). La
+primera ejecución tarda unos minutos en CPU; las siguientes, segundos.
+
 ## 7. Cuándo conviene cada técnica
 
 ![Cuándo usar cada técnica](img/when_to_use.es.svg)
@@ -310,6 +384,7 @@ nivel. Una ontología grande «por completitud» es el principal riesgo de OAG.
 | «Qué hay sobre esta área y cómo se organiza» | GraphRAG (/kg) | Descubre estructura sin esquema previo y agrupa en temas |
 | «Dónde se menciona este identificador» | Naive RAG o búsqueda | Barato e inmediato; no necesita estructura |
 | «Investiga este problema nuevo» | Agentic RAG | Planifica y vuelve a buscar; caro y variable |
+| Cualquiera de las anteriores, en castellano y sin nombres de código | La misma, con capa semántica | Sinónimos en la ontología o embeddings multilingües en el primer paso |
 
 OAG no sustituye a GraphRAG: lo completa. GraphRAG descubre la estructura; OAG fija la parte estable
 como contrato y responde con hechos verificables.
@@ -320,8 +395,9 @@ como contrato y responde con hechos verificables.
 
 Sí, si se adopta por partes y solo para las preguntas de reglas. Lo que ha costado la demo:
 
-- **La ontología**: 4 clases, 6 relaciones, 1 restricción y 4 componentes con sus sinónimos, unas 60
-  líneas de YAML. Buena parte sale de las plantillas que ya usamos (ISSUE_NOTE, SHARP_EDGES, TEST_MAP).
+- **La ontología**: 4 clases, 6 relaciones, 1 restricción y 4 componentes con sus sinónimos en inglés y
+  en castellano, unas 70 líneas de YAML. Buena parte sale de las plantillas que ya usamos (ISSUE_NOTE,
+  SHARP_EDGES, TEST_MAP).
 - **La extracción**: determinista, sin LLM. Parsea tablas, viñetas e IDs; no hay coste por consulta ni
   por reconstrucción.
 - **El mantenimiento**: cada área nueva que queramos consultar con OAG necesita su componente y sus
@@ -343,7 +419,10 @@ exploración las sigue respondiendo mejor el grafo.
    tablas e IDs. La demo extrae así el 100 % de sus hechos, sin LLM.
 5. **Extracción guiada y validada** (Fase C): pasar la ontología a los subagentes de graphify y rechazar
    en `finalize` lo que no cumpla el esquema. Es la continuación natural de fijar la convención de IDs.
-6. **Dos modos en `/kg`** (Fase D): `/kg facts <componente>` devuelve fact blocks con su fuente para
+6. **Preguntas en castellano**: sinónimos en castellano para los componentes de la ontología (baratos,
+   deterministas y revisables) y un modelo de embeddings multilingüe pequeño para la semilla de `/kg` y la
+   búsqueda de texto. No hace falta un modelo grande ni un servicio externo.
+7. **Dos modos en `/kg`** (Fase D): `/kg facts <componente>` devuelve fact blocks con su fuente para
    preguntas de reglas; `/kg <tema>` sigue devolviendo vecinos, temas y lista de lectura para explorar.
 
 ## Referencias

@@ -8,14 +8,16 @@ description: Demo paso 2. Responde la pregunta de la demo con Agentic RAG, busca
 Pregunta: la demo tiene dos escenarios en `data/questions.yaml` (`letter-end-runin`, donde se espera
 que gane OAG, y `comment-memo-landscape`, donde se espera que gane GraphRAG). Si la skill se invoca con
 un id (por ejemplo `/demo-agentic-rag comment-memo-landscape`), añade `--q <id>` a todos los comandos; si no, se
-usa la pregunta por defecto.
+usa la pregunta por defecto. Con `--lang es` usa el campo `pregunta_llana` (castellano llano, sin nombres
+de código) en lugar de `pregunta`, y registra la respuesta como `agentic_rag_es`: Claude traduce y busca en
+inglés por sí mismo, sin capa semántica.
 
 Objetivo: mostrar a Claude recuperando por sí mismo (planificar, buscar, leer, volver a buscar) y lo
 que cuesta. Ver `demo/README.md`.
 
 Reglas:
 - Solo puedes leer ficheros de `data/corpus/`. Nada de `data/kg/`, `data/oag/`, `data/runs/` ni
-  `data/questions.yaml` salvo los campos `pregunta` y `scenario` de la pregunta elegida.
+  `data/questions.yaml` salvo los campos `pregunta`, `pregunta_llana` y `scenario` de la pregunta elegida.
 - No leas los ficheros de `holdout_files` de `data/questions.yaml`: son la hoja de respuestas.
 - Máximo 12 llamadas a herramientas de búsqueda o lectura. Cuéntalas.
 

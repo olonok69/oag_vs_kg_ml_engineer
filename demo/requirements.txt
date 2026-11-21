@@ -1,3 +1,4 @@
 pyyaml>=6
-# opcional, para naive_rag.py --embed
-# sentence-transformers
+# opcional, capa semántica (naive_rag.py --embed, graphrag.py --semantic, oag.py query --semantic):
+# pip install torch --index-url https://download.pytorch.org/whl/cpu
+# pip install sentence-transformers

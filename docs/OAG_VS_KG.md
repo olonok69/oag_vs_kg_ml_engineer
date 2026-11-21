@@ -82,6 +82,11 @@ Dos preguntas reales sobre el corpus completo de `/kg` (452 ficheros), una de ca
   recupera el 83 % y lo agrupa en temas por comunidades; OAG no devuelve nada, porque solo ve lo que su
   esquema declara.
 
+- **La misma pregunta en castellano llano**, sin nombres de código: las tres técnicas deterministas comparan
+  palabras y el corpus está en inglés, así que fallan en silencio. Con una capa semántica pequeña (sinónimos
+  en castellano en la ontología, o un modelo de embeddings multilingüe en CPU) OAG vuelve a dar los mismos
+  hechos que en inglés; GraphRAG llega a la zona correcta, pero no al nodo central que elegiría un experto.
+
 Conclusión: OAG no sustituye al grafo, lo completa. Compensa adoptarlo por partes y solo para las preguntas de
 reglas, con una ontología pequeña y extracción determinista. La v2 de la ontología se escribió tras ver el
 fallo de la v1, así que el resultado hay que confirmarlo con el set completo. Detalle en

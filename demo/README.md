@@ -10,13 +10,19 @@ La demo tiene dos escenarios, elegidos para enseñar dónde gana cada técnica:
 | `letter-end-runin` | Pregunta de reglas sobre un componente modelado: qué tickets e invariantes no romper al arreglar un bug | OAG |
 | `comment-memo-landscape` | Pregunta exploratoria sobre un área que la ontología no modela: qué tickets tratan de ella y en qué temas se agrupan | GraphRAG |
 
+Las dos preguntas tienen además una versión en castellano llano, sin nombres de código (`--lang es`), para
+ver qué pasa cuando el corpus está en inglés y la pregunta no: sin capa semántica fallan las tres técnicas
+deterministas; con ella (embeddings multilingües o sinónimos en castellano en la ontología) se recuperan
+en distinta medida.
+
 | Skill | Técnica | Qué recupera | Script |
 |---|---|---|---|
-| `/demo-naive-rag` | Naive RAG | Trozos de texto por similitud (TF-IDF; `--embed` para embeddings) | `demo/naive_rag.py` |
+| `/demo-naive-rag` | Naive RAG | Trozos de texto por similitud (TF-IDF; `--embed` para embeddings multilingües) | `demo/naive_rag.py` |
 | `/demo-agentic-rag` | Agentic RAG | Claude busca y lee en bucle con Grep/Read | (Claude) + `demo/record_answer.py` |
 | `/demo-graphrag` | GraphRAG | Nuestro skill `/kg`: vecinos en el grafo de tickets y lista de lectura | `demo/graphrag.py` |
 | `/demo-oag` | OAG | Hechos tipados, validados contra `demo/oag/ontology.yaml`, seleccionados por set cover | `demo/oag.py` |
-| `/demo-compare` | Comparativa | Recall, precisión, F1, tokens de contexto y llamadas LLM, por escenario | `demo/compare.py` |
+| `/demo-compare` | Comparativa | Recall, precisión, F1, tokens de contexto y llamadas LLM, por escenario e idioma | `demo/compare.py` |
+| (todas) | Capa semántica | Embeddings multilingües compartidos por las tres técnicas deterministas | `demo/semantic.py` |
 
 Todas las skills y scripts aceptan el id de la pregunta (`/demo-oag comment-memo-landscape`,
 `python demo/oag.py query --q comment-memo-landscape`); sin id se usa la pregunta por defecto.
@@ -43,6 +49,7 @@ data/
   questions.yaml         preguntas, respuestas esperadas y hold-out (plantilla: demo/questions.example.yaml)
   oag/<id>/facts.json    hechos generados por `oag.py build --q <id>`
   runs/<id>/*.json       resultados de cada técnica; runs/compare.md con las tablas
+  cache/embeddings/      embeddings del corpus y del grafo (capa semántica), se regeneran solos
 ```
 
 El corpus es el `_corpus/` completo de `/kg` (452 ficheros tras el hold-out). Tras actualizarlo hay que
@@ -81,7 +88,7 @@ Entorno con [uv](https://docs.astral.sh/uv/) (WSL Ubuntu o Linux; el `pyproject.
 curl -LsSf https://astral.sh/uv/install.sh | sh   # si no está uv
 sudo apt install -y libcairo2                     # solo para regenerar los PNG de los diagramas
 uv sync                                           # crea .venv con la demo y el deck
-uv sync --group embed                             # opcional: naive_rag.py --embed (instala torch)
+uv sync --group embed                             # opcional: capa semántica (torch CPU y el modelo multilingüe)
 source .venv/bin/activate                         # antes de lanzar claude, para que `python` sea el del venv
 python demo/oag.py build          # una vez, o tras cambiar el corpus o la ontología
 ```
@@ -99,11 +106,15 @@ script, responde usando solo lo que ha recuperado y registra la respuesta.
 Los scripts también funcionan sin Claude Code:
 
 ```bash
-python demo/naive_rag.py [--q <id>] [--k 5] [--embed]
-python demo/graphrag.py [--q <id>] [--hops 2] [--full] [--native]
-python demo/oag.py query [--q <id>] [--schema 1]
+python demo/naive_rag.py [--q <id>] [--k 5] [--embed] [--lang es]
+python demo/graphrag.py [--q <id>] [--hops 2] [--lang es] [--semantic] [--full] [--native]
+python demo/oag.py query [--q <id>] [--schema 1|2|3] [--lang es] [--semantic] [--min-sim 0.42]
 python demo/compare.py [--q <id>]
 ```
+
+La capa semántica necesita el grupo `embed` y, la primera vez, acceso a huggingface.co y a su CDN
+(`*.hf.co`) para descargar `paraphrase-multilingual-MiniLM-L12-v2` (unos 470 MB). Después funciona sin
+red (`HF_HUB_OFFLINE=1`). Para usar otro modelo: `--model <nombre>` o `DEMO_EMBED_MODEL`.
 
 ## Qué muestra cada paso
 
@@ -123,6 +134,11 @@ python demo/compare.py [--q <id>]
    áreas (numeración, PDF) y no veía un invariante de detección de títulos que el fin de carta usa. La v2
    añade una restricción (el ticket protegido debe compartir componente) y una relación `calls` entre
    componentes. `--schema 1` reproduce la v1. Es evolución del esquema, escrita después de ver el fallo.
+6. **Pregunta en castellano llano (`--lang es`).** Las tres técnicas deterministas comparan palabras y el
+   corpus está en inglés: sin capa semántica no encuentran nada. Con ella, cada una usa embeddings
+   multilingües solo en el primer paso: Naive RAG ordena los trozos por significado, GraphRAG elige la
+   semilla por similitud y OAG elige los componentes por similitud (`--semantic`). La v3 de la ontología
+   es la alternativa sin modelo: sinónimos en castellano para cada componente (`--schema 3`).
 
 ## Limitaciones
 
@@ -137,3 +153,5 @@ python demo/compare.py [--q <id>]
   completaría con extracción guiada por LLM (Fase C), siempre validada contra la misma ontología.
 - Los componentes y sinónimos de la ontología están escritos a mano para este dominio. Ese es el precio
   de OAG y el principal riesgo de mantenimiento.
+- El umbral de similitud de OAG (`--min-sim 0.42`) está calibrado con las dos preguntas de la demo. Con
+  más preguntas habría que fijarlo con preguntas no vistas.

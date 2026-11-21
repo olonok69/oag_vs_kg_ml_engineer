@@ -15,8 +15,15 @@ set of fact blocks that covers them. Output: facts, not chunks, each with its
 source file.
 
 Schema versions: v1 is the first ontology; v2 adds the `calls` relation between
-components and the must_not_break_same_component constraint. `--schema 1`
-ignores what v2 added, so the demo can show what each change buys.
+components and the must_not_break_same_component constraint; v3 adds Spanish
+labels for the components (alt_labels_es). `--schema N` ignores what later
+versions added, so the demo can show what each change buys.
+
+Language: the question is mapped to components by matching words, so a
+question in Spanish without code names finds none unless the ontology has
+Spanish labels (v3). With --semantic the components are chosen by meaning
+instead (multilingual embeddings, demo/semantic.py), without touching the
+ontology. --lang es asks the question in plain Spanish (pregunta_llana).
 """
 from __future__ import annotations
 
@@ -42,12 +49,34 @@ def alt_regex(labels: list[str]) -> re.Pattern:
     return re.compile("|".join(re.escape(x) for x in sorted(labels, key=len, reverse=True)), re.IGNORECASE)
 
 
-def components_in(text: str, onto: dict, min_hits: int = 1) -> list[str]:
+def components_in(text: str, onto: dict, min_hits: int = 1, schema: int = 2) -> list[str]:
+    """Components named in the text through their altLabels (and Spanish ones from schema v3)."""
+    es = schema >= onto.get("labels", {}).get("alt_labels_es", {}).get("since", 99)
     out = []
     for cid, c in onto["components"].items():
-        if len(alt_regex(c["alt_labels"]).findall(text)) >= min_hits:
+        labels = c["alt_labels"] + ((c.get("alt_labels_es") or []) if es else [])
+        if len(alt_regex(labels).findall(text)) >= min_hits:
             out.append(cid)
     return out
+
+
+def components_semantic(text: str, onto: dict, min_sim: float, model: str | None = None
+                        ) -> tuple[list[str], dict[str, tuple[float, str]]]:
+    """Components whose description is close in meaning to some clause of the question.
+
+    Each component is described by its label and English altLabels (no Spanish labels needed).
+    The question is split into clauses, because a long question dilutes any single concept.
+    Returns the components above min_sim and, for every component, its best (similarity, clause).
+    """
+    import semantic  # optional dependency group `embed`
+    clauses = [c.strip() for c in re.split(r"[.;:?!¿¡\n]|,\s", text) if len(c.strip()) > 3] or [text]
+    best = {}
+    for cid, c in onto["components"].items():
+        desc = f"{c['label']}: {', '.join(c['alt_labels'])}"
+        sims = semantic.similarities(desc, clauses, model)
+        i = max(range(len(sims)), key=sims.__getitem__)
+        best[cid] = (sims[i], clauses[i])
+    return [cid for cid, (sim, _) in best.items() if sim >= min_sim], best
 
 
 # ----------------------------------------------------------------------------- build
@@ -161,7 +190,7 @@ def build(q: dict, onto: dict) -> dict:
 
 
 # ----------------------------------------------------------------------------- query
-def query(q: dict, onto: dict, facts: dict, text: str, schema: int = 2
+def query(q: dict, onto: dict, facts: dict, text: str, schema: int = 2, comps: list[str] | None = None
           ) -> tuple[list[dict], list[str], list[dict]]:
     nodes = {n["id"]: n for n in facts["nodes"]}
     out_e, in_e = defaultdict(list), defaultdict(list)
@@ -171,7 +200,8 @@ def query(q: dict, onto: dict, facts: dict, text: str, schema: int = 2
         out_e[e["from"]].append(e)
         in_e[e["to"]].append(e)
 
-    comps = components_in(text, onto)
+    if comps is None:
+        comps = components_in(text, onto, schema=schema)
     # relevant = invariants that guard the component + tickets the writeups say not to break
     invariants = {e["from"] for c in comps for e in in_e[c] if e["rel"] == "guards"}
     # v2: follow `calls` to the called component, keeping only invariants that pin the called symbols
@@ -236,10 +266,15 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["build", "query"])
     ap.add_argument("--query", help="override the query (default: topic + query from data/questions.yaml)")
-    ap.add_argument("--schema", type=int, default=2, choices=[1, 2],
-                    help="ontology version for the query (1 = without what v2 added)")
+    ap.add_argument("--schema", type=int, default=2, choices=[1, 2, 3],
+                    help="ontology version for the query (1 = without v2, 3 = with Spanish labels)")
+    ap.add_argument("--semantic", action="store_true", help="map the question to components by meaning")
+    ap.add_argument("--min-sim", type=float, default=0.42,
+                    help="similarity threshold for --semantic (calibrated on the two demo questions)")
+    ap.add_argument("--model", help="embedding model (default: demo/semantic.py DEFAULT_MODEL)")
     ap.add_argument("--quiet", action="store_true")
     lib.add_question_arg(ap)
+    lib.add_lang_arg(ap)
     a = ap.parse_args()
 
     q = lib.load_question(a.qid)
@@ -268,17 +303,24 @@ def main() -> None:
         raise SystemExit(f"No facts yet. Run: python demo/oag.py build --q {q['id']}")
     with open(path, encoding="utf-8") as f:
         facts = json.load(f)
-    text = a.query or f"{q['topic']} {q['query']}"
-    blocks, comps, left = query(q, onto, facts, text, a.schema)
+    text = a.query or (lib.spanish_question(q) if a.lang == "es" else f"{q['topic']} {q['query']}")
+    comps, sims = None, {}
+    if a.semantic:
+        comps, sims = components_semantic(text, onto, a.min_sim, a.model)
+    blocks, comps, left = query(q, onto, facts, text, a.schema, comps)
     context = json.dumps(blocks, ensure_ascii=False, indent=1)
     # The answer is the subject of each fact block plus the declared origins of its invariants.
     # Ids under named_as_must_not_break_by are provenance (who said so), not part of the answer.
     answer = " ".join([b["id"] for b in blocks] + [o for b in blocks for i in b.get("originates", []) for o in i["origin"]])
     found = lib.ticket_ids(answer, q)
     if not a.quiet:
-        print(f"OAG query | esquema v{a.schema} | componentes de la ontología en la pregunta: {', '.join(comps) or '-'}")
+        mode = f"semántico, umbral {a.min_sim}" if a.semantic else "por etiquetas"
+        print(f"OAG query | esquema v{a.schema} | {'pregunta en castellano | ' if a.lang == 'es' else ''}"
+              f"componentes ({mode}): {', '.join(comps) or '-'}")
+        for cid, (sim, clause) in sorted(sims.items(), key=lambda x: -x[1][0]):
+            print(f"  {sim:.3f}  {cid:22} <- \"{clause[:80]}\"")
         if not comps:
-            print("La pregunta no menciona ningún componente de la ontología: OAG no tiene hechos que dar.")
+            print("La pregunta no se asocia a ningún componente de la ontología: OAG no tiene hechos que dar.")
         print(f"Set cover: {len(blocks)} fact blocks cubren los nodos relevantes"
               f"{'' if not left else f' (sin cubrir: {len(left)})'}\n")
         print(context)
@@ -286,8 +328,11 @@ def main() -> None:
               " 0 llamadas LLM al consultar.")
         print(f"Tickets que afirman los hechos: {', '.join(found) or '-'}")
     s = lib.print_score(q, found)
-    key = "oag" if a.schema == 2 else f"oag_v{a.schema}"
-    lib.save_run(q, key, {"technique": f"OAG (esquema v{a.schema})", "schema": a.schema, "components": comps, "found": found, "score": s,
+    key = lib.run_key("oag" if a.schema == 2 else f"oag_v{a.schema}", a.lang, a.semantic)
+    name = f"OAG (esquema v{a.schema})" + (", componentes por similitud" if a.semantic else "") \
+        + (" en castellano" if a.lang == "es" else "")
+    lib.save_run(q, key, {"technique": name, "schema": a.schema, "lang": a.lang, "components": comps,
+                         "similarities": {k: round(v[0], 3) for k, v in sims.items()}, "found": found, "score": s,
                          "context_tokens": lib.approx_tokens(context), "llm_calls_retrieval": 0,
                          "sources": sorted({b.get('source') for b in blocks if b.get('source')})})
 

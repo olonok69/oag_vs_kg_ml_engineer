@@ -148,6 +148,7 @@ detail in `demo/README.md`.
 ```bash
 git pull
 uv sync && source .venv/bin/activate
+uv sync --group embed        # optional: semantic layer (question in Spanish)
 python demo/oag.py build --q letter-end-runin
 python demo/oag.py build --q comment-memo-landscape
 python demo/compare.py        # quick check that everything answers
@@ -195,7 +196,14 @@ Question B:
 |---|---|---|
 | `/demo-graphrag comment-memo-landscape` | The extractor's neighbours at two hops and the themes (named communities) | Nobody modelled this area and the graph finds it and groups it |
 | `/demo-oag comment-memo-landscape` | The query with no components and no facts | OAG only sees what its schema declares. To cover the area it has to be modelled first |
-| `/demo-compare` | Both tables | Where each one wins, with its limits |
+| `/demo-compare` | The English and plain Spanish tables | Where each one wins, with its limits |
+
+Question in plain Spanish (optional, section 6):
+
+| Skill | What to show | What to say |
+|---|---|---|
+| `/demo-oag --lang es` | No components with v2; with v3 or `--semantic`, the same facts as in English | The language only affects the first step: recognising which component is meant |
+| `/demo-graphrag --lang es --semantic` | The seed candidates with their similarity | The model finds the area; the central node is still chosen by someone who knows the domain |
 
 ![OAG in the demo](img/demo_oag_pipeline.en.svg)
 
@@ -282,6 +290,72 @@ How to read them:
   the failure. The real evaluation is Step 0 in `HANDOVER.md`: 15 to 20 questions with known answers,
   mixing both kinds.
 
+### The same question in plain Spanish: the semantic layer
+
+The corpus is in English and the three deterministic techniques compare words: TF-IDF in Naive RAG, node
+names in GraphRAG and ontology synonyms in OAG. The questions above work because they carry identifiers
+(`get_letter_end`, "comment memo") and because the scripts search with an English version (`query`,
+`topic`). To see what happens when someone asks the way they speak, each question has a plain Spanish
+version with no code names (`pregunta_llana`) and a Spanish topic for GraphRAG (`tema`). All scripts
+accept `--lang es`.
+
+Then a semantic layer is added: a multilingual embedding model (`paraphrase-multilingual-MiniLM-L12-v2`,
+about 470 MB, runs on CPU) that puts "fin de carta" close to "letter end". Each technique uses it only at
+the step where it compares the question with the corpus:
+
+- **Naive RAG** ranks chunks by similarity of meaning (`--embed`).
+- **GraphRAG** picks the seed by similarity to node labels (`--semantic`).
+- **OAG** picks components by similarity to their labels (`--semantic`). The model-free alternative is to
+  write Spanish synonyms into the ontology (schema v3, `--schema 3`).
+
+**Question A in plain Spanish** (7 expected):
+
+| Technique | Recall | Precision | F1 | IDs |
+|---|---|---|---|---|
+| Naive RAG, TF-IDF | 14% | 25% | 0.18 | 4 |
+| Naive RAG, embeddings | 43% | 38% | 0.40 | 8 |
+| GraphRAG (1 hop), seed by name | 0% | - | 0 | 0 |
+| GraphRAG (1 hop), seed by similarity | 43% | 75% | 0.55 | 4 |
+| OAG v2, English labels | 0% | - | 0 | 0 |
+| OAG v3, Spanish labels | 100% | 47% | 0.64 | 15 |
+| OAG v2, components by similarity | 100% | 47% | 0.64 | 15 |
+
+**Question B in plain Spanish** (29 expected):
+
+| Technique | Recall | Precision | F1 | IDs |
+|---|---|---|---|---|
+| Naive RAG, TF-IDF | 0% | 0% | 0 | 3 |
+| Naive RAG, embeddings | 10% | 50% | 0.17 | 6 |
+| GraphRAG (2 hops), seed by name | 0% | - | 0 | 0 |
+| GraphRAG (2 hops), seed by similarity | 59% | 25% | 0.35 | 68 |
+| OAG (v2, v3 or by similarity) | 0% | - | 0 | 0 |
+
+How to read them:
+
+- **Without a semantic layer, all three techniques fail.** GraphRAG finds no node called "detección del fin
+  de carta" and OAG recognises no component. It is a silent failure: none of them warns that it did not
+  understand the question; they just return nothing.
+- **On question A, OAG recovers fully with either fix**: six Spanish synonyms in the YAML, or the model
+  picking the component. Once the component is identified, the rest of OAG does not depend on the language
+  and the facts are the same as in English.
+- **GraphRAG with a semantic seed lands in the right area, but not on the best node.** On A it picks
+  `letter-end look-ahead` instead of `get_letter_end`; on B, "Comment memo upload and extraction"
+  (similarity 0.89) instead of `CommentMemoExtractor`, and it reaches 59% against 83% with the hand-picked
+  seed. The model understands the topic; knowing which node is central is still domain knowledge.
+- **Embeddings are not better at everything.** In Spanish, Naive RAG clearly improves; in English, on
+  question A, embeddings give 57% against 71% for TF-IDF (on B, 28% against 10%). In a technical corpus
+  full of identifiers, exact word matching matters.
+- **On question B, OAG stays empty with the semantic layer too, and that is right.** The threshold stops
+  the comment memo from being mapped to a component it is not (the highest similarity is 0.35). The
+  semantic layer does not create knowledge the ontology does not have.
+- **OAG's threshold (0.42) is calibrated on these two questions**: it is the midpoint between the correct
+  component (0.47) and the best wrong one (0.38) on question A. With so little data it is a custom fit;
+  with the Step 0 set it should be fixed on unseen questions. The v3 synonyms do not have that problem,
+  but they only cover the words someone has written.
+
+Cost: the model is downloaded once and corpus embeddings are cached (`data/cache/`). The first run takes a
+few minutes on CPU; later runs take seconds.
+
 ## 7. When each technique fits
 
 ![When to use each technique](img/when_to_use.en.svg)
@@ -306,6 +380,7 @@ moving up. A large ontology "for completeness" is the main risk of OAG.
 | "What is there about this area and how is it organised" | GraphRAG (/kg) | Discovers structure without a prior schema and groups it into themes |
 | "Where is this identifier mentioned" | Naive RAG or search | Cheap and immediate; needs no structure |
 | "Investigate this new problem" | Agentic RAG | Plans and searches again; costly and variable |
+| Any of the above, in Spanish and without code names | The same, with a semantic layer | Synonyms in the ontology or multilingual embeddings in the first step |
 
 OAG does not replace GraphRAG: it complements it. GraphRAG discovers the structure; OAG pins the stable
 part as a contract and answers with verifiable facts.
@@ -316,8 +391,8 @@ part as a contract and answers with verifiable facts.
 
 Yes, if it is adopted in parts and only for rules questions. What the demo cost:
 
-- **The ontology**: 4 classes, 6 relations, 1 constraint and 4 components with their synonyms, about 60
-  lines of YAML. Much of it comes from the templates we already use (ISSUE_NOTE, SHARP_EDGES, TEST_MAP).
+- **The ontology**: 4 classes, 6 relations, 1 constraint and 4 components with their English and Spanish
+  synonyms, about 70 lines of YAML. Much of it comes from the templates we already use (ISSUE_NOTE, SHARP_EDGES, TEST_MAP).
 - **The extraction**: deterministic, no LLM. It parses tables, bullets and IDs; there is no cost per
   query or per rebuild.
 - **The maintenance**: every new area we want to query with OAG needs its component and synonyms; every
@@ -340,7 +415,10 @@ answers exploration questions better.
 5. **Guided, validated extraction** (Phase C): pass the ontology to the graphify subagents and reject in
    `finalize` anything that does not conform. It is the natural next step after pinning the ID
    convention.
-6. **Two modes in `/kg`** (Phase D): `/kg facts <component>` returns fact blocks with their source for
+6. **Questions in Spanish**: Spanish synonyms for the ontology components (cheap, deterministic and
+   reviewable) and a small multilingual embedding model for the `/kg` seed and text search. No large model
+   or external service is needed.
+7. **Two modes in `/kg`** (Phase D): `/kg facts <component>` returns fact blocks with their source for
    rules questions; `/kg <topic>` keeps returning neighbours, themes and a reading list for exploration.
 
 ## References

@@ -393,6 +393,33 @@ PLAIN.update({
     "Lo que ha costado": "What it cost",
     "Lo que no compensa": "What does not pay off",
     "Qué llevar a la metodología": "What to take to the methodology",
+    "La pregunta en castellano": "The question in Spanish",
+    "PARTE 4 · LA PREGUNTA EN CASTELLANO": "PART 4 · THE QUESTION IN SPANISH",
+    "Corpus en inglés, pregunta sin nombres de código": "English corpus, question with no code names",
+    "Pregunta A (R / P)": "Question A (R / P)",
+    "Pregunta B (R / P)": "Question B (R / P)",
+    "Qué compara con la pregunta": "What it compares with the question",
+    "Naive RAG, TF-IDF": "Naive RAG, TF-IDF",
+    "Naive RAG, embeddings": "Naive RAG, embeddings",
+    "GraphRAG, semilla por nombre": "GraphRAG, seed by name",
+    "GraphRAG, semilla por similitud": "GraphRAG, seed by similarity",
+    "OAG v2, etiquetas en inglés": "OAG v2, English labels",
+    "OAG v3, sinónimos en castellano": "OAG v3, Spanish synonyms",
+    "OAG v2, componentes por similitud": "OAG v2, components by similarity",
+    "Palabras": "Words",
+    "Significado": "Meaning",
+    "Nombre del nodo": "Node name",
+    "Significado de la etiqueta": "Meaning of the label",
+    "Sinónimos en inglés": "English synonyms",
+    "Sinónimos en castellano": "Spanish synonyms",
+    "Significado del componente": "Meaning of the component",
+    "14% / 25%": "14% / 25%", "0% / 0%": "0% / 0%", "43% / 38%": "43% / 38%", "10% / 50%": "10% / 50%",
+    "43% / 75%": "43% / 75%", "59% / 25%": "59% / 25%", "100% / 47%": "100% / 47%",
+    "Sin capa semántica caen las tres, en silencio. GraphRAG llega a la zona correcta, no al nodo central. Modelo multilingüe pequeño en CPU; el umbral de OAG está calibrado con estas dos preguntas.":
+        "Without a semantic layer all three fail, silently. GraphRAG reaches the right area, not the central node. Small multilingual model on CPU; OAG's threshold is calibrated on these two questions.",
+    "Cualquiera, en castellano y sin nombres de código": "Any of them, in Spanish and without code names",
+    "La misma + capa semántica": "The same + semantic layer",
+    "Sinónimos en la ontología o embeddings multilingües": "Synonyms in the ontology or multilingual embeddings",
 })
 BULLETS_2 = {
     "must_not_break traía tickets de otras áreas (numeración, PDF)":
@@ -405,8 +432,10 @@ BULLETS_2 = {
     "v1 trataba los componentes como islas": "v1 treated components as islands",
     "v2 añade la relación calls y recupera el invariante que faltaba: recall del 86 % al 100 %":
         "v2 adds the calls relation and recovers the missing invariant: recall from 86% to 100%",
-    "Ontología de ~60 líneas: 4 clases, 6 relaciones, 1 restricción, 4 componentes":
-        "~60-line ontology: 4 classes, 6 relations, 1 constraint, 4 components",
+    "Ontología de ~70 líneas: 4 clases, 6 relaciones, 1 restricción, 4 componentes":
+        "~70-line ontology: 4 classes, 6 relations, 1 constraint, 4 components",
+    "Preguntas en castellano: sinónimos o un modelo pequeño en CPU":
+        "Questions in Spanish: synonyms or a small model on CPU",
     "Sale en buena parte de las plantillas (ISSUE_NOTE, SHARP_EDGES, TEST_MAP)":
         "Much of it comes from the templates (ISSUE_NOTE, SHARP_EDGES, TEST_MAP)",
     "Extracción determinista: 0 llamadas LLM": "Deterministic extraction: 0 LLM calls",
@@ -428,6 +457,8 @@ QUOTES.update({
         "v2 was written after seeing the failure: it is schema evolution and must be validated on new questions.",
     "OAG no sustituye a GraphRAG: lo completa. Uno descubre la estructura; el otro la fija como contrato.":
         "OAG does not replace GraphRAG: it complements it. One discovers the structure; the other pins it as a contract.",
+    "El idioma solo afecta al primer paso: con seis sinónimos o un modelo pequeño, OAG responde igual que en inglés.":
+        "The language only affects the first step: with six synonyms or a small model, OAG answers as it does in English.",
     "Poco esfuerzo, bien acotado: ontología pequeña, extracción sin LLM y dos modos en /kg.":
         "Small, well-bounded effort: a small ontology, extraction without an LLM and two modes in /kg.",
 })

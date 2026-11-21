@@ -66,6 +66,11 @@ el id (`--q <id>`):
 4. `/demo-oag`: hechos tipados validados contra la ontología (`--schema 1` reproduce la primera versión).
 5. `/demo-compare`: recall, precisión y coste.
 
+Las dos preguntas tienen una versión en castellano llano sin nombres de código (`--lang es`). La capa
+semántica (`demo/semantic.py`, embeddings multilingües) se activa con `--embed` en Naive RAG y `--semantic`
+en GraphRAG y OAG; necesita `uv sync --group embed` y, la primera vez, acceso a huggingface.co y `*.hf.co`.
+La ontología v3 (`--schema 3`) añade sinónimos en castellano sin modelo.
+
 Preparación:
 
 ```bash
