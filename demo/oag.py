@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """OAG: ontology-first facts over the ticket memory.
 
-    python demo/oag.py build     # corpus -> typed facts, validated against demo/oag/ontology.yaml
-    python demo/oag.py query     # facts that answer the question, with their sources
+    python demo/oag.py build [--q <id>]                # corpus -> typed facts, validated against the ontology
+    python demo/oag.py query [--q <id>] [--schema 1]   # facts that answer the question, with their sources
 
 build: deterministic backbone (no LLM). Each document is mapped to the classes
 and relations the ontology declares. Candidates outside the schema are
@@ -13,6 +13,10 @@ The relevant nodes are the invariants that guard those components and the
 tickets they come from. A greedy set cover (as in OG-RAG) picks the smallest
 set of fact blocks that covers them. Output: facts, not chunks, each with its
 source file.
+
+Schema versions: v1 is the first ontology; v2 adds the `calls` relation between
+components and the must_not_break_same_component constraint. `--schema 1`
+ignores what v2 added, so the demo can show what each change buys.
 """
 from __future__ import annotations
 
@@ -79,6 +83,9 @@ def build(q: dict, onto: dict) -> dict:
 
     for cid, c in onto["components"].items():
         node(cid, "Component", label=c["label"])
+    for cid, c in onto["components"].items():
+        for target, via in (c.get("calls") or {}).items():
+            cand.append({"rel": "calls", "from": cid, "to": target, "via": via, "source": "demo/oag/ontology.yaml"})
 
     inv_n = 0
     for d in docs:
@@ -154,19 +161,37 @@ def build(q: dict, onto: dict) -> dict:
 
 
 # ----------------------------------------------------------------------------- query
-def query(q: dict, onto: dict, facts: dict, text: str) -> tuple[list[dict], list[str], list[dict]]:
+def query(q: dict, onto: dict, facts: dict, text: str, schema: int = 2
+          ) -> tuple[list[dict], list[str], list[dict]]:
     nodes = {n["id"]: n for n in facts["nodes"]}
     out_e, in_e = defaultdict(list), defaultdict(list)
     for e in facts["edges"]:
+        if schema < onto["relations"].get(e["rel"], {}).get("since", 1):
+            continue
         out_e[e["from"]].append(e)
         in_e[e["to"]].append(e)
 
     comps = components_in(text, onto)
     # relevant = invariants that guard the component + tickets the writeups say not to break
-    invariants = [e["from"] for c in comps for e in in_e[c] if e["rel"] == "guards"]
+    invariants = {e["from"] for c in comps for e in in_e[c] if e["rel"] == "guards"}
+    # v2: follow `calls` to the called component, keeping only invariants that pin the called symbols
+    via_note = {}
+    for c in comps:
+        for call in (e for e in out_e[c] if e["rel"] == "calls"):
+            sym = alt_regex(call["via"])
+            for g in in_e[call["to"]]:
+                if g["rel"] == "guards" and g["from"] not in invariants and sym.search(nodes[g["from"]]["text"]):
+                    invariants.add(g["from"])
+                    via_note[g["from"]] = f"{c} calls {', '.join(call['via'])} ({call['to']})"
     touching = [e["from"] for c in comps for e in in_e[c] if e["rel"] == "touches"]
-    protected = [e["to"] for t in touching for e in out_e[t] if e["rel"] == "must_not_break"]
-    relevant = set(invariants) | set(protected)
+    protected = {e["to"] for t in touching for e in out_e[t] if e["rel"] == "must_not_break"}
+    if schema >= onto.get("constraints", {}).get("must_not_break_same_component", {}).get("since", 99):
+        def on_component(t: str) -> bool:
+            own = {e["to"] for e in out_e[t] if e["rel"] == "touches"}
+            own |= {g["to"] for e in out_e[t] if e["rel"] == "originates" for g in out_e[e["to"]] if g["rel"] == "guards"}
+            return bool(own & set(comps))
+        protected = {t for t in protected if on_component(t)}
+    relevant = invariants | protected
 
     # fact blocks: one per ticket = the ticket + what it originates + what it protects
     blocks = {}
@@ -190,9 +215,11 @@ def query(q: dict, onto: dict, facts: dict, text: str) -> tuple[list[dict], list
         fb = {"@type": "Ticket", "id": tid}
         if n.get("title"):
             fb["title"] = n["title"]
-        fb["originates"] = [{"invariant": nodes[e["to"]]["text"][:220],
-                             "origin": sorted(x["from"] for x in in_e[e["to"]] if x["rel"] == "originates"),
-                             "guards": comps}
+        fb["originates"] = [{k: v for k, v in {
+                                "invariant": nodes[e["to"]]["text"][:220],
+                                "origin": sorted(x["from"] for x in in_e[e["to"]] if x["rel"] == "originates"),
+                                "guards": sorted(g["to"] for g in out_e[e["to"]] if g["rel"] == "guards"),
+                                "reached_via": via_note.get(e["to"])}.items() if v}
                             for e in out_e[tid] if e["rel"] == "originates" and e["to"] in relevant]
         why = sorted({e["from"] for t in touching for e in out_e[t]
                       if e["rel"] == "must_not_break" and e["to"] == tid})
@@ -209,16 +236,19 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["build", "query"])
     ap.add_argument("--query", help="override the query (default: topic + query from data/questions.yaml)")
+    ap.add_argument("--schema", type=int, default=2, choices=[1, 2],
+                    help="ontology version for the query (1 = without what v2 added)")
     ap.add_argument("--quiet", action="store_true")
+    lib.add_question_arg(ap)
     a = ap.parse_args()
 
-    q = lib.load_question()
+    q = lib.load_question(a.qid)
     onto = load_ontology()
-    path = os.path.join(lib.OAG_DIR, "facts.json")
+    path = lib.facts_path(q)
 
     if a.cmd == "build":
         facts = build(q, onto)
-        os.makedirs(lib.OAG_DIR, exist_ok=True)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(facts, f, ensure_ascii=False, indent=1)
         r = facts["report"]
@@ -235,18 +265,20 @@ def main() -> None:
         return
 
     if not os.path.exists(path):
-        raise SystemExit("No facts yet. Run: python demo/oag.py build")
+        raise SystemExit(f"No facts yet. Run: python demo/oag.py build --q {q['id']}")
     with open(path, encoding="utf-8") as f:
         facts = json.load(f)
     text = a.query or f"{q['topic']} {q['query']}"
-    blocks, comps, left = query(q, onto, facts, text)
+    blocks, comps, left = query(q, onto, facts, text, a.schema)
     context = json.dumps(blocks, ensure_ascii=False, indent=1)
     # The answer is the subject of each fact block plus the declared origins of its invariants.
     # Ids under named_as_must_not_break_by are provenance (who said so), not part of the answer.
     answer = " ".join([b["id"] for b in blocks] + [o for b in blocks for i in b.get("originates", []) for o in i["origin"]])
     found = lib.ticket_ids(answer, q)
     if not a.quiet:
-        print(f"OAG query | componentes de la ontología en la pregunta: {', '.join(comps) or '-'}")
+        print(f"OAG query | esquema v{a.schema} | componentes de la ontología en la pregunta: {', '.join(comps) or '-'}")
+        if not comps:
+            print("La pregunta no menciona ningún componente de la ontología: OAG no tiene hechos que dar.")
         print(f"Set cover: {len(blocks)} fact blocks cubren los nodos relevantes"
               f"{'' if not left else f' (sin cubrir: {len(left)})'}\n")
         print(context)
@@ -254,7 +286,8 @@ def main() -> None:
               " 0 llamadas LLM al consultar.")
         print(f"Tickets que afirman los hechos: {', '.join(found) or '-'}")
     s = lib.print_score(q, found)
-    lib.save_run("oag", {"technique": "OAG", "found": found, "score": s,
+    key = "oag" if a.schema == 2 else f"oag_v{a.schema}"
+    lib.save_run(q, key, {"technique": f"OAG (esquema v{a.schema})", "schema": a.schema, "components": comps, "found": found, "score": s,
                          "context_tokens": lib.approx_tokens(context), "llm_calls_retrieval": 0,
                          "sources": sorted({b.get('source') for b in blocks if b.get('source')})})
 

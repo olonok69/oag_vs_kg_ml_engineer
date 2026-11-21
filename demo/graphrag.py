@@ -12,7 +12,7 @@ Scope: by default only nodes whose source file is in data/corpus are kept, so
 the comparison with the other techniques uses the same documents. `--full`
 uses the whole graph (what /kg sees in the lambda repo).
 
-    python demo/graphrag.py [--topic get_letter_end] [--hops 1] [--full] [--native]
+    python demo/graphrag.py [--q <id>] [--topic get_letter_end] [--hops 1] [--full] [--native]
 """
 from __future__ import annotations
 
@@ -45,6 +45,16 @@ def load_graph(q: dict, full: bool) -> tuple[dict, list[dict]]:
     return nodes, links
 
 
+def community_names() -> dict[str, str]:
+    """node id -> hand-named community (community_labels.json from /kg-refresh), if present."""
+    path = os.path.join(os.path.dirname(lib.GRAPH), "community_labels.json")
+    if not os.path.exists(path):
+        return {}
+    with open(path, encoding="utf-8") as f:
+        labels = json.load(f)
+    return {m: c["name"] for c in labels.get("communities", []) for m in c.get("members", [])}
+
+
 def resolve(nodes: dict, links: list[dict], topic: str) -> str | None:
     """Exact id/label first, then substring; ties go to the best-connected node."""
     t = topic.lower().strip()
@@ -61,14 +71,16 @@ def main() -> None:
     lib.utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--topic", help="override the topic from data/questions.yaml")
-    ap.add_argument("--hops", type=int, default=1)
+    ap.add_argument("--hops", type=int, help="neighbourhood depth (default: the question's `hops`, else 1)")
     ap.add_argument("--full", action="store_true", help="whole graph instead of the demo corpus")
     ap.add_argument("--native", action="store_true", help="run data/kg/kg_query.sh (needs graphify)")
     ap.add_argument("--quiet", action="store_true")
+    lib.add_question_arg(ap)
     a = ap.parse_args()
 
-    q = lib.load_question()
-    topic = a.topic or q["topic"]
+    q = lib.load_question(a.qid)
+    topic = a.topic or q.get("graph_topic") or q["topic"]
+    a.hops = a.hops or q.get("hops", 1)
 
     if a.native:
         sh = os.path.join(lib.DATA, "kg", "kg_query.sh")
@@ -103,6 +115,8 @@ def main() -> None:
     context = "\n".join(lines)
     reading = sorted({n.get("source_file") for *_, n in rows if n.get("source_file")})
     found = lib.ticket_ids(context, q)
+    names = community_names()
+    themes = Counter(names[n["id"]] for *_, n in rows if n["id"] in names).most_common(8)
 
     if not a.quiet:
         rels = Counter(r for _, r, _, _ in rows)
@@ -115,12 +129,16 @@ def main() -> None:
         print(f"Relaciones: {dict(rels.most_common())}")
         print(f"Aristas genéricas: {generic}/{len(rows)} ({generic / max(1, len(rows)):.0%})."
               " El grafo dice qué leer, no qué hecho aporta cada fichero.")
+        if themes:
+            print("Temas (comunidades del grafo con nombre): "
+                  + "; ".join(f"{name} ({c})" for name, c in themes))
         print(f"Contexto para el LLM: ~{lib.approx_tokens(context)} tokens, 0 llamadas LLM al consultar.")
         print(f"Tickets en el resultado: {', '.join(found) or '-'}")
     s = lib.print_score(q, found)
-    lib.save_run("graphrag", {"technique": "GraphRAG (/kg)", "found": found, "score": s,
+    key = "graphrag" if a.hops == 1 else f"graphrag_{a.hops}h"
+    lib.save_run(q, key, {"technique": f"GraphRAG (/kg, {a.hops} hop)", "hops": a.hops, "found": found, "score": s,
                               "context_tokens": lib.approx_tokens(context), "llm_calls_retrieval": 0,
-                              "sources": reading})
+                              "sources": reading, "themes": themes})
 
 
 if __name__ == "__main__":

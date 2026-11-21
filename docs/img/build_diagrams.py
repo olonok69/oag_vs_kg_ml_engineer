@@ -275,7 +275,57 @@ def when_to_use(L):
 
 
 # ----------------------------------------------------------------------------- strings
+def scenarios(L):
+    s = SVG(1400, 700)
+    header(s, L["sc_eyebrow"], L["sc_title"])
+    for k, sc in enumerate(L["sc_panels"]):
+        x0 = 40 + k * 680
+        box(s, x0, 115, 640, 520, fill=PANEL)
+        text(s, x0 + 24, 150, sc["name"], 17, CORAL if k == 0 else BLUE, "bold")
+        text(s, x0 + 24, 176, sc["q"], 13, MUTED, width=590)
+        # legend
+        lx = x0 + 24
+        s.add(f'<rect x="{lx}" y="226" width="14" height="10" rx="2" fill="{GREEN}"/>')
+        text(s, lx + 20, 236, L["sc_recall"], 12, MUTED)
+        s.add(f'<rect x="{lx + 110}" y="226" width="14" height="10" rx="2" fill="{AMBER}"/>')
+        text(s, lx + 130, 236, L["sc_precision"], 12, MUTED)
+        text(s, x0 + 616, 236, L["sc_ids"], 12, MUTED, anchor="end")
+        for i, (tech, r, p, ids, win) in enumerate(sc["rows"]):
+            y = 262 + i * 58
+            if win:
+                box(s, x0 + 12, y - 8, 616, 54, fill=PANEL_2, stroke=CORAL if k == 0 else BLUE, r=8, sw=2)
+            text(s, x0 + 24, y + 22, tech, 14, TEXT, "bold" if win else "normal")
+            bx, bw = x0 + 230, 300
+            for j, (v, col) in enumerate(((r, GREEN), (p, AMBER))):
+                yy = y + 4 + j * 18
+                s.add(f'<rect x="{bx}" y="{yy}" width="{bw}" height="12" rx="3" fill="{STROKE}"/>')
+                if v:
+                    s.add(f'<rect x="{bx}" y="{yy}" width="{bw * v / 100:.1f}" height="12" rx="3" fill="{col}"/>')
+                text(s, bx + bw + 8, yy + 11, f"{v}%", 12, TEXT)
+            text(s, x0 + 616, y + 22, str(ids), 14, TEXT, anchor="end")
+        text(s, x0 + 24, 572, sc["lesson"], 13, TEXT, width=590)
+    footer_note(s, L["sc_note"])
+    return s
+
+
 ES = dict(
+    sc_eyebrow="Demo", sc_title="Dos preguntas, dos ganadores",
+    sc_recall="Recall", sc_precision="Precisión", sc_ids="IDs devueltos",
+    sc_panels=[
+        dict(name="A · Reglas sobre un componente modelado",
+             q="Bug nuevo en la detección de fin de carta: qué tickets e invariantes no romper (7 esperados).",
+             rows=[("Naive RAG", 71, 62, 8, False), ("GraphRAG, 1 salto", 71, 50, 10, False),
+                   ("GraphRAG, 2 saltos", 100, 13, 53, False), ("OAG, esquema v1", 86, 35, 17, False),
+                   ("OAG, esquema v2", 100, 47, 15, True)],
+             lesson="Gana OAG: todo lo esperado en 15 tickets en lugar de 53, y cada uno con su porqué (invariante, componente, test)."),
+        dict(name="B · Explorar un área que la ontología no modela",
+             q="Entro en el memo de comentarios: qué tickets tratan de él y en qué temas se agrupan (29 esperados).",
+             rows=[("Naive RAG", 10, 100, 3, False), ("GraphRAG, 1 salto", 21, 67, 9, False),
+                   ("GraphRAG, 2 saltos", 83, 43, 56, True), ("OAG, esquema v1", 0, 0, 0, False),
+                   ("OAG, esquema v2", 0, 0, 0, False)],
+             lesson="Gana GraphRAG: descubre el área sin que nadie la modele y la agrupa en temas (comunidades). OAG no ve lo que su esquema no declara."),
+    ],
+    sc_note="Corpus completo (452 ficheros). OAG v2 se corrigió tras ver el fallo de v1: es evolución del esquema. demo/compare.py.",
     evo_eyebrow="De RAG a OAG", evo_title="Seis generaciones de recuperación aumentada",
     evo_steps=[
         ("Naive RAG", "Trocear, vectorizar y recuperar el top-k por similitud.", "Recupera: trozos"),
@@ -332,15 +382,15 @@ ES = dict(
     ],
     do_bottom="Sin LLM al construir ni al consultar. En producción la extracción se completaría con un LLM guiado por la misma ontología (Fase C), siempre validado.",
     do_note="demo/oag.py y demo/oag/ontology.yaml.",
-    ev_eyebrow="Demo", ev_title="Cómo evaluamos: una pregunta real, una hoja de respuestas",
-    ev_q="Pregunta", ev_q_body="Bug real ya resuelto, planteado como si fuera nuevo.",
-    ev_key="Hoja de respuestas", ev_key_body="El writeup del bug lista lo que no hay que romper. Se excluye de todas las técnicas (hold-out).",
+    ev_eyebrow="Demo", ev_title="Cómo evaluamos: preguntas reales con respuesta conocida",
+    ev_q="Pregunta", ev_q_body="A: bug real ya resuelto, planteado como si fuera nuevo. B: un área que hay que explorar.",
+    ev_key="Hoja de respuestas", ev_key_body="A: el writeup del bug lista lo que no hay que romper y se excluye de todas las técnicas (hold-out). B: regla objetiva sobre los títulos.",
     ev_techs=[("Naive RAG", "trozos por similitud"), ("Agentic RAG", "Claude busca y lee en bucle"),
               ("GraphRAG (/kg)", "vecinos + lista de lectura"), ("OAG", "hechos tipados validados")],
     ev_metrics="Métricas",
     ev_metric_lines=["Recall: esperados encontrados / esperados", "Precisión: esperados encontrados / devueltos",
                      "Coste: tokens de contexto y llamadas LLM", "Respuesta final de Claude, registrada"],
-    ev_warn="Una pregunta no es una evaluación: la lista esperada es un mínimo y el corpus es pequeño. La evaluación seria es el Paso 0 (15-20 preguntas).",
+    ev_warn="Dos preguntas no son una evaluación: la lista esperada es un mínimo. La evaluación seria es el Paso 0 (15-20 preguntas, de reglas y de exploración).",
     ev_note="demo/compare.py y demo/record_answer.py.",
     wu_eyebrow="Guía de uso", wu_title="Cuándo conviene cada técnica",
     wu_cols=["Técnica", "Conviene cuando", "Coste y riesgo", "Ejemplo en nuestro trabajo"],
@@ -356,6 +406,23 @@ ES = dict(
 )
 
 EN = dict(
+    sc_eyebrow="Demo", sc_title="Two questions, two winners",
+    sc_recall="Recall", sc_precision="Precision", sc_ids="IDs returned",
+    sc_panels=[
+        dict(name="A · Rules about a modelled component",
+             q="New bug in letter-end detection: which tickets and invariants must not break (7 expected).",
+             rows=[("Naive RAG", 71, 62, 8, False), ("GraphRAG, 1 hop", 71, 50, 10, False),
+                   ("GraphRAG, 2 hops", 100, 13, 53, False), ("OAG, schema v1", 86, 35, 17, False),
+                   ("OAG, schema v2", 100, 47, 15, True)],
+             lesson="OAG wins: everything expected in 15 tickets instead of 53, each with its reason (invariant, component, test)."),
+        dict(name="B · Exploring an area the ontology does not model",
+             q="Joining the comment memo work: which tickets deal with it and how they group into themes (29 expected).",
+             rows=[("Naive RAG", 10, 100, 3, False), ("GraphRAG, 1 hop", 21, 67, 9, False),
+                   ("GraphRAG, 2 hops", 83, 43, 56, True), ("OAG, schema v1", 0, 0, 0, False),
+                   ("OAG, schema v2", 0, 0, 0, False)],
+             lesson="GraphRAG wins: it discovers the area without anyone modelling it and groups it into themes (communities). OAG cannot see what its schema does not declare."),
+    ],
+    sc_note="Full corpus (452 files). OAG v2 was fixed after seeing v1 fail: schema evolution. demo/compare.py.",
     evo_eyebrow="From RAG to OAG", evo_title="Six generations of retrieval augmentation",
     evo_steps=[
         ("Naive RAG", "Chunk, vectorise and retrieve the top-k by similarity.", "Retrieves: chunks"),
@@ -412,15 +479,15 @@ EN = dict(
     ],
     do_bottom="No LLM at build or query time. In production, extraction would be completed by an LLM guided by the same ontology (Phase C), always validated.",
     do_note="demo/oag.py and demo/oag/ontology.yaml.",
-    ev_eyebrow="Demo", ev_title="How we evaluate: one real question, one answer key",
-    ev_q="Question", ev_q_body="A real, already solved bug, asked as if it were new.",
-    ev_key="Answer key", ev_key_body="The bug's writeup lists what must not break. It is excluded from every technique (hold-out).",
+    ev_eyebrow="Demo", ev_title="How we evaluate: real questions with known answers",
+    ev_q="Question", ev_q_body="A: a real, already solved bug, asked as if it were new. B: an area to explore.",
+    ev_key="Answer key", ev_key_body="A: the bug's writeup lists what must not break and is excluded from every technique (hold-out). B: an objective rule on titles.",
     ev_techs=[("Naive RAG", "chunks by similarity"), ("Agentic RAG", "Claude searches and reads in a loop"),
               ("GraphRAG (/kg)", "neighbours + reading list"), ("OAG", "validated typed facts")],
     ev_metrics="Metrics",
     ev_metric_lines=["Recall: expected found / expected", "Precision: expected found / returned",
                      "Cost: context tokens and LLM calls", "Claude's final answer, recorded"],
-    ev_warn="One question is not an evaluation: the expected list is a floor and the corpus is small. The real evaluation is Step 0 (15-20 questions).",
+    ev_warn="Two questions are not an evaluation: the expected list is a floor. The real evaluation is Step 0 (15-20 questions, rules and exploration).",
     ev_note="demo/compare.py and demo/record_answer.py.",
     wu_eyebrow="Usage guide", wu_title="When each technique fits",
     wu_cols=["Technique", "Fits when", "Cost and risk", "Example in our work"],
@@ -442,6 +509,7 @@ DIAGRAMS = {
     "kg_pipeline": kg_pipeline,
     "demo_oag_pipeline": demo_oag_pipeline,
     "evaluation": evaluation,
+    "scenarios": scenarios,
     "when_to_use": when_to_use,
 }
 

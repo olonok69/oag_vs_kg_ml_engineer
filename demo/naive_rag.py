@@ -76,9 +76,10 @@ def main() -> None:
     ap.add_argument("--embed", action="store_true", help="use sentence-transformers instead of TF-IDF")
     ap.add_argument("--query", help="override the query from data/questions.yaml")
     ap.add_argument("--quiet", action="store_true", help="only print the score")
+    lib.add_question_arg(ap)
     a = ap.parse_args()
 
-    q = lib.load_question()
+    q = lib.load_question(a.qid)
     query = a.query or q["query"]
     docs = lib.load_corpus(q)
     chunks = [c for d in docs for c in chunk(d, a.chunk_words, a.overlap)]
@@ -98,7 +99,7 @@ def main() -> None:
         print(f"Contexto para el LLM: ~{lib.approx_tokens(context)} tokens, {a.k} trozos, 0 relaciones.")
         print(f"Tickets que aparecen en el contexto: {', '.join(found) or '-'}")
     s = lib.print_score(q, found)
-    lib.save_run("naive_rag", {"technique": "Naive RAG", "found": found, "score": s,
+    lib.save_run(q, "naive_rag", {"technique": "Naive RAG", "found": found, "score": s,
                                "context_tokens": lib.approx_tokens(context), "llm_calls_retrieval": 0,
                                "sources": sorted({c["source"] for _, c in ranked})})
 

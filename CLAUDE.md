@@ -54,19 +54,23 @@ Un texto nuevo en el deck necesita su entrada en `translations_en.py`.
 
 ## Demo
 
-Cinco skills responden a la misma pregunta real sobre el mismo corpus:
+Cinco skills responden a las mismas preguntas reales sobre el mismo corpus. Hay dos escenarios en
+`data/questions.yaml`: `letter-end-runin` (reglas sobre un componente modelado, gana OAG) y
+`comment-memo-landscape` (explorar un área sin modelar, gana GraphRAG). Las skills y los scripts aceptan
+el id (`--q <id>`):
 
 1. `/demo-naive-rag`: trozos de texto por similitud.
 2. `/demo-agentic-rag`: Claude busca y lee en bucle.
 3. `/demo-graphrag`: nuestro skill `/kg` sobre `data/kg/output/graph.json`.
-4. `/demo-oag`: hechos tipados validados contra la ontología.
+4. `/demo-oag`: hechos tipados validados contra la ontología (`--schema 1` reproduce la primera versión).
 5. `/demo-compare`: recall, precisión y coste.
 
 Preparación:
 
 ```bash
 uv sync && source .venv/bin/activate   # lanzar claude con el venv activo
-python demo/oag.py build     # tras cambiar el corpus o la ontología
+python demo/oag.py build --q letter-end-runin         # tras cambiar el corpus o la ontología
+python demo/oag.py build --q comment-memo-landscape
 ```
 
 Origen de los datos: `D:\repos3\ILS_2\document-parser-lambda\data\knowledge-graph\` (`_corpus/` y
