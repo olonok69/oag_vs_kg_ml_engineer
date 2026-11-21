@@ -60,6 +60,18 @@ def _translate(para):
     if not key.strip():
         return para
     en = TRANSLATIONS.get(key)
+    if isinstance(en, str):
+        # A plain string replaces the content runs and keeps the marker runs ("▸  ", "“ ", " ”").
+        out, placed = [], False
+        for (t, *rest) in para:
+            if not any(ch.isalnum() for ch in t):
+                out.append((t, *rest))
+            elif not placed:
+                out.append((en, *rest))
+                placed = True
+            else:
+                out.append(("", *rest))
+        return out
     if en is None:
         # Solo interesa avisar de prosa: el código, las URLs y los nombres propios
         # pasan tal cual a propósito.
@@ -285,6 +297,24 @@ def steps(slide, items, y=2.2, h=1.9, accent=CORAL):
                  align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
 
 
+IMG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "img")
+
+
+def diagram(slide, name, page=None):
+    """Slide completa con un diagrama de docs/img (el PNG ya lleva su eyebrow y título)."""
+    from PIL import Image
+
+    base(slide, page=page)
+    path = os.path.join(IMG_DIR, f"{name}.{LANG}.png")
+    with Image.open(path) as im:
+        iw, ih = im.size
+    box_x, box_y, box_w, box_h = 0.3, 0.25, 12.95, 6.65
+    scale = min(box_w / iw, box_h / ih)
+    w, h = iw * scale, ih * scale
+    slide.shapes.add_picture(path, Inches(box_x + (box_w - w) / 2), Inches(box_y + (box_h - h) / 2),
+                             Inches(w), Inches(h))
+
+
 def build():
     prs = Presentation()
     prs.slide_width = EMU_W
@@ -314,7 +344,9 @@ def build():
           [R("PARTE 2 — ", 15, BLUE, True),
            R("Nuestro grafo de tickets frente a OAG: qué compartimos y en qué diferimos", 13.5, MUTED, False)],
           [R("PARTE 3 — ", 15, GREEN, True),
-           R("Qué adoptar: ontología mínima, extracción guiada, fact blocks, gates y cómo medirlo", 13.5, MUTED, False)]],
+           R("Qué adoptar: ontología mínima, extracción guiada, fact blocks, gates y cómo medirlo", 13.5, MUTED, False)],
+          [R("PARTE 4 — ", 15, TEXT, True),
+           R("La demo: de Naive RAG a OAG con Claude Code, cómo evaluamos y cuándo usar cada técnica", 13.5, MUTED, False)]],
          space_after=8)
     text(s, 1.0, 6.7, 11, 0.4,
          [[R("Fuentes: Sharma, Kumar & Li — OG-RAG (arXiv 2412.15235, EMNLP 2025) · docs de Palantir Foundry · "
@@ -350,19 +382,7 @@ def build():
 
     # ---- De RAG a OAG
     s, pg = new()
-    base(s, "Parte 1 · De RAG a OAG", "Cinco generaciones de RAG… y una más", page=pg)
-    steps(s, [
-        ("Naive RAG", "Trocear, embeber, top-k por similitud. Barato, pero recupera trozos sueltos."),
-        ("RAG + rerank", "Un segundo modelo reordena. Mejor precisión, mismo modelo de datos."),
-        ("Modular RAG", "Piezas intercambiables: reescritura de query, híbrido, routing."),
-        ("Agentic RAG", "El agente planifica, recupera en bucle y se autocritica."),
-        ("GraphRAG", "Grafo de entidades + comunidades extraído por LLM; esquema libre."),
-        ("OAG", "La ontología es la capa normativa: clases, relaciones y restricciones definidas antes."),
-    ], y=2.1, h=2.6)
-    panel_bullets(s, 0.7, 4.95, 11.95, 1.2, "La idea en una línea",
-                  ["En OAG, recuperar y generar ocurren «dentro de la disciplina ontológica»: el dominio decide qué es un hecho y cómo se conecta."],
-                  accent=BLUE)
-    takeaway(s, "RAG pregunta «¿qué texto se parece?»; OAG pregunta «¿qué hechos del dominio responden?».")
+    diagram(s, "rag_evolution", page=pg)
 
     # ---- Tres lecturas
     s, pg = new()
@@ -410,21 +430,13 @@ def build():
          title="Esquema + instancias (nuestro dominio)")
     takeaway(s, "No es una taxonomía ni una lista de etiquetas: es un contrato sobre qué es un hecho válido en el dominio.")
 
+    # ---- Ontología: diagrama esquema + hechos
+    s, pg = new()
+    diagram(s, "ontology", page=pg)
+
     # ---- OG-RAG pipeline
     s, pg = new()
-    base(s, "Parte 1 · OG-RAG", "El pipeline de OG-RAG", page=pg)
-    steps(s, [
-        ("Ontología", "Triples (sujeto, atributo, valor). Revisada por expertos; no se aprende sola."),
-        ("Preproceso", "Un LLM (GPT-4o) mapea cada documento a la ontología → fact blocks JSON-LD."),
-        ("Hipergrafo", "Cada bloque aplanado = hiperarista; cada par clave-valor = hipernodo."),
-        ("Recuperación", "Top-k nodos por clave y por valor; greedy: mínimo conjunto de hiperaristas que cubre."),
-        ("Generación", "Los hechos van al prompt como lista de diccionarios. 0 llamadas LLM extra al consultar."),
-    ], y=2.05, h=2.25)
-    code(s, 0.7, 4.75, 11.95, 1.35,
-         ['{"@type": "Crop", "name": "Soybean",',
-          ' "isGrownIn": {"@type": "CropRegion", "name": "Madhya Pradesh"},',
-          ' "sowingTime": "mid-June to early July"}      # un fact block = una hiperarista'],
-         title="Un fact block (simplificado)")
+    diagram(s, "ograg_pipeline", page=pg)
 
     # ---- Resultados
     s, pg = new()
@@ -450,7 +462,7 @@ def build():
     # =========================================================================
     s, pg = new()
     divider(s, 2, "Nuestro grafo vs OAG", "El grafo de tickets construido con graphify, puesto al lado de OG-RAG y Palantir.",
-            ["Recordatorio: cómo funciona", "Comparación lado a lado",
+            ["Recordatorio: cómo funciona", "Nuestra pipeline y lo aprendido", "Comparación lado a lado",
              "La ontología que ya tenemos sin saberlo", "Veredicto"], page=pg)
 
     # ---- Recordatorio
@@ -474,6 +486,10 @@ def build():
                    "semantically_similar_to 22 · conceptually_related_to 18",
                    "~75% de las aristas son genéricas (references / relates_to)"],
                   accent=BLUE)
+
+    # ---- Nuestra pipeline
+    s, pg = new()
+    diagram(s, "kg_pipeline", page=pg)
 
     # ---- Comparación
     s, pg = new()
@@ -603,6 +619,37 @@ def build():
                   accent=GREEN)
     takeaway(s, "Mismo principio que el método: un gate verde que no puede fallar no prueba nada.")
 
+    # =========================================================================
+    # PARTE 4
+    # =========================================================================
+    s, pg = new()
+    divider(s, 4, "La demo", "Cinco skills de Claude Code, una pregunta real y la misma vara de medir.",
+            ["OAG en la demo", "Cómo evaluamos", "Resultados", "Cuándo usar cada técnica"], page=pg)
+
+    s, pg = new()
+    diagram(s, "demo_oag_pipeline", page=pg)
+
+    s, pg = new()
+    diagram(s, "evaluation", page=pg)
+
+    # ---- Resultados
+    s, pg = new()
+    base(s, "Parte 4 · Resultados", "Misma pregunta, cuatro técnicas", page=pg)
+    table(s, 0.7, 2.0, [3.0, 1.5, 1.5, 2.2, 2.2],
+          [["Técnica", "Recall", "Precisión", "Tokens de contexto", "LLM al recuperar"],
+           ["Naive RAG", "100%", "39%", "~1.700", "0"],
+           ["GraphRAG (/kg, 1 salto)", "43%", "43%", "~370", "0"],
+           ["GraphRAG (/kg, 2 saltos)", "86%", "23%", "mayor", "0"],
+           ["OAG", "86%", "60%", "~1.400", "0"],
+           ["Agentic RAG", "en directo", "en directo", "variable", "varios pasos"]], row_h=0.48, size=11.5)
+    text(s, 0.7, 5.45, 11.9, 0.7,
+         [[R("Corpus de 14 ficheros, respuesta esperada de 7 tickets escrita por quien resolvió el bug. "
+             "Una pregunta es una demostración, no una evaluación: la lista esperada es un mínimo.", 11, FAINT, False)]])
+    takeaway(s, "Naive RAG encuentra las palabras; OAG devuelve los hechos y dice de dónde salen.")
+
+    s, pg = new()
+    diagram(s, "when_to_use", page=pg)
+
     # ---- Cierre
     s, pg = new()
     base(s, "Cierre", "En una frase", page=pg)
@@ -616,14 +663,25 @@ def build():
           [R("K. Sharma, P. Kumar, Y. Li — OG-RAG: Ontology-Grounded Retrieval-Augmented Generation for LLMs. arXiv 2412.15235 (2024), EMNLP 2025.", 11, MUTED, False)],
           [R("Palantir Foundry docs — Ontology augmented generation (palantir.com/docs/foundry/ontology/ontology-augmented-generation).", 11, MUTED, False)],
           [R("L. Huang — From RAG to OAG (medium.com/@linghuang_76674).", 11, MUTED, False)],
-          [R("Repo: docs/OAG_VS_KG.md · reference/KNOWLEDGE_GRAPH.md · reference/knowledge-graph/", 11, MUTED, False)]],
+          [R("Lewis et al. 2020 (arXiv 2005.11401) · Gao et al. 2023 (arXiv 2312.10997) · Edge et al. 2024, GraphRAG (arXiv 2404.16130) · Singh et al. 2025, Agentic RAG (arXiv 2501.09136)", 11, MUTED, False)],
+          [R("Repo: docs/GUIA_DEMO.md · docs/OAG_VS_KG.md · reference/KNOWLEDGE_GRAPH.md · demo/README.md", 11, MUTED, False)]],
          space_after=6)
 
-    out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "OAG_vs_KG_Presentacion.pptx")
+    name = "OAG_vs_KG_Presentacion.pptx" if LANG == "es" else "OAG_vs_KG_Presentation_EN.pptx"
+    out = os.path.join(os.path.dirname(os.path.abspath(__file__)), name)
     prs.save(out)
     print(f"OK  ->  {out}  ({len(prs.slides._sldIdLst)} slides)")
+    if _MISSES:
+        print(f"WARNING: {len(_MISSES)} lines without translation:")
+        for m in _MISSES:
+            print("   ", m[:100])
     return out
 
 
 if __name__ == "__main__":
+    import argparse
+
+    _ap = argparse.ArgumentParser()
+    _ap.add_argument("--lang", choices=["es", "en"], default="es")
+    LANG = _ap.parse_args().lang
     build()
