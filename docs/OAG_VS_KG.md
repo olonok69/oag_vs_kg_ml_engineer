@@ -71,6 +71,22 @@ Antes de cambiar nada, un set de 15–20 preguntas reales con respuesta conocida
 actual como línea base, revisar la composición (qué tickets faltan), no solo el total, y decir qué no puede
 mostrar el set.
 
+## Lo que ha mostrado la demo (2026-11-21)
+
+Dos preguntas reales sobre el corpus completo de `/kg` (452 ficheros), una de cada tipo:
+
+- **Reglas sobre un componente modelado** («qué no romper al arreglar este bug»): OAG con la ontología
+  corregida (v2) encuentra los 7 tickets esperados entre 15 resultados; GraphRAG a dos saltos también los
+  encuentra, pero entre 53. Naive RAG se deja 2.
+- **Exploración de un área sin modelar** («qué hay sobre el memo de comentarios y cómo se agrupa»): GraphRAG
+  recupera el 83 % y lo agrupa en temas por comunidades; OAG no devuelve nada, porque solo ve lo que su
+  esquema declara.
+
+Conclusión: OAG no sustituye al grafo, lo completa. Compensa adoptarlo por partes y solo para las preguntas de
+reglas, con una ontología pequeña y extracción determinista. La v2 de la ontología se escribió tras ver el
+fallo de la v1, así que el resultado hay que confirmarlo con el set completo. Detalle en
+[`GUIA_DEMO.md`](GUIA_DEMO.md), secciones 6 a 8.
+
 ## Fuentes
 
 - K. Sharma, P. Kumar, Y. Li — [OG-RAG: Ontology-Grounded Retrieval-Augmented Generation for Large Language Models](https://arxiv.org/abs/2412.15235) (2024); [EMNLP 2025](https://aclanthology.org/2025.emnlp-main.1674/).

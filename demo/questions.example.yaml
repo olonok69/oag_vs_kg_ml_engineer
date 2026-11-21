@@ -1,18 +1,38 @@
-# Copiar a data/questions.yaml y rellenar con una pregunta real del corpus (data/ no se sube a git).
-id: letter-end-runin
-pregunta: >
-  Tengo que arreglar un bug nuevo: en una side letter DOCX el marcador de fin de carta va
-  "run-in" (dentro de un párrafo, después de una cláusula), get_letter_end no lo detecta y el
-  bloque de firma acaba dentro de la última provisión. ¿Qué tickets anteriores e invariantes
-  tengo que respetar para no romper nada?
-# Texto de búsqueda (el corpus está en inglés).
-query: >
-  run-in letter-end marker missed by get_letter_end, signature block absorbed into the last
-  provision, letter end detection window, premature truncation
-# Token para /kg (GraphRAG) y semilla de OAG.
-topic: get_letter_end
-# El writeup del ticket real es la hoja de respuestas: se excluye de todas las técnicas.
-holdout: [TKT-NNN]
-holdout_files: [tkt-nnn__tkt-nnn.md]
-# Respuesta esperada: los "Guardrails / do-not-break" y la batería de regresión del writeup.
-esperado: [TKT-AAA, TKT-BBB, TKT-CCC]
+# Copiar a data/questions.yaml y rellenar con preguntas reales del corpus (data/ no se sube a git).
+# Una pregunta suelta (sin `questions:`) también vale.
+default: letter-end-runin
+questions:
+- id: letter-end-runin
+  scenario: "Pregunta de reglas sobre un componente modelado en la ontología (se espera que gane OAG)"
+  pregunta: >
+    Tengo que arreglar un bug nuevo: en una side letter DOCX el marcador de fin de carta va
+    "run-in" (dentro de un párrafo, después de una cláusula), get_letter_end no lo detecta y el
+    bloque de firma acaba dentro de la última provisión. ¿Qué tickets anteriores e invariantes
+    tengo que respetar para no romper nada?
+  # Texto de búsqueda (el corpus está en inglés).
+  query: >
+    run-in letter-end marker missed by get_letter_end, signature block absorbed into the last
+    provision, letter end detection window, premature truncation
+  # Token para /kg (GraphRAG) y semilla de OAG.
+  topic: get_letter_end
+  # El writeup del ticket real es la hoja de respuestas: se excluye de todas las técnicas.
+  holdout: [TKT-NNN]
+  holdout_files: [tkt-nnn__tkt-nnn.md]
+  # Respuesta esperada: los "Guardrails / do-not-break" y la batería de regresión del writeup.
+  esperado: [TKT-AAA, TKT-BBB, TKT-CCC]
+
+- id: comment-memo-landscape
+  scenario: "Pregunta exploratoria sobre un área que la ontología no modela (se espera que gane GraphRAG)"
+  pregunta: >
+    Empiezo a trabajar en el extractor del memo de comentarios (comment memo) y no lo conozco.
+    ¿Qué tickets anteriores tratan de él y en qué temas se agrupan?
+  query: >
+    comment memo extractor chains turns queries responses Q/R typing table mode doc mode
+  topic: comment memo
+  # Semilla en el grafo, si es distinta de `topic`.
+  graph_topic: CommentMemoExtractor
+  holdout: []
+  holdout_files: []
+  # Regla objetiva: todos los writeups cuyo título menciona el área.
+  esperado_regla: writeups tkt-*.md cuyo título contiene "comment memo"
+  esperado: [TKT-DDD, TKT-EEE]

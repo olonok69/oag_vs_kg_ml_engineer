@@ -5,6 +5,11 @@ description: Demo paso 4. Responde la pregunta de la demo con OAG, hechos tipado
 
 # Demo: OAG (Ontology-Augmented Generation)
 
+Pregunta: la demo tiene dos escenarios en `data/questions.yaml` (`letter-end-runin`, donde se espera
+que gane OAG, y `comment-memo-landscape`, donde se espera que gane GraphRAG). Si la skill se invoca con
+un id (por ejemplo `/demo-oag comment-memo-landscape`), añade `--q <id>` a todos los comandos; si no, se
+usa la pregunta por defecto.
+
 Objetivo: mostrar la diferencia de definir el esquema antes (schema-first). Ver `demo/README.md` y
 `demo/oag/ontology.yaml`.
 
@@ -12,9 +17,15 @@ Objetivo: mostrar la diferencia de definir el esquema antes (schema-first). Ver 
    con sus sinónimos (altLabels) y reglas de extracción.
 2. Construye los hechos: `python demo/oag.py build`. Comenta el informe: hechos por relación y, sobre
    todo, lo rechazado por la validación (relaciones que no están en el esquema).
-3. Consulta: `python demo/oag.py query`. Explica cómo la pregunta se mapea a un componente de la ontología
-   y cómo el set cover elige el mínimo de fact blocks.
-4. Responde la pregunta de `data/questions.yaml` usando SOLO los fact blocks. Para cada ticket di el hecho
+3. Consulta con la primera ontología y con la corregida: `python demo/oag.py query --schema 1` y
+   `python demo/oag.py query`. Explica cómo la pregunta se mapea a un componente, cómo el set cover elige
+   el mínimo de fact blocks y qué ha cambiado de v1 a v2: la restricción que exige que un ticket
+   "no romper" comparta componente (quita ruido) y la relación `calls` (fin de carta llama a
+   `get_titles`), que recupera el invariante que faltaba. Di que v2 se escribió después de ver el fallo:
+   es evolución del esquema, y se valida con más preguntas.
+4. Responde la pregunta elegida usando SOLO los fact blocks. Para cada ticket di el hecho
    (qué invariante origina, quién lo nombra como "no romper", qué test lo fija) y su fuente.
 5. Registra tu respuesta: `python demo/record_answer.py oag "<ids>"`.
 6. Cierra con dos líneas: qué aporta frente a /kg y cuál es el precio (escribir y mantener la ontología).
+7. En `comment-memo-landscape` la pregunta no menciona ningún componente de la ontología y OAG no
+   devuelve nada. No lo disimules: es el límite de la técnica (solo ve lo que el esquema declara).

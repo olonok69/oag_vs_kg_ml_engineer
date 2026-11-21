@@ -27,6 +27,7 @@ STROKE   = RGBColor(0x2E, 0x39, 0x48)   # borde sutil
 CORAL    = RGBColor(0xD9, 0x77, 0x57)   # acento primario (Anthropic)
 BLUE     = RGBColor(0x7A, 0xA2, 0xC7)   # acento secundario
 GREEN    = RGBColor(0x8C, 0xC2, 0x8C)
+AMBER    = RGBColor(0xD9, 0xB2, 0x5F)
 TEXT     = RGBColor(0xE8, 0xEA, 0xED)   # texto principal
 MUTED    = RGBColor(0x9A, 0xA4, 0xB2)   # texto secundario
 FAINT    = RGBColor(0x66, 0x70, 0x7E)   # footer
@@ -346,7 +347,7 @@ def build():
           [R("PARTE 3 — ", 15, GREEN, True),
            R("Qué adoptar: ontología mínima, extracción guiada, fact blocks, gates y cómo medirlo", 13.5, MUTED, False)],
           [R("PARTE 4 — ", 15, TEXT, True),
-           R("La demo: de Naive RAG a OAG con Claude Code, cómo evaluamos y cuándo usar cada técnica", 13.5, MUTED, False)]],
+           R("La demo: de Naive RAG a OAG con Claude Code, dos preguntas, dónde gana cada técnica y si merece la pena", 13.5, MUTED, False)]],
          space_after=8)
     text(s, 1.0, 6.7, 11, 0.4,
          [[R("Fuentes: Sharma, Kumar & Li — OG-RAG (arXiv 2412.15235, EMNLP 2025) · docs de Palantir Foundry · "
@@ -623,8 +624,9 @@ def build():
     # PARTE 4
     # =========================================================================
     s, pg = new()
-    divider(s, 4, "La demo", "Cinco skills de Claude Code, una pregunta real y la misma vara de medir.",
-            ["OAG en la demo", "Cómo evaluamos", "Resultados", "Cuándo usar cada técnica"], page=pg)
+    divider(s, 4, "La demo", "Cinco skills de Claude Code, dos preguntas reales y la misma vara de medir.",
+            ["OAG en la demo", "Cómo evaluamos", "Dos preguntas, dos ganadores", "De OAG v1 a v2",
+             "Dónde gana cada técnica", "¿Merece la pena en nuestro caso?"], page=pg)
 
     s, pg = new()
     diagram(s, "demo_oag_pipeline", page=pg)
@@ -632,23 +634,89 @@ def build():
     s, pg = new()
     diagram(s, "evaluation", page=pg)
 
-    # ---- Resultados
     s, pg = new()
-    base(s, "Parte 4 · Resultados", "Misma pregunta, cuatro técnicas", page=pg)
-    table(s, 0.7, 2.0, [3.0, 1.5, 1.5, 2.2, 2.2],
-          [["Técnica", "Recall", "Precisión", "Tokens de contexto", "LLM al recuperar"],
-           ["Naive RAG", "100%", "39%", "~1.700", "0"],
-           ["GraphRAG (/kg, 1 salto)", "43%", "43%", "~370", "0"],
-           ["GraphRAG (/kg, 2 saltos)", "86%", "23%", "mayor", "0"],
-           ["OAG", "86%", "60%", "~1.400", "0"],
-           ["Agentic RAG", "en directo", "en directo", "variable", "varios pasos"]], row_h=0.48, size=11.5)
-    text(s, 0.7, 5.45, 11.9, 0.7,
-         [[R("Corpus de 14 ficheros, respuesta esperada de 7 tickets escrita por quien resolvió el bug. "
-             "Una pregunta es una demostración, no una evaluación: la lista esperada es un mínimo.", 11, FAINT, False)]])
-    takeaway(s, "Naive RAG encuentra las palabras; OAG devuelve los hechos y dice de dónde salen.")
+    diagram(s, "scenarios", page=pg)
+
+    # ---- Resultados A
+    s, pg = new()
+    base(s, "Parte 4 · Pregunta A", "Reglas sobre un componente modelado", page=pg)
+    table(s, 0.7, 1.95, [3.0, 1.3, 1.4, 1.0, 1.1, 1.85, 2.3],
+          [["Técnica", "Recall", "Precisión", "F1", "IDs", "Tokens", "Con 14 ficheros (R / P)"],
+           ["Naive RAG", "71%", "62%", "0,67", "8", "~1.600", "100% / 39%"],
+           ["GraphRAG (/kg, 1 salto)", "71%", "50%", "0,59", "10", "~770", "43% / 43%"],
+           ["GraphRAG (/kg, 2 saltos)", "100%", "13%", "0,23", "53", "~7.000", "86% / 23%"],
+           ["OAG, esquema v1", "86%", "35%", "0,50", "17", "~2.000", "86% / 60%"],
+           ["OAG, esquema v2", "100%", "47%", "0,64", "15", "~2.500", "-"],
+           ["Agentic RAG", "en directo", "en directo", "-", "variable", "variable", "-"]], row_h=0.44, size=11.5)
+    text(s, 0.7, 5.75, 11.9, 0.5,
+         [[R("7 tickets esperados, escritos por quien resolvió el bug. Corpus completo: 452 ficheros. "
+             "Por F1 Naive RAG queda a la par, pero se deja dos de los siete: en «qué no romper», un olvido es una regresión.",
+             11, FAINT, False)]])
+    takeaway(s, "OAG v2 encuentra todo en 15 tickets, no en 53, y dice por qué importa cada uno.")
+
+    # ---- Resultados B
+    s, pg = new()
+    base(s, "Parte 4 · Pregunta B", "Explorar un área que la ontología no modela", page=pg)
+    table(s, 0.7, 1.95, [3.0, 1.4, 1.5, 1.1, 1.2, 2.0],
+          [["Técnica", "Recall", "Precisión", "F1", "IDs", "Tokens"],
+           ["Naive RAG", "10%", "100%", "0,19", "3", "~1.600"],
+           ["GraphRAG (/kg, 1 salto)", "21%", "67%", "0,32", "9", "~1.100"],
+           ["GraphRAG (/kg, 2 saltos)", "83%", "43%", "0,56", "56", "~7.000"],
+           ["OAG, esquema v1 y v2", "0%", "-", "0", "0", "0"],
+           ["Agentic RAG", "en directo", "en directo", "-", "variable", "variable"]], row_h=0.44, size=11.5)
+    text(s, 0.7, 5.25, 11.9, 0.9,
+         [[R("29 esperados por una regla objetiva: los writeups cuyo título menciona el área. "
+             "GraphRAG agrupa el resultado en temas con las comunidades del grafo; "
+             "OAG no encuentra ningún componente de su ontología en la pregunta y no devuelve nada.",
+             11, FAINT, False)]])
+    takeaway(s, "GraphRAG descubre lo que nadie ha modelado; OAG solo ve lo que su esquema declara.")
+
+    # ---- v1 -> v2
+    s, pg = new()
+    base(s, "Parte 4 · De OAG v1 a v2", "El esquema también se depura", page=pg)
+    panel_bullets(s, 0.7, 2.0, 5.85, 2.6, "1 · Ruido: una relación sin restricción",
+                  ["must_not_break traía tickets de otras áreas (numeración, PDF)",
+                   "v2 añade una restricción al estilo SHACL: el ticket protegido debe compartir componente",
+                   "De 17 a 11 tickets sin perder ninguno esperado"], accent=AMBER)
+    panel_bullets(s, 6.8, 2.0, 5.85, 2.6, "2 · Una dependencia sin declarar",
+                  ["El fin de carta usa get_titles para mirar el título siguiente",
+                   "v1 trataba los componentes como islas",
+                   "v2 añade la relación calls y recupera el invariante que faltaba: recall del 86 % al 100 %"],
+                  accent=GREEN)
+    takeaway(s, "v2 se escribió después de ver el fallo: es evolución del esquema y hay que validarla con preguntas nuevas.")
 
     s, pg = new()
     diagram(s, "when_to_use", page=pg)
+
+    # ---- Dónde gana cada una
+    s, pg = new()
+    base(s, "Parte 4 · Dónde gana cada técnica", "Depende de la pregunta, no de la moda", page=pg)
+    table(s, 0.7, 1.95, [4.6, 2.3, 5.0],
+          [["Si la pregunta es...", "Usa", "Porque"],
+           ["«Qué reglas, tickets o tests protegen este componente»", "OAG", "Hechos tipados con su porqué; poco ruido; validable antes del LLM"],
+           ["«Qué hay sobre esta área y cómo se organiza»", "GraphRAG (/kg)", "Descubre estructura sin esquema previo y agrupa en temas"],
+           ["«Dónde se menciona este identificador»", "Naive RAG o búsqueda", "Barato e inmediato; no necesita estructura"],
+           ["«Investiga este problema nuevo»", "Agentic RAG", "Planifica y vuelve a buscar; caro y variable"]],
+          row_h=0.62, size=11.5)
+    takeaway(s, "OAG no sustituye a GraphRAG: lo completa. Uno descubre la estructura; el otro la fija como contrato.")
+
+    # ---- Merece la pena
+    s, pg = new()
+    base(s, "Parte 4 · ¿Merece la pena?", "Sí, por partes y solo para las preguntas de reglas", page=pg)
+    panel_bullets(s, 0.7, 2.0, 3.85, 3.3, "Lo que ha costado",
+                  ["Ontología de ~60 líneas: 4 clases, 6 relaciones, 1 restricción, 4 componentes",
+                   "Sale en buena parte de las plantillas (ISSUE_NOTE, SHARP_EDGES, TEST_MAP)",
+                   "Extracción determinista: 0 llamadas LLM"], accent=GREEN)
+    panel_bullets(s, 4.75, 2.0, 3.85, 3.3, "Lo que no compensa",
+                  ["Modelar todo el dominio «por completitud»",
+                   "Sustituir /kg: explorar lo sigue haciendo mejor el grafo",
+                   "Atribuir el resultado sin un set de 15-20 preguntas"], accent=AMBER)
+    panel_bullets(s, 8.8, 2.0, 3.85, 3.3, "Qué llevar a la metodología",
+                  ["Paso 0: set de preguntas de reglas y de exploración",
+                   "Ontología mínima con dependencias (calls)",
+                   "Validar en /kg-refresh contra el esquema",
+                   "/kg facts <componente> junto a /kg <tema>"], accent=CORAL)
+    takeaway(s, "Poco esfuerzo, bien acotado: ontología pequeña, extracción sin LLM y dos modos en /kg.")
 
     # ---- Cierre
     s, pg = new()

@@ -1,4 +1,4 @@
-# Minimal ontology for the ticket memory (demo scope).
+# Minimal ontology for the ticket memory (demo scope). Version 2.
 # Written before extraction (schema-first). The extractor may only emit the classes and
 # relations declared here; anything else is rejected by validation and reported.
 # Derived from the methodology templates (ISSUE_NOTE, SHARP_EDGES, TEST_MAP), see HANDOVER.md, Phase A.
@@ -26,6 +26,17 @@ relations:
   originates:   {from: Ticket,    to: Invariant, description: The invariant was introduced by this ticket.}
   verified_by:  {from: Ticket,    to: Test,      description: The ticket's contract is pinned by this test.}
   must_not_break: {from: Ticket,  to: Ticket,    description: The writeup names the other ticket as a regression to avoid.}
+  calls:        {from: Component, to: Component, since: 2,
+                 description: The first component calls code of the second; changing it can break the second's invariants.}
+
+# Constraints checked at query time (SHACL-like shapes). `since` marks the schema version that added them;
+# `python demo/oag.py query --schema 1` runs without them, to show what each change buys.
+constraints:
+  must_not_break_same_component:
+    since: 2
+    description: A ticket reached through must_not_break only counts if it touches, or originates an
+      invariant that guards, one of the question's components. Without it, a writeup that touches the
+      component drags in regressions from unrelated areas (numbering, PDF).
 
 # Components of the domain and the words that identify them in free text (altLabels).
 # This is the part a domain expert writes; it is what makes "letter end", "LETTER_END_*",
@@ -35,6 +46,9 @@ components:
     label: Letter-end detection
     alt_labels: [get_letter_end, letter_end, LETTER_END, letter-end, letter end, end-of-letter,
                  end of letter, _confirm_letter_end_via_lookahead, signature page, _is_signature_page_marker]
+    # The letter-end look-ahead matches the next provision title with get_titles (an invariant in SHARP_EDGES
+    # invariant), so invariants that pin get_titles can break when letter-end detection changes.
+    calls: {title_detection: [get_titles]}
   title_detection:
     label: Provision title detection
     alt_labels: [get_titles, is_potential_title, TITLE_LEN_MAX, title match, titles_l, glued title]

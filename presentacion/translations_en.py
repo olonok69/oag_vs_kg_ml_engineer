@@ -188,8 +188,12 @@ PLAIN = {
     "en directo": "live",
     "variable": "variable",
     "varios pasos": "several steps",
-    "Corpus de 14 ficheros, respuesta esperada de 7 tickets escrita por quien resolvió el bug. Una pregunta es una demostración, no una evaluación: la lista esperada es un mínimo.":
-        "14-file corpus, expected answer of 7 tickets written by whoever solved the bug. One question is a demonstration, not an evaluation: the expected list is a floor.",
+    "Corpus completo: 452 ficheros. Al crecer el corpus, Naive RAG pierde recall y OAG lo mantiene. Respuesta esperada de 7 tickets; una pregunta es una demostración, no una evaluación.":
+        "Full corpus: 452 files. As the corpus grows, Naive RAG loses recall and OAG keeps it. Expected answer of 7 tickets; one question is a demonstration, not an evaluation.",
+    "Con 14 ficheros (R / P)": "With 14 files (R / P)",
+    "~1.600": "~1,600",
+    "~7.000": "~7,000",
+    "~2.000": "~2,000",
     "CIERRE": "CLOSING",
     "En una frase": "In one sentence",
     "Referencias": "References",
@@ -341,6 +345,94 @@ KEEP = [
     "L. Huang — From RAG to OAG (medium.com/@linghuang_76674).",
     "Lewis et al. 2020 (arXiv 2005.11401) · Gao et al. 2023 (arXiv 2312.10997) · Edge et al. 2024, GraphRAG (arXiv 2404.16130) · Singh et al. 2025, Agentic RAG (arXiv 2501.09136)",
 ]
+
+
+# Part 4 with two questions (where each technique wins).
+PLAIN.update({
+    "Cinco skills de Claude Code, dos preguntas reales y la misma vara de medir.":
+        "Five Claude Code skills, two real questions and the same yardstick.",
+    "Dos preguntas, dos ganadores": "Two questions, two winners",
+    "De OAG v1 a v2": "From OAG v1 to v2",
+    "Dónde gana cada técnica": "Where each technique wins",
+    "¿Merece la pena en nuestro caso?": "Is it worth it in our case?",
+    "PARTE 4 · PREGUNTA A": "PART 4 · QUESTION A",
+    "Reglas sobre un componente modelado": "Rules about a modelled component",
+    "PARTE 4 · PREGUNTA B": "PART 4 · QUESTION B",
+    "Explorar un área que la ontología no modela": "Exploring an area the ontology does not model",
+    "Tokens": "Tokens",
+    "OAG, esquema v1": "OAG, schema v1",
+    "OAG, esquema v2": "OAG, schema v2",
+    "OAG, esquema v1 y v2": "OAG, schema v1 and v2",
+    "0,67": "0.67", "0,59": "0.59", "0,23": "0.23", "0,50": "0.50", "0,64": "0.64",
+    "0,19": "0.19", "0,32": "0.32", "0,56": "0.56", "~1.100": "~1,100", "~2.500": "~2,500",
+    "7 tickets esperados, escritos por quien resolvió el bug. Corpus completo: 452 ficheros. Por F1 Naive RAG queda a la par, pero se deja dos de los siete: en «qué no romper», un olvido es una regresión.":
+        "7 expected tickets, written by whoever solved the bug. Full corpus: 452 files. On F1 Naive RAG is level, but it misses two of the seven: in a \"what must not break\" question, a miss is a regression.",
+    "29 esperados por una regla objetiva: los writeups cuyo título menciona el área. GraphRAG agrupa el resultado en temas con las comunidades del grafo; OAG no encuentra ningún componente de su ontología en la pregunta y no devuelve nada.":
+        "29 expected by an objective rule: the writeups whose title mentions the area. GraphRAG groups the result into themes with the graph's communities; OAG finds no component of its ontology in the question and returns nothing.",
+    "PARTE 4 · DE OAG V1 A V2": "PART 4 · FROM OAG V1 TO V2",
+    "El esquema también se depura": "The schema gets debugged too",
+    "1 · Ruido: una relación sin restricción": "1 · Noise: an unconstrained relation",
+    "2 · Una dependencia sin declarar": "2 · An undeclared dependency",
+    "PARTE 4 · DÓNDE GANA CADA TÉCNICA": "PART 4 · WHERE EACH TECHNIQUE WINS",
+    "Depende de la pregunta, no de la moda": "It depends on the question, not on fashion",
+    "Si la pregunta es...": "If the question is...",
+    "Usa": "Use",
+    "Porque": "Because",
+    "«Qué reglas, tickets o tests protegen este componente»": "\"Which rules, tickets or tests protect this component\"",
+    "Hechos tipados con su porqué; poco ruido; validable antes del LLM": "Typed facts with their reason; little noise; validated before the LLM",
+    "«Qué hay sobre esta área y cómo se organiza»": "\"What is there about this area and how is it organised\"",
+    "GraphRAG (/kg)": "GraphRAG (/kg)",
+    "Descubre estructura sin esquema previo y agrupa en temas": "Discovers structure without a prior schema and groups it into themes",
+    "«Dónde se menciona este identificador»": "\"Where is this identifier mentioned\"",
+    "Naive RAG o búsqueda": "Naive RAG or search",
+    "Barato e inmediato; no necesita estructura": "Cheap and immediate; needs no structure",
+    "«Investiga este problema nuevo»": "\"Investigate this new problem\"",
+    "Planifica y vuelve a buscar; caro y variable": "Plans and searches again; costly and variable",
+    "PARTE 4 · ¿MERECE LA PENA?": "PART 4 · IS IT WORTH IT?",
+    "Sí, por partes y solo para las preguntas de reglas": "Yes, in parts and only for rules questions",
+    "Lo que ha costado": "What it cost",
+    "Lo que no compensa": "What does not pay off",
+    "Qué llevar a la metodología": "What to take to the methodology",
+})
+BULLETS_2 = {
+    "must_not_break traía tickets de otras áreas (numeración, PDF)":
+        "must_not_break brought in tickets from other areas (numbering, PDF)",
+    "v2 añade una restricción al estilo SHACL: el ticket protegido debe compartir componente":
+        "v2 adds a SHACL-style constraint: the protected ticket must share a component",
+    "De 17 a 11 tickets sin perder ninguno esperado": "From 17 to 11 tickets without losing any expected one",
+    "El fin de carta usa get_titles para mirar el título siguiente":
+        "Letter-end detection uses get_titles to look at the next title",
+    "v1 trataba los componentes como islas": "v1 treated components as islands",
+    "v2 añade la relación calls y recupera el invariante que faltaba: recall del 86 % al 100 %":
+        "v2 adds the calls relation and recovers the missing invariant: recall from 86% to 100%",
+    "Ontología de ~60 líneas: 4 clases, 6 relaciones, 1 restricción, 4 componentes":
+        "~60-line ontology: 4 classes, 6 relations, 1 constraint, 4 components",
+    "Sale en buena parte de las plantillas (ISSUE_NOTE, SHARP_EDGES, TEST_MAP)":
+        "Much of it comes from the templates (ISSUE_NOTE, SHARP_EDGES, TEST_MAP)",
+    "Extracción determinista: 0 llamadas LLM": "Deterministic extraction: 0 LLM calls",
+    "Modelar todo el dominio «por completitud»": "Modelling the whole domain \"for completeness\"",
+    "Sustituir /kg: explorar lo sigue haciendo mejor el grafo": "Replacing /kg: the graph still explores better",
+    "Atribuir el resultado sin un set de 15-20 preguntas": "Crediting the result without a 15-20 question set",
+    "Paso 0: set de preguntas de reglas y de exploración": "Step 0: a set of rules and exploration questions",
+    "Ontología mínima con dependencias (calls)": "Minimal ontology with dependencies (calls)",
+    "Validar en /kg-refresh contra el esquema": "Validate in /kg-refresh against the schema",
+    "/kg facts <componente> junto a /kg <tema>": "/kg facts <component> next to /kg <topic>",
+}
+BULLETS.update(BULLETS_2)
+QUOTES.update({
+    "OAG v2 encuentra todo en 15 tickets, no en 53, y dice por qué importa cada uno.":
+        "OAG v2 finds everything in 15 tickets, not 53, and says why each one matters.",
+    "GraphRAG descubre lo que nadie ha modelado; OAG solo ve lo que su esquema declara.":
+        "GraphRAG discovers what nobody has modelled; OAG only sees what its schema declares.",
+    "v2 se escribió después de ver el fallo: es evolución del esquema y hay que validarla con preguntas nuevas.":
+        "v2 was written after seeing the failure: it is schema evolution and must be validated on new questions.",
+    "OAG no sustituye a GraphRAG: lo completa. Uno descubre la estructura; el otro la fija como contrato.":
+        "OAG does not replace GraphRAG: it complements it. One discovers the structure; the other pins it as a contract.",
+    "Poco esfuerzo, bien acotado: ontología pequeña, extracción sin LLM y dos modos en /kg.":
+        "Small, well-bounded effort: a small ontology, extraction without an LLM and two modes in /kg.",
+})
+RUNS["PARTE 4 — La demo: de Naive RAG a OAG con Claude Code, dos preguntas, dónde gana cada técnica y si merece la pena"] = \
+    ["PART 4 — ", "The demo: from Naive RAG to OAG with Claude Code, two questions, where each technique wins and whether it is worth it"]
 
 TRANSLATIONS: dict = {}
 TRANSLATIONS.update(PLAIN)

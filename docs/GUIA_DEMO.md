@@ -1,6 +1,7 @@
 # Guía de la presentación y la demo: de Naive RAG a OAG
 
-> English version: [DEMO_GUIDE.md](DEMO_GUIDE.md). Deck: `presentacion/OAG_vs_KG_Presentacion.pptx`
+> English version: [DEMO_GUIDE.md](DEMO_GUIDE.md). Detalle técnico (qué se ejecuta y dónde):
+> [GUIA_TECNICA.md](GUIA_TECNICA.md). Deck: `presentacion/OAG_vs_KG_Presentacion.pptx`
 > (ES) y `presentacion/OAG_vs_KG_Presentation_EN.pptx` (EN). Diagramas: `docs/img/` (se regeneran con
 > `python docs/img/build_diagrams.py --png`).
 
@@ -16,8 +17,8 @@ evaluación y, al final, cuándo conviene cada técnica.
 | 2 | Conceptos: ontología, hechos, schema-first | 10 min |
 | 3 | De RAG a OAG y el pipeline de OG-RAG | 10 min |
 | 4 | Nuestro grafo de tickets: qué hace y qué aprendimos | 10 min |
-| 5 | Demo en directo: cinco skills | 20 min |
-| 6 | Evaluación, resultados y cuándo usar cada técnica | 10 min |
+| 5 | Demo en directo: dos preguntas, cinco skills | 25 min |
+| 6 | Evaluación, resultados, dónde gana cada técnica y si merece la pena | 15 min |
 
 ---
 
@@ -138,21 +139,26 @@ sola vez, atribución, uso antes de actuar). Le falta el esquema previo, la vali
 
 ## 5. La demo
 
-Cinco skills de Claude Code responden a la misma pregunta real sobre el mismo corpus. Detalle técnico en
-`demo/README.md`.
+Cinco skills de Claude Code responden a las mismas preguntas reales sobre el mismo corpus. La demo no
+busca un ganador absoluto: tiene dos preguntas elegidas para enseñar dónde gana cada técnica y por qué.
+Detalle técnico en `demo/README.md`.
 
 ### Preparación (antes de la sesión)
 
 ```bash
 git pull
-pip install -r demo/requirements.txt
-python demo/oag.py build
+uv sync && source .venv/bin/activate
+python demo/oag.py build --q letter-end-runin
+python demo/oag.py build --q comment-memo-landscape
 python demo/compare.py        # comprobación rápida de que todo responde
 ```
 
-Los datos están en `data/` (fuera de git): corpus de kg, `graph.json` y `questions.yaml`.
+Los datos están en `data/` (fuera de git): el corpus completo de kg, `graph.json`, los nombres de las
+comunidades y `questions.yaml`.
 
-### La pregunta
+### Las dos preguntas
+
+**A. Reglas sobre un componente modelado** (`letter-end-runin`, se espera que gane OAG):
 
 > Tengo que arreglar un bug nuevo: en una side letter DOCX el marcador de fin de carta va «run-in»
 > (dentro de un párrafo, después de una cláusula), `get_letter_end` no lo detecta y el bloque de firma
@@ -162,29 +168,70 @@ Los datos están en `data/` (fuera de git): corpus de kg, `graph.json` y `questi
 Es un bug real que ya se investigó. Su writeup contiene la lista de lo que no hay que romper, escrita por
 quien lo resolvió. Esa lista es la hoja de respuestas, y el writeup se excluye de todas las técnicas.
 
+**B. Explorar un área que la ontología no modela** (`comment-memo-landscape`, se espera que gane
+GraphRAG):
+
+> Empiezo a trabajar en el extractor del memo de comentarios y no lo conozco. ¿Qué tickets anteriores
+> tratan de él y en qué temas se agrupan?
+
+La respuesta esperada sale de una regla objetiva: todos los writeups cuyo título menciona el memo de
+comentarios (29). La ontología de la demo no tiene ese componente, a propósito: es lo que pasa con
+cualquier área que nadie ha modelado todavía.
+
 ### Paso a paso
+
+Pregunta A:
 
 | Skill | Qué enseñar | Qué decir |
 |---|---|---|
 | `/demo-naive-rag` | Los 5 trozos recuperados y los tickets que aparecen | Encuentra las palabras, no los hechos. No sabe qué ticket importa ni por qué |
 | `/demo-agentic-rag` | Claude planificando, buscando y leyendo, paso a paso | Más precisión a cambio de pasos y tokens; cada ejecución es distinta |
-| `/demo-graphrag` | Los vecinos de `get_letter_end`, sus tipos de arista y la lista de lectura | Barato y determinista. Dice qué leer; con dos saltos gana recall y pierde precisión |
-| `/demo-oag` | `ontology.yaml`, el informe de validación (lo rechazado) y los fact blocks | El esquema primero. Cada hecho dice qué invariante origina, quién pide no romperlo y qué test lo fija |
-| `/demo-compare` | La tabla final | Recall, precisión y coste, con sus límites |
+| `/demo-graphrag` | Los vecinos de `get_letter_end`, sus tipos de arista y la lista de lectura | Barato y determinista. Dice qué leer; con dos saltos lo encuentra todo, pero entre 53 tickets |
+| `/demo-oag` | `ontology.yaml`, lo rechazado por la validación y los fact blocks, con v1 y v2 | El esquema primero. Cada hecho dice qué invariante origina, quién pide no romperlo y qué test lo fija |
+
+Pregunta B:
+
+| Skill | Qué enseñar | Qué decir |
+|---|---|---|
+| `/demo-graphrag comment-memo-landscape` | Vecinos del extractor a dos saltos y los temas (comunidades con nombre) | Nadie ha modelado esta área y el grafo la encuentra y la agrupa |
+| `/demo-oag comment-memo-landscape` | La consulta sin componentes y sin hechos | OAG solo ve lo que su esquema declara. Para cubrir el área hay que modelarla primero |
+| `/demo-compare` | Las dos tablas | Dónde gana cada una, con sus límites |
 
 ![OAG en la demo](img/demo_oag_pipeline.es.svg)
 
-En `/demo-oag` merece la pena enseñar tres cosas: los sinónimos del componente `letter_end_detection`
-(por qué la pregunta encuentra el componente), las 31 menciones genéricas rechazadas por la validación
-(por qué el grafo resultante es más limpio) y un fact block completo (qué recibe el modelo).
+En `/demo-oag` merece la pena enseñar cuatro cosas: los sinónimos del componente `letter_end_detection`
+(por qué la pregunta encuentra el componente), las menciones genéricas rechazadas por la validación (por
+qué el grafo resultante es más limpio), un fact block completo (qué recibe el modelo) y la diferencia
+entre el esquema v1 y el v2 (siguiente apartado).
+
+### De OAG v1 a v2: el esquema también se depura
+
+La primera ontología fallaba en la pregunta A de dos formas, y las dos eran del esquema, no de la
+técnica:
+
+1. **Ruido por una relación sin restricción.** `must_not_break` traía tickets que un writeup de fin de
+   carta pide no romper, pero que pertenecen a otras áreas (numeración, PDF). La v2 añade una
+   restricción, al estilo de SHACL: el ticket protegido debe compartir componente con la pregunta. Pasa
+   de 17 a 11 tickets sin perder ninguno esperado.
+2. **Una dependencia que no estaba declarada.** La detección de fin de carta usa `get_titles` para mirar
+   el título siguiente (lo dice un invariante de `SHARP_EDGES`), pero la v1 trataba los componentes como
+   islas. La v2 añade la relación `calls` (fin de carta llama a `get_titles`) y recupera el invariante
+   que faltaba.
+
+`python demo/oag.py query --schema 1` reproduce la v1. Hay que contarlo con honestidad: la v2 se escribió
+después de ver qué fallaba. Es la forma normal de mantener una ontología, pero el resultado solo se puede
+atribuir a la técnica cuando se valide con preguntas nuevas.
 
 ## 6. Cómo evaluamos
 
 ![Evaluación](img/evaluation.es.svg)
 
-- **Respuesta esperada**: los tickets que el writeup del bug manda respetar (7 en la pregunta actual).
-- **Hold-out**: el writeup y sus notas se excluyen del corpus, del grafo y de los hechos.
+- **Respuesta esperada**: en la pregunta A, los tickets que el writeup del bug manda respetar (7); en la
+  B, los writeups cuyo título menciona el área (29), una regla objetiva y no una lista elegida a mano.
+- **Hold-out**: en la pregunta A, el writeup y sus notas se excluyen del corpus, del grafo y de los
+  hechos. La B no tiene hoja de respuestas que esconder.
 - **Recall** = esperados encontrados / esperados. **Precisión** = esperados encontrados / devueltos.
+  **F1** = media armónica de las dos.
 - **Qué cuenta como devuelto**: en Naive RAG, los tickets que aparecen en los trozos; en GraphRAG, los de
   los vecinos y la lista de lectura; en OAG, el sujeto de cada fact block y los orígenes de sus
   invariantes (no los tickets que solo figuran como procedencia).
@@ -192,25 +239,52 @@ En `/demo-oag` merece la pena enseñar tres cosas: los sinónimos del componente
 - **Respuesta de Claude**: cada skill registra la respuesta final; es la comparación que importa en
   directo.
 
-Resultados con 14 ficheros del corpus (antes de copiar el corpus completo):
+Resultados con el corpus completo (452 ficheros tras el hold-out) y el grafo reconstruido el 20 de
+noviembre.
 
-| Técnica | Recall | Precisión | Tokens de contexto | LLM al recuperar |
-|---|---|---|---|---|
-| Naive RAG | 100 % | 39 % | ~1.700 | 0 |
-| GraphRAG (/kg, 1 salto) | 43 % | 43 % | ~370 | 0 |
-| GraphRAG (/kg, 2 saltos) | 86 % | 23 % | mayor | 0 |
-| OAG | 86 % | 60 % | ~1.400 | 0 |
-| Agentic RAG | en directo | en directo | variable | varios pasos |
+![Dos preguntas, dos ganadores](img/scenarios.es.svg)
+
+**Pregunta A: reglas sobre un componente modelado** (7 esperados). La última columna es la primera
+prueba, con 14 ficheros y el grafo anterior:
+
+| Técnica | Recall | Precisión | F1 | IDs | Tokens de contexto | Con 14 ficheros (R / P) |
+|---|---|---|---|---|---|---|
+| Naive RAG | 71 % | 62 % | 0,67 | 8 | ~1.600 | 100 % / 39 % |
+| GraphRAG (/kg, 1 salto) | 71 % | 50 % | 0,59 | 10 | ~770 | 43 % / 43 % |
+| GraphRAG (/kg, 2 saltos) | 100 % | 13 % | 0,23 | 53 | ~7.000 | 86 % / 23 % |
+| OAG, esquema v1 | 86 % | 35 % | 0,50 | 17 | ~2.000 | 86 % / 60 % |
+| OAG, esquema v2 | 100 % | 47 % | 0,64 | 15 | ~2.500 | - |
+| Agentic RAG | en directo | en directo | - | variable | variable | - |
+
+**Pregunta B: explorar un área que la ontología no modela** (29 esperados):
+
+| Técnica | Recall | Precisión | F1 | IDs | Tokens de contexto |
+|---|---|---|---|---|---|
+| Naive RAG | 10 % | 100 % | 0,19 | 3 | ~1.600 |
+| GraphRAG (/kg, 1 salto) | 21 % | 67 % | 0,32 | 9 | ~1.100 |
+| GraphRAG (/kg, 2 saltos) | 83 % | 43 % | 0,56 | 56 | ~7.000 |
+| OAG, esquema v1 y v2 | 0 % | - | 0 | 0 | 0 |
+| Agentic RAG | en directo | en directo | - | variable | variable |
+
+Ninguna técnica llama a un LLM para recuperar, salvo Agentic RAG, que es el propio Claude buscando.
 
 Cómo leerlos:
 
-- Naive RAG acierta todo porque entra el índice de invariantes de `SHARP_EDGES`, que alguien ya escribió
-  a mano: es una ontología implícita. Con el corpus completo la competencia por el top-k es mayor.
-- OAG no encuentra uno de los siete tickets porque su invariante protege la detección de títulos, no el fin de carta. Es
-  un fallo honesto del esquema, y se corrige con una relación o un componente más, no con más texto.
-- Una sola pregunta no es una evaluación. La lista esperada es un mínimo: algunos «falsos positivos» de
-  OAG (otros invariantes de fin de carta) son defendibles. La evaluación seria es el Paso 0 del
-  `HANDOVER.md`: entre 15 y 20 preguntas con respuesta conocida.
+- **En la pregunta A gana OAG v2, y conviene decir en qué.** Es la única técnica que encuentra los siete
+  tickets sin traer otros 46: GraphRAG a dos saltos también llega al 100 %, pero entre 53. Por F1, Naive
+  RAG queda a la par, porque devuelve poco; pero se deja dos de los siete, y en una pregunta de «qué no
+  romper» un olvido es una regresión. Además, cada fact block dice por qué el ticket importa
+  (invariante, componente y test), algo que ni los trozos ni la lista de lectura dicen.
+- **En la pregunta B gana GraphRAG.** Descubre el área sin que nadie la haya modelado y la agrupa en temas
+  con las comunidades del grafo (rutas de extracción, modo documento, vocabulario de estados, fronteras
+  de cadena, cabeceras de tabla...). OAG no devuelve nada, porque la pregunta no menciona ningún
+  componente de su ontología: no falla con ruido, falla en silencio. Naive RAG acierta en lo poco que
+  devuelve, pero un top-5 no puede responder «todo lo que hay sobre X».
+- **Naive RAG pierde recall al crecer el corpus** (100 % con 14 ficheros, 71 % con 452). Con pocos
+  ficheros entraba el índice de `SHARP_EDGES`, que ya es una ontología implícita escrita a mano.
+- **Dos preguntas no son una evaluación.** La lista esperada es un mínimo y OAG v2 se corrigió tras ver el
+  fallo. La evaluación seria es el Paso 0 del `HANDOVER.md`: entre 15 y 20 preguntas con respuesta
+  conocida, mezclando los dos tipos.
 
 ## 7. Cuándo conviene cada técnica
 
@@ -228,19 +302,49 @@ Cómo leerlos:
 Regla práctica: empezar por lo más simple que responda las preguntas reales y medir antes de subir de
 nivel. Una ontología grande «por completitud» es el principal riesgo de OAG.
 
+### Dónde gana cada una en nuestra demo
+
+| Si la pregunta es... | Usa | Porque |
+|---|---|---|
+| «Qué reglas, tickets o tests protegen este componente» | OAG | Hechos tipados con su porqué; poco ruido; validable antes de llegar al LLM |
+| «Qué hay sobre esta área y cómo se organiza» | GraphRAG (/kg) | Descubre estructura sin esquema previo y agrupa en temas |
+| «Dónde se menciona este identificador» | Naive RAG o búsqueda | Barato e inmediato; no necesita estructura |
+| «Investiga este problema nuevo» | Agentic RAG | Planifica y vuelve a buscar; caro y variable |
+
+OAG no sustituye a GraphRAG: lo completa. GraphRAG descubre la estructura; OAG fija la parte estable
+como contrato y responde con hechos verificables.
+
 ## 8. Lecciones para los skills de la metodología
 
-Lo que la demo sugiere para `/kg`, `/kg-refresh` y las plantillas:
+### ¿Merece la pena el esfuerzo en nuestro caso?
 
-1. **Medir antes de cambiar**: convertir la pregunta de la demo en las primeras de un set de 15-20 con
-   respuesta conocida (Paso 0) y medir el grafo actual.
-2. **Escribir la ontología mínima** a partir de las plantillas (Fase A): la de la demo
-   (`demo/oag/ontology.yaml`) es un punto de partida.
-3. **Backbone determinista** (Fase B): frontmatter en las plantillas de ticket y sharp edges, y parseo
-   de tablas e IDs. La demo extrae así el 100 % de sus hechos, sin LLM.
-4. **Extracción guiada y validada** (Fase C): pasar la ontología a los subagentes de graphify y rechazar
+Sí, si se adopta por partes y solo para las preguntas de reglas. Lo que ha costado la demo:
+
+- **La ontología**: 4 clases, 6 relaciones, 1 restricción y 4 componentes con sus sinónimos, unas 60
+  líneas de YAML. Buena parte sale de las plantillas que ya usamos (ISSUE_NOTE, SHARP_EDGES, TEST_MAP).
+- **La extracción**: determinista, sin LLM. Parsea tablas, viñetas e IDs; no hay coste por consulta ni
+  por reconstrucción.
+- **El mantenimiento**: cada área nueva que queramos consultar con OAG necesita su componente y sus
+  sinónimos; cada fallo como el de v1 se corrige con una regla o una relación. Ese es el precio, y es
+  pequeño mientras la ontología se limite a lo que preguntamos de verdad.
+
+Lo que no merece la pena: modelar todo el dominio «por completitud» o sustituir `/kg`. Las preguntas de
+exploración las sigue respondiendo mejor el grafo.
+
+### Qué llevar a `/kg`, `/kg-refresh` y las plantillas
+
+1. **Medir antes de cambiar**: convertir las dos preguntas de la demo en las primeras de un set de 15-20
+   con respuesta conocida (Paso 0), mezclando preguntas de reglas y de exploración.
+2. **Escribir la ontología mínima** a partir de las plantillas (Fase A), empezando por los componentes
+   con más invariantes en `SHARP_EDGES`. La de la demo (`demo/oag/ontology.yaml`) es el punto de partida.
+3. **Declarar las dependencias entre componentes** (`calls`): es lo que faltaba en la v1 y lo que un
+   grafo emergente no da tipado.
+4. **Backbone determinista** (Fase B): frontmatter en las plantillas de ticket y sharp edges, y parseo de
+   tablas e IDs. La demo extrae así el 100 % de sus hechos, sin LLM.
+5. **Extracción guiada y validada** (Fase C): pasar la ontología a los subagentes de graphify y rechazar
    en `finalize` lo que no cumpla el esquema. Es la continuación natural de fijar la convención de IDs.
-5. **`/kg facts <tema>`** (Fase D): devolver fact blocks con su fuente, además de la lista de lectura.
+6. **Dos modos en `/kg`** (Fase D): `/kg facts <componente>` devuelve fact blocks con su fuente para
+   preguntas de reglas; `/kg <tema>` sigue devolviendo vecinos, temas y lista de lectura para explorar.
 
 ## Referencias
 

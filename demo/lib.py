@@ -33,19 +33,45 @@ def utf8_stdout() -> None:
             pass
 
 
-def load_question(path: str = QUESTIONS) -> dict:
+def add_question_arg(ap) -> None:
+    ap.add_argument("--q", dest="qid", default=os.environ.get("DEMO_Q"),
+                    help="question id in data/questions.yaml (default: the file's `default`)")
+
+
+def list_questions(path: str = QUESTIONS) -> list[dict]:
+    """All questions. data/questions.yaml holds either one question or `questions: [...]`."""
     try:
         import yaml
     except ImportError:
-        sys.exit("pyyaml is required: pip install pyyaml")
+        sys.exit("pyyaml is required: uv sync (or pip install pyyaml)")
     if not os.path.exists(path):
         sys.exit(f"No question file at {path}. Copy demo/questions.example.yaml to data/questions.yaml.")
     with open(path, encoding="utf-8") as f:
-        q = yaml.safe_load(f)
-    q["holdout"] = [h.upper() for h in q.get("holdout", [])]
-    q["esperado"] = [e.upper() for e in q.get("esperado", [])]
-    q.setdefault("holdout_files", [])
-    return q
+        doc = yaml.safe_load(f)
+    qs = doc["questions"] if "questions" in doc else [doc]
+    for q in qs:
+        q["holdout"] = [h.upper() for h in q.get("holdout", []) or []]
+        q["esperado"] = [e.upper() for e in q.get("esperado", []) or []]
+        q["holdout_files"] = q.get("holdout_files", []) or []
+        q["_default"] = doc.get("default", qs[0]["id"])
+    return qs
+
+
+def load_question(qid: str | None = None, path: str = QUESTIONS) -> dict:
+    qs = list_questions(path)
+    want = qid or qs[0]["_default"]
+    for q in qs:
+        if q["id"] == want:
+            return q
+    sys.exit(f"No question {want!r}. Available: {', '.join(q['id'] for q in qs)}")
+
+
+def run_dir(q: dict) -> str:
+    return os.path.join(RUNS, q["id"])
+
+
+def facts_path(q: dict) -> str:
+    return os.path.join(OAG_DIR, q["id"], "facts.json")
 
 
 @dataclass
@@ -94,9 +120,9 @@ def approx_tokens(text: str) -> int:
     return max(1, len(text) // 4)
 
 
-def save_run(technique: str, payload: dict) -> str:
-    os.makedirs(RUNS, exist_ok=True)
-    path = os.path.join(RUNS, f"{technique}.json")
+def save_run(q: dict, technique: str, payload: dict) -> str:
+    os.makedirs(run_dir(q), exist_ok=True)
+    path = os.path.join(run_dir(q), f"{technique}.json")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
     return path
