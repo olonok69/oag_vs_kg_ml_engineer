@@ -21,6 +21,9 @@ La demo tiene dos escenarios, elegidos para enseñar dónde gana cada técnica:
 Todas las skills y scripts aceptan el id de la pregunta (`/demo-oag comment-memo-landscape`,
 `python demo/oag.py query --q comment-memo-landscape`); sin id se usa la pregunta por defecto.
 
+Qué ejecuta cada paso, función por función: [`docs/GUIA_TECNICA.md`](../docs/GUIA_TECNICA.md)
+(EN: [`docs/TECHNICAL_GUIDE.md`](../docs/TECHNICAL_GUIDE.md)).
+
 `/demo-graphrag` no es una implementación nueva: es la consulta que hace `/kg` (`kg_query.sh <tema>`,
 equivalente a `graphify explain`) sobre el `graph.json` que construye `/kg-refresh` en el repo lambda.
 El script la reproduce en Python para poder aplicar el hold-out y limitarla al corpus de la demo;

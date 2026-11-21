@@ -1,5 +1,6 @@
 # Presentation and demo guide: from Naive RAG to OAG
 
+> Technical detail (what runs and where): [TECHNICAL_GUIDE.md](TECHNICAL_GUIDE.md).
 > Versión en castellano: [GUIA_DEMO.md](GUIA_DEMO.md). Deck: `presentacion/OAG_vs_KG_Presentation_EN.pptx`
 > (EN) and `presentacion/OAG_vs_KG_Presentacion.pptx` (ES). Diagrams: `docs/img/` (regenerate with
 > `python docs/img/build_diagrams.py --png`).

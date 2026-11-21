@@ -29,6 +29,7 @@ Investigación sobre Ontology-Augmented Generation (OAG) frente al grafo de cono
 | `HANDOVER.md` | Traspaso completo: pregunta, fuentes, comparación, plan (Paso 0 y Fases A a D), reglas |
 | `docs/OAG_VS_KG.md` | Informe de investigación |
 | `docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md` | Guía de la demo en ES y EN |
+| `docs/GUIA_TECNICA.md`, `docs/TECHNICAL_GUIDE.md` | Guía técnica de la demo (qué se ejecuta y dónde), con enlaces al código |
 | `docs/img/build_diagrams.py` | Generador de los diagramas: SVG para las guías y PNG para el deck |
 | `presentacion/build_pptx_oag.py` | Generador del deck (python-pptx). El `.pptx` se regenera desde aquí; no editarlo a mano |
 | `presentacion/translations_en.py` | Traducciones para el deck en inglés |
@@ -76,6 +77,9 @@ python demo/oag.py build --q comment-memo-landscape
 Origen de los datos: `D:\repos3\ILS_2\document-parser-lambda\data\knowledge-graph\` (`_corpus/` y
 `output/graph.json`). La pregunta y la respuesta esperada están en `data/questions.yaml`; el ticket que
 sirve de hoja de respuestas se excluye de todas las técnicas (`holdout`).
+
+Si cambias el código de la demo, actualiza los enlaces a líneas (`#L`) de `docs/GUIA_TECNICA.md` y
+`docs/TECHNICAL_GUIDE.md`.
 
 Durante una skill de la demo, responde solo con lo que haya recuperado esa técnica. No uses lo que sepas
 del proyecto ni leas los ficheros excluidos.
