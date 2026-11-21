@@ -190,25 +190,32 @@ graph is cleaner) and one full fact block (what the model receives).
 - **Cost**: context tokens and LLM calls during retrieval.
 - **Claude's answer**: each skill records the final answer; that is the comparison that matters live.
 
-Results with 14 corpus files (before copying the full corpus):
+Results with the full corpus (452 files after the hold-out) and the graph rebuilt on 20 November. The
+last column is the first trial, with 14 files and the previous graph:
 
-| Technique | Recall | Precision | Context tokens | LLM calls during retrieval |
-|---|---|---|---|---|
-| Naive RAG | 100% | 39% | ~1,700 | 0 |
-| GraphRAG (/kg, 1 hop) | 43% | 43% | ~370 | 0 |
-| GraphRAG (/kg, 2 hops) | 86% | 23% | larger | 0 |
-| OAG | 86% | 60% | ~1,400 | 0 |
-| Agentic RAG | live | live | variable | several steps |
+| Technique | Recall | Precision | IDs returned | Context tokens | LLM calls during retrieval | With 14 files (R / P) |
+|---|---|---|---|---|---|---|
+| Naive RAG | 71% | 62% | 8 | ~1,600 | 0 | 100% / 39% |
+| GraphRAG (/kg, 1 hop) | 71% | 50% | 10 | ~770 | 0 | 43% / 43% |
+| GraphRAG (/kg, 2 hops) | 100% | 13% | 53 | ~7,000 | 0 | 86% / 23% |
+| OAG | 86% | 35% | 17 | ~2,000 | 0 | 86% / 60% |
+| Agentic RAG | live | live | variable | variable | several steps | - |
 
 How to read them:
 
-- Naive RAG gets everything because the invariant index in `SHARP_EDGES`, already written by hand, is
-  retrieved: it is an implicit ontology. With the full corpus there is more competition for the top-k.
-- OAG misses one of the seven tickets because its invariant protects title detection, not the end of
-  the letter. It is an honest schema gap, fixed with one more relation or component, not with more text.
-- One question is not an evaluation. The expected list is a floor: some OAG "false positives" (other
-  end-of-letter invariants) are defensible. The real evaluation is Step 0 in `HANDOVER.md`: 15 to 20
-  questions with known answers.
+- **Naive RAG loses recall as the corpus grows** (100% to 71%). With 14 files it won because the
+  invariant index in `SHARP_EDGES`, already written by hand, was retrieved: an implicit ontology. With
+  452 files more chunks compete for the top-k and two of the seven tickets drop out.
+- **GraphRAG improves with the new graph** (43% to 71% at one hop). At two hops it finds everything, but
+  among 53 tickets and about 7,000 tokens: the problem moves from finding to filtering.
+- **OAG keeps its recall** (86% with 14 and with 452 files), because the query walks typed relations and
+  does not depend on a top-k. It loses precision because the full corpus holds more end-of-letter
+  invariants; several of those "false positives" are defensible.
+- OAG still misses one of the seven tickets because its invariant protects title detection, not the
+  end of the letter. It is an honest schema gap, fixed with one more relation or component, not with
+  more text.
+- One question is not an evaluation. The expected list is a floor. The real evaluation is Step 0 in
+  `HANDOVER.md`: 15 to 20 questions with known answers.
 
 ## 7. When each technique fits
 

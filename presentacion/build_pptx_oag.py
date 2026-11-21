@@ -635,16 +635,16 @@ def build():
     # ---- Resultados
     s, pg = new()
     base(s, "Parte 4 · Resultados", "Misma pregunta, cuatro técnicas", page=pg)
-    table(s, 0.7, 2.0, [3.0, 1.5, 1.5, 2.2, 2.2],
-          [["Técnica", "Recall", "Precisión", "Tokens de contexto", "LLM al recuperar"],
-           ["Naive RAG", "100%", "39%", "~1.700", "0"],
-           ["GraphRAG (/kg, 1 salto)", "43%", "43%", "~370", "0"],
-           ["GraphRAG (/kg, 2 saltos)", "86%", "23%", "mayor", "0"],
-           ["OAG", "86%", "60%", "~1.400", "0"],
-           ["Agentic RAG", "en directo", "en directo", "variable", "varios pasos"]], row_h=0.48, size=11.5)
+    table(s, 0.7, 2.0, [3.0, 1.25, 1.35, 1.9, 1.9, 2.5],
+          [["Técnica", "Recall", "Precisión", "Tokens de contexto", "LLM al recuperar", "Con 14 ficheros (R / P)"],
+           ["Naive RAG", "71%", "62%", "~1.600", "0", "100% / 39%"],
+           ["GraphRAG (/kg, 1 salto)", "71%", "50%", "~770", "0", "43% / 43%"],
+           ["GraphRAG (/kg, 2 saltos)", "100%", "13%", "~7.000", "0", "86% / 23%"],
+           ["OAG", "86%", "35%", "~2.000", "0", "86% / 60%"],
+           ["Agentic RAG", "en directo", "en directo", "variable", "varios pasos", "-"]], row_h=0.48, size=11.5)
     text(s, 0.7, 5.45, 11.9, 0.7,
-         [[R("Corpus de 14 ficheros, respuesta esperada de 7 tickets escrita por quien resolvió el bug. "
-             "Una pregunta es una demostración, no una evaluación: la lista esperada es un mínimo.", 11, FAINT, False)]])
+         [[R("Corpus completo: 452 ficheros. Al crecer el corpus, Naive RAG pierde recall y OAG lo mantiene. "
+             "Respuesta esperada de 7 tickets; una pregunta es una demostración, no una evaluación.", 11, FAINT, False)]])
     takeaway(s, "Naive RAG encuentra las palabras; OAG devuelve los hechos y dice de dónde salen.")
 
     s, pg = new()

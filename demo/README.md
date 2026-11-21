@@ -99,7 +99,8 @@ python demo/compare.py
 - Una sola pregunta y un corpus pequeño: es una demostración, no una evaluación. El Paso 0 del
   `HANDOVER.md` (15 a 20 preguntas) es la evaluación.
 - Con pocos documentos, Naive RAG lo tiene fácil, sobre todo si entra un hub como `SHARP_EDGES`, que ya es
-  un índice escrito a mano. La diferencia crece con el corpus completo.
+  un índice escrito a mano. Con el corpus completo (452 ficheros) su recall baja del 100 % al 71 %,
+  mientras que OAG se mantiene en el 86 % (ver `docs/GUIA_DEMO.md`, sección 6).
 - La extracción de OAG es determinista (frontmatter, tablas, citas y sinónimos). En producción se
   completaría con extracción guiada por LLM (Fase C), siempre validada contra la misma ontología.
 - Los componentes y sinónimos de la ontología están escritos a mano para este dominio. Ese es el precio

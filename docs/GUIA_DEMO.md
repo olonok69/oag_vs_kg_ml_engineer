@@ -192,25 +192,32 @@ En `/demo-oag` merece la pena enseñar tres cosas: los sinónimos del componente
 - **Respuesta de Claude**: cada skill registra la respuesta final; es la comparación que importa en
   directo.
 
-Resultados con 14 ficheros del corpus (antes de copiar el corpus completo):
+Resultados con el corpus completo (452 ficheros tras el hold-out) y el grafo reconstruido el 20 de
+noviembre. La última columna es la primera prueba, con 14 ficheros y el grafo anterior:
 
-| Técnica | Recall | Precisión | Tokens de contexto | LLM al recuperar |
-|---|---|---|---|---|
-| Naive RAG | 100 % | 39 % | ~1.700 | 0 |
-| GraphRAG (/kg, 1 salto) | 43 % | 43 % | ~370 | 0 |
-| GraphRAG (/kg, 2 saltos) | 86 % | 23 % | mayor | 0 |
-| OAG | 86 % | 60 % | ~1.400 | 0 |
-| Agentic RAG | en directo | en directo | variable | varios pasos |
+| Técnica | Recall | Precisión | IDs devueltos | Tokens de contexto | LLM al recuperar | Con 14 ficheros (R / P) |
+|---|---|---|---|---|---|---|
+| Naive RAG | 71 % | 62 % | 8 | ~1.600 | 0 | 100 % / 39 % |
+| GraphRAG (/kg, 1 salto) | 71 % | 50 % | 10 | ~770 | 0 | 43 % / 43 % |
+| GraphRAG (/kg, 2 saltos) | 100 % | 13 % | 53 | ~7.000 | 0 | 86 % / 23 % |
+| OAG | 86 % | 35 % | 17 | ~2.000 | 0 | 86 % / 60 % |
+| Agentic RAG | en directo | en directo | variable | variable | varios pasos | - |
 
 Cómo leerlos:
 
-- Naive RAG acierta todo porque entra el índice de invariantes de `SHARP_EDGES`, que alguien ya escribió
-  a mano: es una ontología implícita. Con el corpus completo la competencia por el top-k es mayor.
-- OAG no encuentra uno de los siete tickets porque su invariante protege la detección de títulos, no el fin de carta. Es
-  un fallo honesto del esquema, y se corrige con una relación o un componente más, no con más texto.
-- Una sola pregunta no es una evaluación. La lista esperada es un mínimo: algunos «falsos positivos» de
-  OAG (otros invariantes de fin de carta) son defendibles. La evaluación seria es el Paso 0 del
-  `HANDOVER.md`: entre 15 y 20 preguntas con respuesta conocida.
+- **Naive RAG pierde recall al crecer el corpus** (100 % a 71 %). Con 14 ficheros ganaba porque entraba
+  el índice de invariantes de `SHARP_EDGES`, que alguien ya escribió a mano: una ontología implícita. Con
+  452 ficheros hay más trozos que compiten por el top-k y dos de los siete tickets se quedan fuera.
+- **GraphRAG mejora con el grafo nuevo** (43 % a 71 % a un salto). A dos saltos lo encuentra todo, pero
+  entre 53 tickets y unos 7.000 tokens: el problema pasa de encontrar a filtrar.
+- **OAG mantiene el recall** (86 % con 14 y con 452 ficheros), porque la consulta recorre relaciones
+  tipadas y no depende de un top-k. Pierde precisión porque el corpus completo tiene más invariantes
+  de fin de carta; varios de esos «falsos positivos» son defendibles.
+- OAG sigue sin encontrar uno de los siete tickets porque su invariante protege la detección de títulos,
+  no el fin de carta. Es un fallo honesto del esquema, y se corrige con una relación o un componente
+  más, no con más texto.
+- Una sola pregunta no es una evaluación. La lista esperada es un mínimo. La evaluación seria es el
+  Paso 0 del `HANDOVER.md`: entre 15 y 20 preguntas con respuesta conocida.
 
 ## 7. Cuándo conviene cada técnica
 

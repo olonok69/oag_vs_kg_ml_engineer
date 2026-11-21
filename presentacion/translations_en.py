@@ -188,8 +188,12 @@ PLAIN = {
     "en directo": "live",
     "variable": "variable",
     "varios pasos": "several steps",
-    "Corpus de 14 ficheros, respuesta esperada de 7 tickets escrita por quien resolvió el bug. Una pregunta es una demostración, no una evaluación: la lista esperada es un mínimo.":
-        "14-file corpus, expected answer of 7 tickets written by whoever solved the bug. One question is a demonstration, not an evaluation: the expected list is a floor.",
+    "Corpus completo: 452 ficheros. Al crecer el corpus, Naive RAG pierde recall y OAG lo mantiene. Respuesta esperada de 7 tickets; una pregunta es una demostración, no una evaluación.":
+        "Full corpus: 452 files. As the corpus grows, Naive RAG loses recall and OAG keeps it. Expected answer of 7 tickets; one question is a demonstration, not an evaluation.",
+    "Con 14 ficheros (R / P)": "With 14 files (R / P)",
+    "~1.600": "~1,600",
+    "~7.000": "~7,000",
+    "~2.000": "~2,000",
     "CIERRE": "CLOSING",
     "En una frase": "In one sentence",
     "Referencias": "References",
