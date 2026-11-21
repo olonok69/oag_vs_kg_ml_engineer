@@ -28,7 +28,10 @@ Investigación sobre Ontology-Augmented Generation (OAG) frente al grafo de cono
 |---|---|
 | `HANDOVER.md` | Traspaso completo: pregunta, fuentes, comparación, plan (Paso 0 y Fases A a D), reglas |
 | `docs/OAG_VS_KG.md` | Informe de investigación |
+| `docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md` | Guía de la demo en ES y EN |
+| `docs/img/build_diagrams.py` | Generador de los diagramas: SVG para las guías y PNG para el deck |
 | `presentacion/build_pptx_oag.py` | Generador del deck (python-pptx). El `.pptx` se regenera desde aquí; no editarlo a mano |
+| `presentacion/translations_en.py` | Traducciones para el deck en inglés |
 | `demo/` | Scripts de la demo y ontología mínima (`demo/oag/ontology.yaml`) |
 | `.claude/skills/demo-*` | Skills de la demo |
 | `reference/` | Documentación y scripts del grafo de tickets (copia sanitizada) y plantillas de la metodología |
@@ -37,14 +40,17 @@ Investigación sobre Ontology-Augmented Generation (OAG) frente al grafo de cono
 ## Presentación
 
 ```bash
-pip install python-pptx
-python presentacion/build_pptx_oag.py
+pip install python-pptx pillow cairosvg
+python docs/img/build_diagrams.py --png        # SVG + PNG de los diagramas, tras cambiar alguno
+python presentacion/build_pptx_oag.py          # deck ES
+python presentacion/build_pptx_oag.py --lang en   # deck EN (avisa de líneas sin traducir)
 soffice --headless --convert-to pdf presentacion/OAG_vs_KG_Presentacion.pptx   # revisión visual
 ```
 
 Para añadir o cambiar una slide se edita el generador, se regenera y se revisa el render. Los helpers de
 estilo (`base`, `cards`, `panel_bullets`, `code`, `table`, `steps`, `takeaway`) mantienen el estilo del
-deck.
+deck. Las slides de diagrama usan `diagram(slide, "<nombre>")`, que inserta `docs/img/<nombre>.<lang>.png`.
+Un texto nuevo en el deck necesita su entrada en `translations_en.py`.
 
 ## Demo
 
