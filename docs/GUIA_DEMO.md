@@ -143,16 +143,24 @@ Cinco skills de Claude Code responden a las mismas preguntas reales sobre el mis
 busca un ganador absoluto: tiene dos preguntas elegidas para enseñar dónde gana cada técnica y por qué.
 Detalle técnico en `demo/README.md`.
 
+**Cómo ejecutarla:** la chuleta con los comandos de la terminal, cómo se llama a cada skill dentro de Claude
+Code y qué debe salir en cada paso está en [EJECUTAR_DEMO.md](EJECUTAR_DEMO.md).
+
 ### Preparación (antes de la sesión)
 
 ```bash
 git pull
-uv sync && source .venv/bin/activate
-uv sync --group embed        # opcional: capa semántica (pregunta en castellano)
+uv sync --group embed        # entorno con la capa semántica (uv sync a secas la desinstala)
+source .venv/bin/activate    # antes de lanzar claude: las skills llaman a `python`
 python demo/oag.py build --q letter-end-runin
 python demo/oag.py build --q comment-memo-landscape
-python demo/compare.py        # comprobación rápida de que todo responde
+python demo/compare.py        # comprobación rápida y caché de embeddings
+claude                        # desde la raíz del repo
 ```
+
+Dentro de Claude Code, cada skill se invoca con `/` y su nombre, y el id de la pregunta y `--lang es` van
+detrás: `/demo-oag comment-memo-landscape`, `/demo-oag letter-end-runin --lang es`. Conviene escribir
+`/clear` antes de cada skill para que ninguna técnica use lo que recuperó la anterior.
 
 Los datos están en `data/` (fuera de git): el corpus completo de kg, `graph.json`, los nombres de las
 comunidades y `questions.yaml`.
@@ -183,7 +191,7 @@ cualquier área que nadie ha modelado todavía.
 
 Pregunta A:
 
-| Skill | Qué enseñar | Qué decir |
+| Comando en Claude Code | Qué enseñar | Qué decir |
 |---|---|---|
 | `/demo-naive-rag` | Los 5 trozos recuperados y los tickets que aparecen | Encuentra las palabras, no los hechos. No sabe qué ticket importa ni por qué |
 | `/demo-agentic-rag` | Claude planificando, buscando y leyendo, paso a paso | Más precisión a cambio de pasos y tokens; cada ejecución es distinta |
@@ -192,7 +200,7 @@ Pregunta A:
 
 Pregunta B:
 
-| Skill | Qué enseñar | Qué decir |
+| Comando en Claude Code | Qué enseñar | Qué decir |
 |---|---|---|
 | `/demo-graphrag comment-memo-landscape` | Vecinos del extractor a dos saltos y los temas (comunidades con nombre) | Nadie ha modelado esta área y el grafo la encuentra y la agrupa |
 | `/demo-oag comment-memo-landscape` | La consulta sin componentes y sin hechos | OAG solo ve lo que su esquema declara. Para cubrir el área hay que modelarla primero |
@@ -200,10 +208,10 @@ Pregunta B:
 
 Pregunta en castellano llano (opcional, apartado 6):
 
-| Skill | Qué enseñar | Qué decir |
+| Comando en Claude Code | Qué enseñar | Qué decir |
 |---|---|---|
-| `/demo-oag --lang es` | Sin componentes con v2; con v3 o `--semantic`, los mismos hechos que en inglés | El idioma solo afecta al primer paso: reconocer de qué componente se habla |
-| `/demo-graphrag --lang es --semantic` | Los candidatos a semilla con su similitud | El modelo encuentra la zona; el nodo central lo sigue eligiendo quien conoce el dominio |
+| `/demo-oag letter-end-runin --lang es` | Sin componentes con v2; con v3 o `--semantic`, los mismos hechos que en inglés | El idioma solo afecta al primer paso: reconocer de qué componente se habla |
+| `/demo-graphrag comment-memo-landscape --lang es` | Los candidatos a semilla con su similitud | El modelo encuentra la zona; el nodo central lo sigue eligiendo quien conoce el dominio |
 
 ![OAG en la demo](img/demo_oag_pipeline.es.svg)
 

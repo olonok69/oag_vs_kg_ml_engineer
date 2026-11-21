@@ -1,7 +1,7 @@
 # Traspaso: OAG vs grafo de conocimiento de tickets
 
 > **Para quién:** cualquier persona o agente que continúe este trabajo, aquí o en otro proyecto.
-> **Fecha:** 2026-11-20, actualizado el 2026-11-21. **Estado:** investigación, presentación (32 slides, ES y EN), guía
+> **Fecha:** 2026-11-20, actualizado el 2026-11-21. **Estado:** investigación, presentación (33 slides, ES y EN), guía
 > y demo en directo terminadas; la adopción (Fases A–D) no ha empezado. La demo deja las dos primeras preguntas
 > del Paso 0 y una ontología mínima de partida.
 > Léelo entero antes de tocar nada: la sección 6 tiene las reglas que no se pueden romper.
@@ -48,7 +48,7 @@ Informe completo: [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md). Deck: [`presentacion
    `/demo-graphrag`, `/demo-oag`, `/demo-compare`) sobre el corpus completo de `/kg` (452 ficheros), con los
    datos reales en `data/` (fuera de git) y entorno con uv. Ver `demo/README.md`.
 7. **Guía de la demo y diagramas** en ES y EN (`docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md`, `docs/img/`) y deck
-   bilingüe con la Parte 4 (la demo); 32 slides desde el punto 9.
+   bilingüe con la Parte 4 (la demo); 33 slides desde el punto 10.
 8. **Dos escenarios** (decisión de juan): el objetivo no es demostrar que OAG siempre gana, sino enseñar dónde
    gana cada técnica y si merece la pena adoptarla. Pregunta A (reglas sobre un componente modelado): gana
    OAG con el esquema v2 (100 % de recall, 15 tickets frente a 53 de GraphRAG a dos saltos). Pregunta B
@@ -64,6 +64,12 @@ Informe completo: [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md). Deck: [`presentacion
    zona correcta pero no al nodo central (59 % en B frente al 83 %). El umbral semántico de OAG (0,42) está
    calibrado con estas dos preguntas. El entorno cloud necesitó permitir huggingface.co, `*.hf.co`,
    download.pytorch.org y download-r2.pytorch.org.
+10. **Cómo ejecutarla en Claude Code**: chuleta `docs/EJECUTAR_DEMO.md` (EN: `docs/RUN_DEMO.md`) con la
+   preparación, cómo se invoca cada skill y lo que debe salir, y una slide con los comandos. Las cinco skills se
+   probaron en Claude Code. Las skills ejecutan siempre `python demo/...` desde la raíz para que una sola
+   aprobación del permiso sirva para toda la demo. Pendiente: la prueba de Agentic RAG detectó que el hold-out
+   de la pregunta A no excluye la viñeta del ticket excluido en `SHARP_EDGES` ni una nota `knowledge__` que
+   describe su arreglo; hay que decidir si se excluyen (cambiaría algunas cifras).
 
 ---
 
@@ -239,16 +245,18 @@ Regla: si una relación no responde una pregunta del set de la línea base, fuer
 | `HANDOVER.md` | Este documento |
 | `docs/OAG_VS_KG.md` | Informe de investigación |
 | `docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md` | Guía de la presentación y la demo (ES, EN) |
+| `docs/EJECUTAR_DEMO.md`, `docs/RUN_DEMO.md` | Cómo ejecutar la demo en Claude Code, comando a comando (ES, EN) |
+| `docs/GUIA_TECNICA.md`, `docs/TECHNICAL_GUIDE.md` | Qué ejecuta cada skill por dentro, con enlaces al código (ES, EN) |
 | `docs/img/` | Diagramas SVG y PNG, generados por `build_diagrams.py` |
 | `presentacion/build_pptx_oag.py` | Generador del deck (python-pptx, idempotente; `--lang en` para inglés) |
-| `presentacion/OAG_vs_KG_Presentacion.pptx` | Deck de 32 slides (ES); `OAG_vs_KG_Presentation_EN.pptx` (EN) |
+| `presentacion/OAG_vs_KG_Presentacion.pptx` | Deck de 33 slides (ES); `OAG_vs_KG_Presentation_EN.pptx` (EN) |
 | `demo/`, `.claude/skills/demo-*` | Scripts, ontología mínima (`demo/oag/ontology.yaml`) y skills de la demo |
 | `reference/KNOWLEDGE_GRAPH.md` | Explicación del grafo de tickets |
 | `reference/knowledge-graph/` | Scripts, tests, diseño y grafo sanitizado (copia de `claude_code_ml_engineer/docs/`, 2026-11-20) |
 | `reference/templates/` | Plantillas de la metodología (la ontología implícita) |
 
 ```bash
-uv sync && source .venv/bin/activate
+uv sync --group embed && source .venv/bin/activate
 python docs/img/build_diagrams.py --png         # diagramas
 python presentacion/build_pptx_oag.py           # regenera el .pptx (añade --lang en para el inglés)
 # revisión visual (opcional)

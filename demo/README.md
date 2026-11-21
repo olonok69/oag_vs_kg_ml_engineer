@@ -27,6 +27,9 @@ en distinta medida.
 Todas las skills y scripts aceptan el id de la pregunta (`/demo-oag comment-memo-landscape`,
 `python demo/oag.py query --q comment-memo-landscape`); sin id se usa la pregunta por defecto.
 
+Cómo lanzarla dentro de Claude Code, comando a comando y con lo que debe salir:
+[`docs/EJECUTAR_DEMO.md`](../docs/EJECUTAR_DEMO.md) (EN: [`docs/RUN_DEMO.md`](../docs/RUN_DEMO.md)).
+
 Qué ejecuta cada paso, función por función: [`docs/GUIA_TECNICA.md`](../docs/GUIA_TECNICA.md)
 (EN: [`docs/TECHNICAL_GUIDE.md`](../docs/TECHNICAL_GUIDE.md)).
 
@@ -87,10 +90,10 @@ Entorno con [uv](https://docs.astral.sh/uv/) (WSL Ubuntu o Linux; el `pyproject.
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh   # si no está uv
 sudo apt install -y libcairo2                     # solo para regenerar los PNG de los diagramas
-uv sync                                           # crea .venv con la demo y el deck
-uv sync --group embed                             # opcional: capa semántica (torch CPU y el modelo multilingüe)
+uv sync --group embed                             # crea .venv con la demo, el deck y la capa semántica
+                                                  # (uv sync a secas deja fuera la capa semántica)
 source .venv/bin/activate                         # antes de lanzar claude, para que `python` sea el del venv
-python demo/oag.py build          # una vez, o tras cambiar el corpus o la ontología
+claude                                            # Claude Code, desde la raíz del repo
 ```
 
 Sin uv: `pip install -r demo/requirements.txt`.
@@ -98,7 +101,11 @@ Sin uv: `pip install -r demo/requirements.txt`.
 Y una vez por pregunta: `python demo/oag.py build --q letter-end-runin` y
 `python demo/oag.py build --q comment-memo-landscape`.
 
-En Claude Code, primer escenario: `/demo-naive-rag`, `/demo-agentic-rag`, `/demo-graphrag`, `/demo-oag`.
+Dentro de Claude Code, cada skill se invoca con `/` y su nombre; el id de la pregunta y `--lang es` van detrás
+(`/demo-oag comment-memo-landscape`, `/demo-oag letter-end-runin --lang es`). Escribe `/clear` antes de cada
+skill. La primera vez que una skill ejecute `python demo/...`, aprueba el comando para todo el proyecto.
+
+Primer escenario: `/demo-naive-rag`, `/demo-agentic-rag`, `/demo-graphrag`, `/demo-oag`.
 Segundo escenario: `/demo-graphrag comment-memo-landscape` y `/demo-oag comment-memo-landscape` (y, si hay
 tiempo, `/demo-naive-rag comment-memo-landscape`). Al final, `/demo-compare`. Cada skill ejecuta su
 script, responde usando solo lo que ha recuperado y registra la respuesta.

@@ -1,9 +1,15 @@
 ---
 name: demo-compare
 description: Demo final. Compara Naive RAG, Agentic RAG, GraphRAG (/kg) y OAG en los dos escenarios de la demo con recall, precisión, F1 y coste. Usar cuando se pida /demo-compare o la tabla comparativa.
+argument-hint: "[letter-end-runin | comment-memo-landscape]"
 ---
 
 # Demo: comparativa
+
+Cómo ejecutar los scripts: desde la raíz del repo, con el venv activo, exactamente `python demo/<script>.py ...`,
+sin `cd`, sin encadenar comandos con `&&` y sin rutas a `.venv`. Así una sola aprobación («no volver a
+preguntar» para `python demo/...`) cubre toda la demo. Si `python` no existe, el venv no está activo: dilo y
+para, en lugar de probar otras rutas.
 
 1. Ejecuta `python demo/compare.py` (las dos preguntas) o `python demo/compare.py --q <id>` (una). Vuelve
    a lanzar las técnicas deterministas (GraphRAG a uno y dos saltos, OAG con esquema v1 y v2) y lee los

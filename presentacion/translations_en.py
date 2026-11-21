@@ -329,6 +329,11 @@ RUNS = {
 
 # Text that stays as it is (names, code, numbers).
 KEEP = [
+    "git pull", "uv sync --group embed", "source .venv/bin/activate",
+    "python demo/oag.py build --q letter-end-runin", "python demo/oag.py build --q comment-memo-landscape",
+    "python demo/compare.py", "claude", "/demo-naive-rag    /demo-agentic-rag", "/demo-graphrag     /demo-oag",
+    "/demo-graphrag comment-memo-landscape", "/demo-oag comment-memo-landscape",
+    "/demo-oag letter-end-runin --lang es", "/demo-compare",
     "Ontology-Augmented Generation", "Medium (L. Huang)", "OG-RAG (Microsoft Research)", "Palantir Foundry",
     "Ticket    --fixes-->       Symbol", "Invariant --guards-->      Symbol", "Ticket    --originates-->  Invariant",
     "TKT-104  fixes  get_letter_end", "Context recall", "RAPTOR", "GraphRAG", "OG-RAG",
@@ -394,6 +399,15 @@ PLAIN.update({
     "Lo que no compensa": "What does not pay off",
     "Qué llevar a la metodología": "What to take to the methodology",
     "La pregunta en castellano": "The question in Spanish",
+    "PARTE 4 · CÓMO EJECUTARLA": "PART 4 · HOW TO RUN IT",
+    "La demo en Claude Code, paso a paso": "The demo in Claude Code, step by step",
+    "1 · Preparación": "1 · Setup",
+    "2 · Dentro de Claude Code": "2 · Inside Claude Code",
+    "# una vez, en la terminal (WSL)": "# once, in the terminal (WSL)",
+    "# pregunta A: reglas (gana OAG)": "# question A: rules (OAG wins)",
+    "# pregunta B: exploración (gana GraphRAG)": "# question B: exploration (GraphRAG wins)",
+    "# en castellano llano (opcional)": "# in plain Spanish (optional)",
+    "# cierre": "# close",
     "PARTE 4 · LA PREGUNTA EN CASTELLANO": "PART 4 · THE QUESTION IN SPANISH",
     "Corpus en inglés, pregunta sin nombres de código": "English corpus, question with no code names",
     "Pregunta A (R / P)": "Question A (R / P)",
@@ -457,6 +471,8 @@ QUOTES.update({
         "v2 was written after seeing the failure: it is schema evolution and must be validated on new questions.",
     "OAG no sustituye a GraphRAG: lo completa. Uno descubre la estructura; el otro la fija como contrato.":
         "OAG does not replace GraphRAG: it complements it. One discovers the structure; the other pins it as a contract.",
+    "/clear antes de cada skill y aprobar una vez «python demo/...»: cada técnica responde solo con lo suyo.":
+        "/clear before each skill and approve \"python demo/...\" once: each technique answers only with its own retrieval.",
     "El idioma solo afecta al primer paso: con seis sinónimos o un modelo pequeño, OAG responde igual que en inglés.":
         "The language only affects the first step: with six synonyms or a small model, OAG answers as it does in English.",
     "Poco esfuerzo, bien acotado: ontología pequeña, extracción sin LLM y dos modos en /kg.":

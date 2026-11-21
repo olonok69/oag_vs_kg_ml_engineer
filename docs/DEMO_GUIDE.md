@@ -143,16 +143,24 @@ Five Claude Code skills answer the same real questions over the same corpus. The
 an overall winner: it has two questions chosen to show where each technique wins and why. Technical
 detail in `demo/README.md`.
 
+**How to run it:** the cheat sheet with the terminal commands, how to call each skill inside Claude Code and
+what should come out at each step is in [RUN_DEMO.md](RUN_DEMO.md).
+
 ### Setup (before the session)
 
 ```bash
 git pull
-uv sync && source .venv/bin/activate
-uv sync --group embed        # optional: semantic layer (question in Spanish)
+uv sync --group embed        # environment with the semantic layer (a plain uv sync removes it)
+source .venv/bin/activate    # before starting claude: the skills call `python`
 python demo/oag.py build --q letter-end-runin
 python demo/oag.py build --q comment-memo-landscape
-python demo/compare.py        # quick check that everything answers
+python demo/compare.py        # quick check and embedding cache
+claude                        # from the repo root
 ```
+
+Inside Claude Code, each skill is invoked with `/` and its name, with the question id and `--lang es` after
+it: `/demo-oag comment-memo-landscape`, `/demo-oag letter-end-runin --lang es`. Type `/clear` before each
+skill so that no technique uses what the previous one retrieved.
 
 The data lives in `data/` (outside git): the full kg corpus, `graph.json`, the community names and
 `questions.yaml`.
@@ -183,7 +191,7 @@ modelled yet.
 
 Question A:
 
-| Skill | What to show | What to say |
+| Command in Claude Code | What to show | What to say |
 |---|---|---|
 | `/demo-naive-rag` | The 5 retrieved chunks and the tickets in them | It finds the words, not the facts. It does not know which ticket matters or why |
 | `/demo-agentic-rag` | Claude planning, searching and reading, step by step | More precision at the cost of steps and tokens; every run is different |
@@ -192,7 +200,7 @@ Question A:
 
 Question B:
 
-| Skill | What to show | What to say |
+| Command in Claude Code | What to show | What to say |
 |---|---|---|
 | `/demo-graphrag comment-memo-landscape` | The extractor's neighbours at two hops and the themes (named communities) | Nobody modelled this area and the graph finds it and groups it |
 | `/demo-oag comment-memo-landscape` | The query with no components and no facts | OAG only sees what its schema declares. To cover the area it has to be modelled first |
@@ -200,10 +208,10 @@ Question B:
 
 Question in plain Spanish (optional, section 6):
 
-| Skill | What to show | What to say |
+| Command in Claude Code | What to show | What to say |
 |---|---|---|
-| `/demo-oag --lang es` | No components with v2; with v3 or `--semantic`, the same facts as in English | The language only affects the first step: recognising which component is meant |
-| `/demo-graphrag --lang es --semantic` | The seed candidates with their similarity | The model finds the area; the central node is still chosen by someone who knows the domain |
+| `/demo-oag letter-end-runin --lang es` | No components with v2; with v3 or `--semantic`, the same facts as in English | The language only affects the first step: recognising which component is meant |
+| `/demo-graphrag comment-memo-landscape --lang es` | The seed candidates with their similarity | The model finds the area; the central node is still chosen by someone who knows the domain |
 
 ![OAG in the demo](img/demo_oag_pipeline.en.svg)
 
