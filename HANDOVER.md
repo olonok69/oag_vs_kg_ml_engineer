@@ -1,7 +1,9 @@
 # Traspaso: OAG vs grafo de conocimiento de tickets
 
 > **Para quién:** cualquier persona o agente que continúe este trabajo, aquí o en otro proyecto.
-> **Fecha:** 2026-11-20. **Estado:** investigación y presentación terminadas; la adopción (Fases A–D) no ha empezado.
+> **Fecha:** 2026-11-20, actualizado el 2026-11-21. **Estado:** investigación, presentación (31 slides, ES y EN), guía
+> y demo en directo terminadas; la adopción (Fases A–D) no ha empezado. La demo deja las dos primeras preguntas
+> del Paso 0 y una ontología mínima de partida.
 > Léelo entero antes de tocar nada: la sección 6 tiene las reglas que no se pueden romper.
 
 ---
@@ -42,6 +44,17 @@ Informe completo: [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md). Deck: [`presentacion
 5. **Primera ubicación:** rama `claude/project-thread-oog8kb` de `claude_code_ml_engineer` (commit `356a646`,
    sin PR, sin fusionar). **Obsoleta**: el 2026-11-20 juan creó este repo y todo se movió aquí (commit
    inicial `9f34423` en `main`).
+6. **Demo en directo** (2026-11-21): cinco skills de Claude Code (`/demo-naive-rag`, `/demo-agentic-rag`,
+   `/demo-graphrag`, `/demo-oag`, `/demo-compare`) sobre el corpus completo de `/kg` (452 ficheros), con los
+   datos reales en `data/` (fuera de git) y entorno con uv. Ver `demo/README.md`.
+7. **Guía de la demo y diagramas** en ES y EN (`docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md`, `docs/img/`) y deck
+   bilingüe de 31 slides con la Parte 4 (la demo).
+8. **Dos escenarios** (decisión de juan): el objetivo no es demostrar que OAG siempre gana, sino enseñar dónde
+   gana cada técnica y si merece la pena adoptarla. Pregunta A (reglas sobre un componente modelado): gana
+   OAG con el esquema v2 (100 % de recall, 15 tickets frente a 53 de GraphRAG a dos saltos). Pregunta B
+   (explorar un área que la ontología no modela): gana GraphRAG (83 % de recall y temas por comunidades;
+   OAG no devuelve nada). La v2 de la ontología (restricción de componente y relación `calls`) se escribió
+   tras ver el fallo de la v1 y así se cuenta. Detalle en la sección 6 de `docs/GUIA_DEMO.md`.
 
 ---
 
@@ -138,6 +151,9 @@ Principio rector: pequeño, reversible y medible, igual que los gates de la meto
 - Medir el recall del grafo actual con `kg_query.sh` (equivalente a C-Rec de OG-RAG).
 - Revisar la **composición** (qué falta), no solo el total, y anotar qué no puede mostrar el set.
 - Sugerencia de ubicación: `eval/questions.yaml` + `eval/run_eval.py`.
+- Punto de partida: la demo ya tiene el formato y el arnés (`data/questions.yaml` con varias preguntas,
+  `demo/compare.py` con recall, precisión y F1 por técnica). Sus dos preguntas son las primeras del set;
+  conviene mezclar preguntas de reglas y de exploración, porque cada técnica gana en un tipo.
 
 ### Fase A — Ontología mínima
 
@@ -213,15 +229,19 @@ Regla: si una relación no responde una pregunta del set de la línea base, fuer
 |---|---|
 | `HANDOVER.md` | Este documento |
 | `docs/OAG_VS_KG.md` | Informe de investigación |
-| `presentacion/build_pptx_oag.py` | Generador del deck (python-pptx, idempotente) |
-| `presentacion/OAG_vs_KG_Presentacion.pptx` | Deck de 19 slides |
+| `docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md` | Guía de la presentación y la demo (ES, EN) |
+| `docs/img/` | Diagramas SVG y PNG, generados por `build_diagrams.py` |
+| `presentacion/build_pptx_oag.py` | Generador del deck (python-pptx, idempotente; `--lang en` para inglés) |
+| `presentacion/OAG_vs_KG_Presentacion.pptx` | Deck de 31 slides (ES); `OAG_vs_KG_Presentation_EN.pptx` (EN) |
+| `demo/`, `.claude/skills/demo-*` | Scripts, ontología mínima (`demo/oag/ontology.yaml`) y skills de la demo |
 | `reference/KNOWLEDGE_GRAPH.md` | Explicación del grafo de tickets |
 | `reference/knowledge-graph/` | Scripts, tests, diseño y grafo sanitizado (copia de `claude_code_ml_engineer/docs/`, 2026-11-20) |
 | `reference/templates/` | Plantillas de la metodología (la ontología implícita) |
 
 ```bash
-pip install python-pptx
-python presentacion/build_pptx_oag.py           # regenera el .pptx
+uv sync && source .venv/bin/activate
+python docs/img/build_diagrams.py --png         # diagramas
+python presentacion/build_pptx_oag.py           # regenera el .pptx (añade --lang en para el inglés)
 # revisión visual (opcional)
 soffice --headless --convert-to pdf presentacion/OAG_vs_KG_Presentacion.pptx
 ```
