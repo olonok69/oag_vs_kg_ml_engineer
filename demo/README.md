@@ -54,10 +54,18 @@ Métricas, contra la respuesta esperada:
 
 ## Cómo ejecutarla
 
+Entorno con [uv](https://docs.astral.sh/uv/) (WSL Ubuntu o Linux; el `pyproject.toml` está en la raíz):
+
 ```bash
-pip install -r demo/requirements.txt
+curl -LsSf https://astral.sh/uv/install.sh | sh   # si no está uv
+sudo apt install -y libcairo2                     # solo para regenerar los PNG de los diagramas
+uv sync                                           # crea .venv con la demo y el deck
+uv sync --group embed                             # opcional: naive_rag.py --embed (instala torch)
+source .venv/bin/activate                         # antes de lanzar claude, para que `python` sea el del venv
 python demo/oag.py build          # una vez, o tras cambiar el corpus o la ontología
 ```
+
+Sin uv: `pip install -r demo/requirements.txt`.
 
 En Claude Code, en este orden: `/demo-naive-rag`, `/demo-agentic-rag`, `/demo-graphrag`, `/demo-oag`,
 `/demo-compare`. Cada skill ejecuta su script, responde a la pregunta usando solo lo que ha recuperado y
