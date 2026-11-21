@@ -182,9 +182,9 @@ def takeaway(slide, phrase):
            R(" ”", 13, CORAL, True)]], anchor=MSO_ANCHOR.MIDDLE)
 
 
-def cards(slide, items, top=2.1, cols=2, height=1.02, gap=0.28, badge=CORAL, bottom_takeaway=True):
+def cards(slide, items, top=2.1, cols=2, height=1.02, gap=0.28, badge=CORAL, bottom_takeaway=True,
+          left=0.7, right=12.65):
     """items: lista de (num, titulo, descripcion). Rejilla de tarjetas numeradas."""
-    left, right = 0.7, 12.65
     total_w = right - left
     card_w = (total_w - gap * (cols - 1)) / cols
     for idx, (num, ttl, desc) in enumerate(items):
@@ -345,7 +345,7 @@ def build():
     # =========================================================================
     s, pg = new()
     divider(s, 1, "Qué es OAG", "De recuperar trozos de texto a recuperar hechos tipados según una ontología.",
-            ["De RAG a OAG", "Tres lecturas del término",
+            ["De RAG a OAG", "Tres lecturas del término", "Qué es una ontología",
              "OG-RAG: el pipeline", "OG-RAG: resultados y límites"], page=pg)
 
     # ---- De RAG a OAG
@@ -386,6 +386,29 @@ def build():
                    "El LLM consulta objetos y propone acciones"],
                   accent=GREEN)
     takeaway(s, "Lo común: un esquema del dominio que el LLM respeta al recuperar, razonar y actuar.")
+
+    # ---- Qué es una ontología
+    s, pg = new()
+    base(s, "Parte 1 · Conceptos", "Qué es una ontología", page=pg)
+    panel_bullets(s, 0.7, 2.0, 11.95, 1.2, "Definición",
+                  ["La especificación explícita y compartida de un dominio: qué tipos de cosas existen, "
+                   "cómo se relacionan y qué reglas deben cumplir. Escrita para que una máquina pueda usarla y validarla."],
+                  accent=BLUE)
+    cards(s, [
+        ("C", "Clases", "Los tipos de cosas del dominio: Ticket, Invariante, Símbolo, Test."),
+        ("R", "Relaciones", "Enlaces con nombre: Ticket fixes Símbolo, Invariante guards Símbolo."),
+        ("A", "Atributos", "Propiedades de cada clase: estado, causa raíz, fichero fuente."),
+        ("✓", "Restricciones", "«guards» solo sale de un Invariante; todo nodo tiene fichero fuente."),
+    ], top=3.4, cols=2, height=1.25, gap=0.22, left=0.7, right=7.3)
+    code(s, 7.55, 3.74, 5.1, 2.38,
+         ["# esquema: qué PUEDE existir",
+          "Ticket    --fixes-->       Symbol",
+          "Invariant --guards-->      Symbol",
+          "Ticket    --originates-->  Invariant",
+          "# hechos: qué ES verdad hoy",
+          "TKT-104  fixes  get_letter_end"],
+         title="Esquema + instancias (nuestro dominio)")
+    takeaway(s, "No es una taxonomía ni una lista de etiquetas: es un contrato sobre qué es un hecho válido en el dominio.")
 
     # ---- OG-RAG pipeline
     s, pg = new()

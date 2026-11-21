@@ -10,7 +10,7 @@ material de partida para adoptar lo útil.
 |---|---|
 | [`HANDOVER.md`](HANDOVER.md) | Traspaso completo: qué se hizo, fuentes, plan accionable y lo que necesita otro agente |
 | [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md) | El informe: qué es OAG (OG-RAG, Palantir, Medium), comparación con nuestro grafo, qué adoptar y cómo medirlo |
-| [`presentacion/OAG_vs_KG_Presentacion.pptx`](presentacion/OAG_vs_KG_Presentacion.pptx) | Deck de 18 slides, mismo estilo que los decks del curso |
+| [`presentacion/OAG_vs_KG_Presentacion.pptx`](presentacion/OAG_vs_KG_Presentacion.pptx) | Deck de 19 slides, mismo estilo que los decks del curso |
 | [`presentacion/build_pptx_oag.py`](presentacion/build_pptx_oag.py) | Generador del deck (`pip install python-pptx && python presentacion/build_pptx_oag.py`) |
 | [`reference/KNOWLEDGE_GRAPH.md`](reference/KNOWLEDGE_GRAPH.md) | Cómo funciona el grafo de tickets actual (`/kg`, `/kg-refresh`) |
 | [`reference/knowledge-graph/`](reference/knowledge-graph/) | Diseño, scripts, tests y el grafo construido (versión sanitizada): línea base para medir |
