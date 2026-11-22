@@ -217,7 +217,8 @@ reproduce la primera ontología. La explicación divulgativa de v1 y v2 está en
    ([`parse_invariants`](../demo/oag.py#L83), [línea 134](../demo/oag.py#L134)).
 4. **Tests**: cada `tests/test_tkt_NNN_*.py` citado da `verified_by` desde su ticket
    ([línea 144](../demo/oag.py#L144)).
-5. **Validación** al estilo de SHACL ([línea 154](../demo/oag.py#L154)): se rechaza toda arista cuya relación no
+5. **Validación** al estilo de SHACL, el estándar del W3C para validar grafos contra un esquema (definición en
+   la [guía de la demo](GUIA_DEMO.md#2-conceptos-principales)) ([línea 154](../demo/oag.py#L154)): se rechaza toda arista cuya relación no
    esté en la ontología (las `mentions`), o cuyo dominio o rango no sea el declarado, o que no tenga fuente. Se
    avisa de los nodos cuyo id no cumple el patrón o a los que les falta un campo obligatorio.
 6. Escribe `data/oag/<id>/facts.json` con nodos, aristas aceptadas y un informe (aceptadas y rechazadas por

@@ -54,6 +54,21 @@ The term is used in three different senses, and it helps to keep them apart:
 - **Attribute.** A property of a class: title, status, source file.
 - **Constraint.** What can be true: `guards` only starts at an `Invariant`; every edge has a source. On
   the semantic web these are expressed in OWL and validated with SHACL (W3C).
+- **OWL (Web Ontology Language).** The W3C standard for writing ontologies (OWL 2, 2009). It declares
+  classes, properties, hierarchies and axioms ("every invariant has a ticket of origin", "`guards` goes
+  from an invariant to a component"). An OWL reasoner can infer new facts from the declared ones. It uses
+  the open-world assumption: a missing fact is not taken as false, only as unknown.
+- **SHACL (Shapes Constraint Language).** The W3C standard for validating graph data (2017). It defines
+  "shapes" the data must satisfy: the type of each node, the allowed relations, required fields,
+  cardinalities. It uses the closed-world assumption: a missing required value is an error, and it
+  returns a report of what does not conform. In short: OWL says what can exist and what follows; SHACL
+  checks that the data complies.
+- **OWL and SHACL in the demo.** We use neither standard, only their idea with light tools: the ontology
+  is a YAML file (`demo/oag/ontology.yaml`) that plays the role of OWL, and the validation in
+  `oag.py build` (about 30 lines of Python that reject relations outside the schema, wrong domains or
+  ranges and edges without a source) plays the role of SHACL. That is why the guides speak of
+  "SHACL-style" validation. If the domain grew, the YAML could be translated to OWL and SHACL without
+  changing the model.
 - **Instance or fact.** A concrete statement that conforms to the schema:
   `TKT-104 touches letter_end_detection`.
 - **Synonyms (altLabels).** The words free text uses for the same concept. They are what lets

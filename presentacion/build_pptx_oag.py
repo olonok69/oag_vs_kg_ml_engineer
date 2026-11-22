@@ -435,6 +435,26 @@ def build():
     s, pg = new()
     diagram(s, "ontology", page=pg)
 
+    # ---- OWL y SHACL
+    s, pg = new()
+    base(s, "Parte 1 · Conceptos", "OWL y SHACL: los dos estándares del W3C", page=pg)
+    panel_bullets(s, 0.7, 2.0, 3.85, 4.0, "OWL · Web Ontology Language",
+                  ["Sirve para escribir la ontología: clases, propiedades, jerarquías y axiomas",
+                   "Ejemplo: «todo invariante tiene un ticket de origen»",
+                   "Un razonador deduce hechos nuevos a partir de los declarados",
+                   "Mundo abierto: lo que falta no es falso, es desconocido"], accent=BLUE)
+    panel_bullets(s, 4.75, 2.0, 3.85, 4.0, "SHACL · Shapes Constraint Language",
+                  ["Sirve para validar los datos del grafo contra unas «formas»",
+                   "Tipos de nodo, relaciones permitidas, campos obligatorios, cardinalidades",
+                   "Mundo cerrado: si falta un dato obligatorio, es un error",
+                   "Devuelve un informe con lo que no cumple"], accent=AMBER)
+    panel_bullets(s, 8.8, 2.0, 3.85, 4.0, "En nuestra demo",
+                  ["No usamos los estándares, sino su idea con herramientas ligeras",
+                   "El YAML de la ontología hace el papel de OWL",
+                   "La validación de oag.py build hace el de SHACL: rechaza lo que no cumple el esquema",
+                   "Si el dominio crece, el YAML se traduce a OWL y SHACL"], accent=GREEN)
+    takeaway(s, "OWL dice qué puede existir y qué se deduce; SHACL comprueba que los datos lo cumplen.")
+
     # ---- OG-RAG pipeline
     s, pg = new()
     diagram(s, "ograg_pipeline", page=pg)

@@ -15,7 +15,7 @@ material de partida para adoptar lo útil.
 | [`docs/GUIA_TECNICA.md`](docs/GUIA_TECNICA.md) / [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) | Guía técnica de la demo (ES / EN): qué ejecuta cada skill, en qué fichero y función, qué lee y qué escribe |
 | [`docs/pdf/`](docs/pdf/) | Las guías y el informe en PDF, generados con `python docs/build_pdfs.py` |
 | [`docs/img/`](docs/img/) | Diagramas SVG (ES y EN) de la guía y PNG para el deck, generados con `build_diagrams.py` |
-| [`presentacion/OAG_vs_KG_Presentacion.pptx`](presentacion/OAG_vs_KG_Presentacion.pptx) / [`OAG_vs_KG_Presentation_EN.pptx`](presentacion/OAG_vs_KG_Presentation_EN.pptx) | Deck de 33 slides en castellano e inglés, mismo estilo que los decks del curso |
+| [`presentacion/OAG_vs_KG_Presentacion.pptx`](presentacion/OAG_vs_KG_Presentacion.pptx) / [`OAG_vs_KG_Presentation_EN.pptx`](presentacion/OAG_vs_KG_Presentation_EN.pptx) | Deck de 34 slides en castellano e inglés, mismo estilo que los decks del curso |
 | [`presentacion/build_pptx_oag.py`](presentacion/build_pptx_oag.py) | Generador del deck (`python presentacion/build_pptx_oag.py [--lang en]`) |
 | [`demo/`](demo/README.md) | Demo en directo: skills de Claude Code de Naive RAG a OAG sobre la memoria de tickets, con dos preguntas (una de reglas, otra de exploración), también en castellano llano con capa semántica; datos en `data/`, fuera de git |
 | [`reference/KNOWLEDGE_GRAPH.md`](reference/KNOWLEDGE_GRAPH.md) | Cómo funciona el grafo de tickets actual (`/kg`, `/kg-refresh`) |

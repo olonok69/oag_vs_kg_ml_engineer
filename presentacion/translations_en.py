@@ -410,6 +410,10 @@ PLAIN.update({
     "Lo que no compensa": "What does not pay off",
     "Qué llevar a la metodología": "What to take to the methodology",
     "La pregunta en castellano": "The question in Spanish",
+    "OWL y SHACL: los dos estándares del W3C": "OWL and SHACL: the two W3C standards",
+    "OWL · Web Ontology Language": "OWL · Web Ontology Language",
+    "SHACL · Shapes Constraint Language": "SHACL · Shapes Constraint Language",
+    "En nuestra demo": "In our demo",
     "PARTE 4 · CÓMO EJECUTARLA": "PART 4 · HOW TO RUN IT",
     "La demo en Claude Code, paso a paso": "The demo in Claude Code, step by step",
     "1 · Preparación": "1 · Setup",
@@ -459,6 +463,21 @@ BULLETS_2 = {
         "v2 adds the calls relation and recovers the missing invariant: recall from 86% to 100%",
     "Ontología de ~70 líneas: 4 clases, 6 relaciones, 1 restricción, 4 componentes":
         "~70-line ontology: 4 classes, 6 relations, 1 constraint, 4 components",
+    "Sirve para escribir la ontología: clases, propiedades, jerarquías y axiomas":
+        "Used to write the ontology: classes, properties, hierarchies and axioms",
+    "Ejemplo: «todo invariante tiene un ticket de origen»": "Example: \"every invariant has a ticket of origin\"",
+    "Un razonador deduce hechos nuevos a partir de los declarados": "A reasoner infers new facts from the declared ones",
+    "Mundo abierto: lo que falta no es falso, es desconocido": "Open world: what is missing is not false, just unknown",
+    "Sirve para validar los datos del grafo contra unas «formas»": "Used to validate graph data against \"shapes\"",
+    "Tipos de nodo, relaciones permitidas, campos obligatorios, cardinalidades":
+        "Node types, allowed relations, required fields, cardinalities",
+    "Mundo cerrado: si falta un dato obligatorio, es un error": "Closed world: a missing required value is an error",
+    "Devuelve un informe con lo que no cumple": "Returns a report of what does not conform",
+    "No usamos los estándares, sino su idea con herramientas ligeras": "We do not use the standards, only their idea with light tools",
+    "El YAML de la ontología hace el papel de OWL": "The ontology YAML plays the role of OWL",
+    "La validación de oag.py build hace el de SHACL: rechaza lo que no cumple el esquema":
+        "The validation in oag.py build plays the role of SHACL: it rejects what breaks the schema",
+    "Si el dominio crece, el YAML se traduce a OWL y SHACL": "If the domain grows, the YAML translates to OWL and SHACL",
     "Preguntas en castellano: sinónimos o un modelo pequeño en CPU":
         "Questions in Spanish: synonyms or a small model on CPU",
     "Sale en buena parte de las plantillas (ISSUE_NOTE, SHARP_EDGES, TEST_MAP)":
@@ -484,6 +503,8 @@ QUOTES.update({
         "OAG does not replace GraphRAG: it complements it. One discovers the structure; the other pins it as a contract.",
     "/clear antes de cada skill y aprobar una vez «python demo/...»: cada técnica responde solo con lo suyo.":
         "/clear before each skill and approve \"python demo/...\" once: each technique answers only with its own retrieval.",
+    "OWL dice qué puede existir y qué se deduce; SHACL comprueba que los datos lo cumplen.":
+        "OWL says what can exist and what follows; SHACL checks that the data complies.",
     "El idioma solo afecta al primer paso: con seis sinónimos o un modelo pequeño, OAG responde igual que en inglés.":
         "The language only affects the first step: with six synonyms or a small model, OAG answers as it does in English.",
     "Poco esfuerzo, bien acotado: ontología pequeña, extracción sin LLM y dos modos en /kg.":

@@ -215,7 +215,8 @@ reproduces the first ontology. The plain-language explanation of v1 and v2 is in
    ([`parse_invariants`](../demo/oag.py#L83), [line 134](../demo/oag.py#L134)).
 4. **Tests**: each cited `tests/test_tkt_NNN_*.py` yields `verified_by` from its ticket
    ([line 144](../demo/oag.py#L144)).
-5. **SHACL-style validation** ([line 154](../demo/oag.py#L154)): any edge whose relation is not in the ontology
+5. **SHACL-style validation**, after the W3C standard for validating graphs against a schema (defined in the
+   [demo guide](DEMO_GUIDE.md#2-key-concepts)) ([line 154](../demo/oag.py#L154)): any edge whose relation is not in the ontology
    (the `mentions`), whose domain or range is not the declared one, or that has no source, is rejected. Nodes
    whose id does not match the pattern or that miss a required field are reported.
 6. Writes `data/oag/<id>/facts.json` with nodes, accepted edges and a report (accepted and rejected by reason).

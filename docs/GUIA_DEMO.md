@@ -54,6 +54,21 @@ El término se usa con tres sentidos distintos, y conviene separarlos:
 - **Atributo.** Una propiedad de una clase: título, estado, fichero fuente.
 - **Restricción.** Lo que puede ser verdad: `guards` solo sale de un `Invariant`; toda arista tiene
   fuente. En la web semántica se expresan con OWL y se validan con SHACL (W3C).
+- **OWL (Web Ontology Language).** El estándar del W3C para escribir ontologías (OWL 2, 2009). Declara
+  clases, propiedades, jerarquías y axiomas («todo invariante tiene un ticket de origen», «`guards` va de
+  un invariante a un componente»). Un razonador OWL puede deducir hechos nuevos a partir de los
+  declarados. Trabaja con mundo abierto: si un dato falta, no se concluye que sea falso, solo que no se
+  sabe.
+- **SHACL (Shapes Constraint Language).** El estándar del W3C para validar datos de un grafo (2017).
+  Define «formas» que los datos deben cumplir: tipo de cada nodo, relaciones permitidas, campos
+  obligatorios, cardinalidades. Trabaja con mundo cerrado: si falta un dato obligatorio, es un error, y
+  devuelve un informe con lo que no cumple. En resumen: OWL dice qué puede existir y qué se deduce;
+  SHACL comprueba que los datos lo cumplen.
+- **OWL y SHACL en la demo.** No usamos ninguno de los dos estándares, sino su idea con herramientas
+  ligeras: la ontología es un YAML (`demo/oag/ontology.yaml`) que hace el papel de OWL, y la validación de
+  `oag.py build` (unas 30 líneas de Python que rechazan relaciones fuera del esquema, dominios o rangos
+  incorrectos y aristas sin fuente) hace el de SHACL. Por eso las guías hablan de validación «al estilo
+  de SHACL». Si el dominio creciera, el YAML se puede traducir a OWL y SHACL sin cambiar el modelo.
 - **Instancia o hecho.** Un dato concreto que cumple el esquema: `TKT-104 touches letter_end_detection`.
 - **Sinónimos (altLabels).** Las palabras con las que el texto libre nombra un mismo concepto. Son la
   pieza que permite que `get_letter_end`, `LETTER_END_*` y «fin de carta» se traten como una sola cosa.
