@@ -12,7 +12,7 @@ preguntar» para `python demo/...`) cubre toda la demo. Si `python` no existe, e
 para, en lugar de probar otras rutas.
 
 1. Ejecuta `python demo/compare.py` (las dos preguntas) o `python demo/compare.py --q <id>` (una). Vuelve
-   a lanzar las técnicas deterministas (GraphRAG a uno y dos saltos, OAG con esquema v1 y v2) y lee los
+   a lanzar las técnicas deterministas (GraphRAG a uno y dos saltos, OAG con esquema v1 y v2 y el híbrido de `demo/hybrid.py`) y lee los
    resultados guardados en `data/runs/<id>/` (Agentic RAG y las respuestas registradas de Claude). Cada
    pregunta tiene una segunda tabla con la misma pregunta en castellano llano: primero solo coincidencia de
    palabras y después con la capa semántica (embeddings multilingües) o los sinónimos en castellano de la
@@ -30,6 +30,8 @@ para, en lugar de probar otras rutas.
    - En castellano llano, sin capa semántica caen las tres técnicas; con ella, OAG recupera exactamente
      lo mismo que en inglés, GraphRAG llega a la zona correcta pero no al mejor nodo y Naive RAG mejora
      sin llegar a su resultado en inglés.
+   - El híbrido (GraphRAG propone, la ontología filtra) iguala a la mejor técnica en cada pregunta sin
+     tener que elegirla, pero no la supera.
    - Lección: OAG compensa donde hay reglas estables que alguien puede escribir; GraphRAG, para explorar.
 4. Recuerda las limitaciones: dos preguntas, respuesta esperada escrita a mano o por regla (es un mínimo;
    un ID extra puede ser correcto), OAG v2 corregido después de ver el fallo y el umbral semántico de OAG

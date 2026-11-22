@@ -332,12 +332,12 @@ def build():
     rect(s, -0.1, -0.1, 13.53, 7.7, fill=BG)
     rect(s, 0, 0, 13.333, 0.16, fill=CORAL)
     rect(s, 0, 7.34, 13.333, 0.16, fill=CORAL)
-    text(s, 1.0, 1.4, 11, 0.5, [[R("INVESTIGACIÓN · METODOLOGÍA DE AGENTES IA", 14, CORAL, True)]])
+    text(s, 1.0, 1.4, 11, 0.5, [[R("CHARLA Y DEMO · METODOLOGÍA DE AGENTES IA", 14, CORAL, True)]])
     text(s, 0.95, 2.0, 11.5, 2.0,
          [[R("Ontology-Augmented Generation", 50, TEXT, True)],
-          [R("¿se parece a nuestro ", 26, MUTED, False), R("grafo de conocimiento de tickets", 26, TEXT, True),
-           R("?", 26, MUTED, False)]],
-         space_after=10)
+          [R("De Naive RAG a OAG sobre nuestro ", 26, MUTED, False), R("grafo de tickets", 26, TEXT, True)],
+          [R("Charla y demo en directo: dónde gana cada técnica y si merece la pena adoptarla", 17, MUTED, False)]],
+         space_after=8)
     rect(s, 1.02, 4.2, 1.4, 0.05, fill=CORAL)
     text(s, 1.0, 4.45, 11.5, 1.7,
          [[R("PARTE 1 — ", 15, CORAL, True),
@@ -435,6 +435,26 @@ def build():
     s, pg = new()
     diagram(s, "ontology", page=pg)
 
+    # ---- OWL y SHACL
+    s, pg = new()
+    base(s, "Parte 1 · Conceptos", "OWL y SHACL: los dos estándares del W3C", page=pg)
+    panel_bullets(s, 0.7, 2.0, 3.85, 4.0, "OWL · Web Ontology Language",
+                  ["Sirve para escribir la ontología: clases, propiedades, jerarquías y axiomas",
+                   "Ejemplo: «todo invariante tiene un ticket de origen»",
+                   "Un razonador deduce hechos nuevos a partir de los declarados",
+                   "Mundo abierto: lo que falta no es falso, es desconocido"], accent=BLUE)
+    panel_bullets(s, 4.75, 2.0, 3.85, 4.0, "SHACL · Shapes Constraint Language",
+                  ["Sirve para validar los datos del grafo contra unas «formas»",
+                   "Tipos de nodo, relaciones permitidas, campos obligatorios, cardinalidades",
+                   "Mundo cerrado: si falta un dato obligatorio, es un error",
+                   "Devuelve un informe con lo que no cumple"], accent=AMBER)
+    panel_bullets(s, 8.8, 2.0, 3.85, 4.0, "En nuestra demo",
+                  ["No usamos los estándares, sino su idea con herramientas ligeras",
+                   "El YAML de la ontología hace el papel de OWL",
+                   "La validación de oag.py build hace el de SHACL: rechaza lo que no cumple el esquema",
+                   "Si el dominio crece, el YAML se traduce a OWL y SHACL"], accent=GREEN)
+    takeaway(s, "OWL dice qué puede existir y qué se deduce; SHACL comprueba que los datos lo cumplen.")
+
     # ---- OG-RAG pipeline
     s, pg = new()
     diagram(s, "ograg_pipeline", page=pg)
@@ -477,15 +497,16 @@ def build():
          title="Pipeline y consulta")
     table(s, 0.7, 4.15, [2.4, 3.9],
           [["Corpus → grafo", "Valor"],
-           ["Ficheros / palabras", "116 / ~196k"],
-           ["Nodos · aristas · comunidades", "507 · 672 · 35"],
-           ["Aristas EXTRACTED / INFERRED", "92% / 7%"]], row_h=0.38, size=10.5)
+           ["Ficheros / palabras", "453 / ~690k"],
+           ["Nodos · aristas · comunidades", "3.977 · 8.076 · 213"],
+           ["Aristas EXTRACTED / INFERRED", "93% / 7%"]], row_h=0.38, size=10.5)
     panel_bullets(s, 7.25, 1.82, 5.4, 4.35, "Tipos que salieron (emergentes)",
-                  ["Nodos: document 420 · code 58 · concept 20 · rationale 9",
-                   "references 286 · relates_to 221",
-                   "rationale_for 66 · fixes 59",
-                   "semantically_similar_to 22 · conceptually_related_to 18",
-                   "~75% de las aristas son genéricas (references / relates_to)"],
+                  ["Nodos: concept 2.102 · rationale 674 · símbolo 543 · ticket 441",
+                   "references 4.749 · rationale_for 821",
+                   "implements 594 · calls 398",
+                   "conceptually_related_to 312 · relates_to 267 · semantically_similar_to 120",
+                   "~67% de las aristas son genéricas (references, relates_to y similares)",
+                   "Grafo de /kg-refresh del 20-11-2026, el mismo que usa la demo"],
                   accent=BLUE)
 
     # ---- Nuestra pipeline
@@ -624,8 +645,9 @@ def build():
     # PARTE 4
     # =========================================================================
     s, pg = new()
-    divider(s, 4, "La demo", "Cinco skills de Claude Code, dos preguntas reales y la misma vara de medir.",
-            ["OAG en la demo", "Cómo evaluamos", "Dos preguntas, dos ganadores", "De OAG v1 a v2",
+    divider(s, 4, "La demo", "Seis skills de Claude Code, dos preguntas reales y la misma vara de medir.",
+            ["OAG en la demo", "Cómo evaluamos", "Dos preguntas, dos ganadores", "Combinar las dos",
+             "De OAG v1 a v2",
              "La pregunta en castellano", "Dónde gana cada técnica", "¿Merece la pena en nuestro caso?"], page=pg)
 
     # ---- Cómo ejecutarla
@@ -649,8 +671,8 @@ def build():
           "/demo-oag comment-memo-landscape",
           "# en castellano llano (opcional)",
           "/demo-oag letter-end-runin --lang es",
-          "# cierre",
-          "/demo-compare"], title="2 · Dentro de Claude Code")
+          "# híbrido y cierre",
+          "/demo-hybrid       /demo-compare"], title="2 · Dentro de Claude Code")
     takeaway(s, "/clear antes de cada skill y aprobar una vez «python demo/...»: cada técnica responde solo con lo suyo.")
 
     s, pg = new()
@@ -695,6 +717,26 @@ def build():
              "OAG no encuentra ningún componente de su ontología en la pregunta y no devuelve nada.",
              11, FAINT, False)]])
     takeaway(s, "GraphRAG descubre lo que nadie ha modelado; OAG solo ve lo que su esquema declara.")
+
+    # ---- Híbrido
+    s, pg = new()
+    base(s, "Parte 4 · Combinar las dos", "Híbrido: GraphRAG propone, la ontología filtra", page=pg)
+    table(s, 0.7, 2.0, [3.3, 1.6, 1.6],
+          [["Técnica", "Pregunta A", "Pregunta B"],
+           ["GraphRAG (/kg, 2 saltos)", "100% / 13%", "83% / 43%"],
+           ["OAG, esquema v2", "100% / 47%", "0%"],
+           ["Híbrido", "100% / 47%", "83% / 43%"]], row_h=0.5, size=11.5)
+    text(s, 0.7, 4.2, 6.5, 1.2,
+         [[R("Recall / precisión. Pregunta A: 53 candidatos del grafo; 22 se conectan al componente en la "
+             "ontología; 15 cumplen sus reglas. El grafo no aportó ningún ticket que OAG no tuviera.",
+             10.5, FAINT, False)]])
+    panel_bullets(s, 7.55, 2.0, 5.1, 3.4, "Cómo funciona (demo/hybrid.py)",
+                  ["GraphRAG a 2 saltos da la lista amplia: mucho recall, poca precisión",
+                   "Si la pregunta nombra un componente de la ontología, se filtra con sus clases, relaciones y reglas",
+                   "Si no nombra ninguno, se queda la lista del grafo sin tocar",
+                   "Las comunidades que el grafo encuentra fuera del esquema salen como propuesta para ampliar la ontología; la revisa una persona"],
+                  accent=GREEN)
+    takeaway(s, "No supera a la mejor en cada pregunta: evita elegir mal y dice qué modelar después.")
 
     # ---- v1 -> v2
     s, pg = new()

@@ -22,6 +22,13 @@ el grafo contra ella.
 | Sharma, Kumar & Li, *OG-RAG* (Microsoft Research, arXiv 2412.15235, EMNLP 2025) | El método concreto. Un LLM mapea los documentos a la ontología → *fact blocks* JSON-LD → hipergrafo (bloque = hiperarista, par clave-valor = hipernodo). Recuperación: top-k nodos por clave y por valor + selección greedy del mínimo conjunto de hiperaristas que cubre. Sin llamadas LLM extra al consultar. |
 | Palantir Foundry, *Ontology augmented generation* | Versión de plataforma: chunks como objetos de la Ontología, búsqueda semántica / keyword / híbrida (RRF, k=60), y una Ontología de negocio con objetos, enlaces y acciones tipadas. |
 
+Dos términos que aparecen a lo largo del informe: **OWL** (Web Ontology Language) es el estándar del W3C para
+escribir ontologías, con clases, propiedades y axiomas de los que un razonador puede deducir hechos nuevos;
+**SHACL** (Shapes Constraint Language) es el estándar del W3C para validar que los datos de un grafo cumplen
+unas «formas» (tipos, relaciones permitidas, campos obligatorios). OWL dice qué puede existir; SHACL comprueba
+que los datos lo cumplen. Aquí no se proponen los estándares, sino su idea: una ontología en YAML y una
+validación ligera «al estilo SHACL».
+
 Resultados de OG-RAG (Tabla 1, context recall): soja 0.22 RAG / 0.54 RAPTOR / 0.41 GraphRAG / **0.84** OG-RAG;
 trigo 0.14 / 0.85 / 0.78 / **0.95**; noticias 0.01 / 0.82 / — / 0.82. El abstract resume: +55% recall de hechos,
 +40% corrección, atribución 30% más rápida, +27% en razonamiento sobre hechos. Letra pequeña: datos
@@ -40,9 +47,11 @@ propietarios, dos dominios, ontologías hechas a mano, y la relevancia de respue
 | Salida | Hechos en el prompt | Chunks + citas | Lista de lectura (tickets + zona de peligro) |
 | Acciones | No | Sí | Skills y gates del método |
 
-Datos del grafo actual: 507 nodos, 672 aristas, 35 comunidades; aristas `references` 286, `relates_to` 221,
-`rationale_for` 66, `fixes` 59, `semantically_similar_to` 22, `conceptually_related_to` 18. Unas tres cuartas
-partes de las aristas son genéricas: ahí es donde una ontología añadiría más.
+Datos del grafo actual (`/kg-refresh` del 20 de noviembre, 453 ficheros, el que usa la demo): 3.977 nodos,
+8.076 aristas, 213 comunidades; aristas `references` 4.749, `rationale_for` 821, `implements` 594, `calls` 398,
+`conceptually_related_to` 312, `relates_to` 267, `semantically_similar_to` 120. Unos dos tercios de las aristas
+son genéricas: ahí es donde una ontología añadiría más. (La copia sanitizada de `reference/`, de 116 ficheros,
+daba 507 nodos, 672 aristas y tres cuartas partes de aristas genéricas.)
 
 ## Qué adoptar
 

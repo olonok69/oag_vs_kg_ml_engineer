@@ -32,7 +32,7 @@ Notas:
 ## 2. Cómo se llama a una skill
 
 Dentro de Claude Code, una skill se invoca escribiendo `/` y su nombre. Al escribir `/demo` aparecen las
-cinco. Lo que va después del nombre son los argumentos:
+seis. Lo que va después del nombre son los argumentos:
 
 ```
 /demo-oag                                   pregunta por defecto (letter-end-runin), en inglés
@@ -82,6 +82,13 @@ que recuperó la técnica anterior y la comparación deja de ser justa.
 | `/demo-oag letter-end-runin --lang es` | v2 (sin componentes), v3 (sinónimos en castellano) y `--semantic` | 0 %, 100 % y 100 % |
 | `/demo-graphrag comment-memo-landscape --lang es` | Semilla por nombre y después por similitud | 0 % y después 59 % / 25 % |
 
+### Combinar GraphRAG y OAG
+
+| Comando | Qué hace | Qué debería salir |
+|---|---|---|
+| `/demo-hybrid` | GraphRAG a 2 saltos propone; la ontología filtra (componente, reglas) | 53 candidatos, 22 y 15: 100 % / 47 %, igual que OAG v2 |
+| `/demo-hybrid comment-memo-landscape` | Sin componentes: lista del grafo y propuesta para la ontología | 83 % / 43 %, igual que GraphRAG, y las comunidades a revisar |
+
 ### Cierre
 
 | Comando | Qué hace | Qué debería salir |
@@ -98,6 +105,7 @@ Los scripts funcionan solos, con la misma salida que ven las skills:
 python demo/naive_rag.py --q letter-end-runin [--embed] [--lang es]
 python demo/graphrag.py --q comment-memo-landscape [--hops 2] [--semantic] [--lang es]
 python demo/oag.py query --q letter-end-runin [--schema 1|2|3] [--semantic] [--lang es]
+python demo/hybrid.py --q letter-end-runin [--semantic] [--lang es]
 python demo/compare.py
 ```
 

@@ -28,6 +28,9 @@ flowchart LR
     N --> R[data/runs/&lt;id&gt;/*.json]
     G --> R
     O --> R
+    G -.-> H[hybrid.py]
+    O -.-> H
+    H --> R
     A[Claude: Grep/Read] -- record_answer.py --> R
     R --> CMP[compare.py] --> MD[data/runs/compare.md]
 ```
@@ -42,6 +45,7 @@ Claude, which in each skill reads what was retrieved and answers.
 | Naive RAG | [`demo/naive_rag.py`](../demo/naive_rag.py) | Text chunks, TF-IDF (or multilingual embeddings) and top-k |
 | GraphRAG | [`demo/graphrag.py`](../demo/graphrag.py) | The `/kg` query over `graph.json`: neighbours, reading list and themes |
 | OAG | [`demo/oag.py`](../demo/oag.py) | `build`: typed facts validated against the ontology. `query`: set cover of fact blocks |
+| Hybrid | [`demo/hybrid.py`](../demo/hybrid.py) | GraphRAG proposes and the ontology filters if the question falls inside it; otherwise it proposes what to model |
 | Ontology | [`demo/oag/ontology.yaml`](../demo/oag/ontology.yaml) | Classes, relations, constraints, components with synonyms and extraction rules |
 | Agentic RAG | [`.claude/skills/demo-agentic-rag/SKILL.md`](../.claude/skills/demo-agentic-rag/SKILL.md) | Claude searches and reads with Grep/Read; records its answer |
 | Semantic layer | [`demo/semantic.py`](../demo/semantic.py) | Cached multilingual embeddings, used by the three deterministic techniques with `--embed` or `--semantic` |
@@ -215,7 +219,8 @@ reproduces the first ontology. The plain-language explanation of v1 and v2 is in
    ([`parse_invariants`](../demo/oag.py#L83), [line 134](../demo/oag.py#L134)).
 4. **Tests**: each cited `tests/test_tkt_NNN_*.py` yields `verified_by` from its ticket
    ([line 144](../demo/oag.py#L144)).
-5. **SHACL-style validation** ([line 154](../demo/oag.py#L154)): any edge whose relation is not in the ontology
+5. **SHACL-style validation**, after the W3C standard for validating graphs against a schema (defined in the
+   [demo guide](DEMO_GUIDE.md#2-key-concepts)) ([line 154](../demo/oag.py#L154)): any edge whose relation is not in the ontology
    (the `mentions`), whose domain or range is not the declared one, or that has no source, is rejected. Nodes
    whose id does not match the pattern or that miss a required field are reported.
 6. Writes `data/oag/<id>/facts.json` with nodes, accepted edges and a report (accepted and rejected by reason).
@@ -244,6 +249,29 @@ reproduces the first ontology. The plain-language explanation of v1 and v2 is in
 
 Output: `data/runs/<id>/oag.json` (v2), `oag_v1.json` or `oag_v3.json`, with `_es` and `_sem` suffixes for the
 variants.
+
+### 7.4 The hybrid: GraphRAG proposes, the ontology filters
+
+[`demo/hybrid.py`](../demo/hybrid.py) ([`main`](../demo/hybrid.py#L55)) retrieves nothing on its own: it combines
+the two previous techniques, with no LLM.
+
+1. Runs `graphrag.py` at 2 hops and `oag.py query` with the same flags (`--q`, `--lang`, `--semantic`) and reads
+   their results from `data/runs/<id>/` ([lines 72-73](../demo/hybrid.py#L72)), so the figures are exactly those
+   of each technique.
+2. If the question maps to an ontology component ([line 85](../demo/hybrid.py#L85)), it filters the graph's
+   candidates in two steps: first those the ontology connects to the component through classes and relations
+   ([`linked_to`](../demo/hybrid.py#L43)), then those that meet its rules, which are the ones the OAG v2 query
+   returns ([lines 87-89](../demo/hybrid.py#L87)). It reports any ticket OAG finds that the graph did not propose.
+3. If it maps to none ([line 104](../demo/hybrid.py#L104)), the answer is GraphRAG's list as it is, and the
+   neighbourhood's communities are printed as a proposal to extend the ontology. The proposal is not applied: a
+   person reviews it.
+
+Result on the two questions: on A, 53 candidates, 22 connected to the component and 15 that meet the rules
+(100% / 47%, the same as OAG v2; the graph adds no ticket OAG did not already have). On B, GraphRAG's list
+(83% / 43%). The hybrid matches the best technique on each question without having to choose it; its weak point
+is deciding whether the question falls inside the ontology.
+
+Output: `data/runs/<id>/hybrid.json`, with `route` (`ontology` or `graphrag`), `candidates` and `proposal`.
 
 ## 8. The semantic layer (question in Spanish)
 
@@ -282,7 +310,7 @@ download.pytorch.org (and download-r2.pytorch.org). After that it can run offlin
 ## 9. Metrics and comparison
 
 **Scoring** ([`score`](../demo/lib.py#L126)): recall = expected found / expected; precision = expected found /
-returned. F1 is computed in [`compare.py`](../demo/compare.py#L68). Context tokens = characters / 4
+returned. F1 is computed in [`compare.py`](../demo/compare.py#L70). Context tokens = characters / 4
 ([`approx_tokens`](../demo/lib.py#L138)).
 
 **What counts as returned** depends on what each technique asserts: the IDs in the chunks (Naive RAG), those in
@@ -290,15 +318,15 @@ the graph context (GraphRAG), the subjects and origins of the fact blocks (OAG) 
 answer (Agentic RAG). The criterion and its limits are in the
 [demo guide, section 6](DEMO_GUIDE.md#6-how-we-evaluate).
 
-**`compare.py`** ([`main`](../demo/compare.py#L94)), for every question or only `--q`:
+**`compare.py`** ([`main`](../demo/compare.py#L96)), for every question or only `--q`:
 
-1. Re-runs Naive RAG, GraphRAG at 1 and 2 hops, OAG v1 and v2 ([lines 104-112](../demo/compare.py#L104)); if there
+1. Re-runs Naive RAG, GraphRAG at 1 and 2 hops, OAG v1 and v2 and the hybrid ([lines 107-115](../demo/compare.py#L107)); if there
    are no facts yet, it runs `oag.py build` first. Then the plain Spanish variants without a model and, if the
-   `embed` group is installed ([`has_embed`](../demo/compare.py#L54)), the semantic ones
-   ([lines 113-122](../demo/compare.py#L113)).
+   `embed` group is installed ([`has_embed`](../demo/compare.py#L56)), the semantic ones
+   ([lines 116-125](../demo/compare.py#L116)).
 2. Reads `data/runs/<id>/*.json`, including Agentic RAG and Claude's recorded answers
-   ([`table`](../demo/compare.py#L73)).
-3. Prints two tables per question, in English and in plain Spanish ([`order_es`](../demo/compare.py#L39)), and
+   ([`table`](../demo/compare.py#L75)).
+3. Prints two tables per question, in English and in plain Spanish ([`order_es`](../demo/compare.py#L41)), and
    saves them to `data/runs/compare.md`.
 
 `record_answer.py` adds Claude's final answer (`answer`, `answer_score`) to each result; it shows in the table's

@@ -9,6 +9,9 @@ _B = "▸  "
 
 PLAIN = {
     "INVESTIGACIÓN · METODOLOGÍA DE AGENTES IA": "RESEARCH · AI AGENT METHODOLOGY",
+    "CHARLA Y DEMO · METODOLOGÍA DE AGENTES IA": "TALK AND DEMO · AI AGENT METHODOLOGY",
+    "Charla y demo en directo: dónde gana cada técnica y si merece la pena adoptarla":
+        "Talk and live demo: where each technique wins and whether it is worth adopting",
     "Fuentes: Sharma, Kumar & Li — OG-RAG (arXiv 2412.15235, EMNLP 2025) · docs de Palantir Foundry · L. Huang, \"From RAG to OAG\" (Medium) · reference/KNOWLEDGE_GRAPH.md":
         "Sources: Sharma, Kumar & Li — OG-RAG (arXiv 2412.15235, EMNLP 2025) · Palantir Foundry docs · L. Huang, \"From RAG to OAG\" (Medium) · reference/KNOWLEDGE_GRAPH.md",
     "LA PREGUNTA": "THE QUESTION",
@@ -249,6 +252,12 @@ BULLETS = {
         "Proprietary data, two domains · hand-made ontologies · answer relevance not always better (RAPTOR wins on wheat and news)",
     "Nodos: document 420 · code 58 · concept 20 · rationale 9": "Nodes: document 420 · code 58 · concept 20 · rationale 9",
     "~75% de las aristas son genéricas (references / relates_to)": "~75% of the edges are generic (references / relates_to)",
+    "~67% de las aristas son genéricas (references, relates_to y similares)": "~67% of the edges are generic (references, relates_to and similar)",
+    "Nodos: concept 2.102 · rationale 674 · símbolo 543 · ticket 441": "Nodes: concept 2,102 · rationale 674 · symbol 543 · ticket 441",
+    "references 4.749 · rationale_for 821": "references 4,749 · rationale_for 821",
+    "implements 594 · calls 398": "implements 594 · calls 398",
+    "conceptually_related_to 312 · relates_to 267 · semantically_similar_to 120": "conceptually_related_to 312 · relates_to 267 · semantically_similar_to 120",
+    "Grafo de /kg-refresh del 20-11-2026, el mismo que usa la demo": "/kg-refresh graph of 2026-11-20, the same one the demo uses",
     "Las clases existen en las plantillas, pero graphify no las conoce: cada refresh las reinventa (por eso solo <1% de las etiquetas de comunidad sobrevive).":
         "The classes exist in the templates, but graphify does not know them: every refresh reinvents them (which is why <1% of community labels survive).",
     "Conocimiento del dominio como grafo, no como chunks": "Domain knowledge as a graph, not as chunks",
@@ -313,7 +322,7 @@ QUOTES = {
 
 # Paragraphs with mixed formatting: one string per run.
 RUNS = {
-    "¿se parece a nuestro grafo de conocimiento de tickets?": ["does it resemble our ", "ticket knowledge graph", "?"],
+    "De Naive RAG a OAG sobre nuestro grafo de tickets": ["From Naive RAG to OAG on our ", "ticket graph"],
     "PARTE 1 — Qué es OAG: de RAG a ontologías · OG-RAG (Microsoft Research) · Palantir Foundry":
         ["PART 1 — ", "What OAG is: from RAG to ontologies · OG-RAG (Microsoft Research) · Palantir Foundry"],
     "PARTE 2 — Nuestro grafo de tickets frente a OAG: qué compartimos y en qué diferimos":
@@ -329,6 +338,7 @@ RUNS = {
 
 # Text that stays as it is (names, code, numbers).
 KEEP = [
+    "453 / ~690k",
     "git pull", "uv sync --group embed", "source .venv/bin/activate",
     "python demo/oag.py build --q letter-end-runin", "python demo/oag.py build --q comment-memo-landscape",
     "python demo/compare.py", "claude", "/demo-naive-rag    /demo-agentic-rag", "/demo-graphrag     /demo-oag",
@@ -354,8 +364,8 @@ KEEP = [
 
 # Part 4 with two questions (where each technique wins).
 PLAIN.update({
-    "Cinco skills de Claude Code, dos preguntas reales y la misma vara de medir.":
-        "Five Claude Code skills, two real questions and the same yardstick.",
+    "Seis skills de Claude Code, dos preguntas reales y la misma vara de medir.":
+        "Six Claude Code skills, two real questions and the same yardstick.",
     "Dos preguntas, dos ganadores": "Two questions, two winners",
     "De OAG v1 a v2": "From OAG v1 to v2",
     "Dónde gana cada técnica": "Where each technique wins",
@@ -368,6 +378,7 @@ PLAIN.update({
     "OAG, esquema v1": "OAG, schema v1",
     "OAG, esquema v2": "OAG, schema v2",
     "OAG, esquema v1 y v2": "OAG, schema v1 and v2",
+    "3.977 · 8.076 · 213": "3,977 · 8,076 · 213", "93% / 7%": "93% / 7%",
     "0,67": "0.67", "0,59": "0.59", "0,23": "0.23", "0,50": "0.50", "0,64": "0.64",
     "0,19": "0.19", "0,32": "0.32", "0,56": "0.56", "~1.100": "~1,100", "~2.500": "~2,500",
     "7 tickets esperados, escritos por quien resolvió el bug. Corpus completo: 452 ficheros. Por F1 Naive RAG queda a la par, pero se deja dos de los siete: en «qué no romper», un olvido es una regresión.":
@@ -399,6 +410,10 @@ PLAIN.update({
     "Lo que no compensa": "What does not pay off",
     "Qué llevar a la metodología": "What to take to the methodology",
     "La pregunta en castellano": "The question in Spanish",
+    "OWL y SHACL: los dos estándares del W3C": "OWL and SHACL: the two W3C standards",
+    "OWL · Web Ontology Language": "OWL · Web Ontology Language",
+    "SHACL · Shapes Constraint Language": "SHACL · Shapes Constraint Language",
+    "En nuestra demo": "In our demo",
     "PARTE 4 · CÓMO EJECUTARLA": "PART 4 · HOW TO RUN IT",
     "La demo en Claude Code, paso a paso": "The demo in Claude Code, step by step",
     "1 · Preparación": "1 · Setup",
@@ -448,6 +463,21 @@ BULLETS_2 = {
         "v2 adds the calls relation and recovers the missing invariant: recall from 86% to 100%",
     "Ontología de ~70 líneas: 4 clases, 6 relaciones, 1 restricción, 4 componentes":
         "~70-line ontology: 4 classes, 6 relations, 1 constraint, 4 components",
+    "Sirve para escribir la ontología: clases, propiedades, jerarquías y axiomas":
+        "Used to write the ontology: classes, properties, hierarchies and axioms",
+    "Ejemplo: «todo invariante tiene un ticket de origen»": "Example: \"every invariant has a ticket of origin\"",
+    "Un razonador deduce hechos nuevos a partir de los declarados": "A reasoner infers new facts from the declared ones",
+    "Mundo abierto: lo que falta no es falso, es desconocido": "Open world: what is missing is not false, just unknown",
+    "Sirve para validar los datos del grafo contra unas «formas»": "Used to validate graph data against \"shapes\"",
+    "Tipos de nodo, relaciones permitidas, campos obligatorios, cardinalidades":
+        "Node types, allowed relations, required fields, cardinalities",
+    "Mundo cerrado: si falta un dato obligatorio, es un error": "Closed world: a missing required value is an error",
+    "Devuelve un informe con lo que no cumple": "Returns a report of what does not conform",
+    "No usamos los estándares, sino su idea con herramientas ligeras": "We do not use the standards, only their idea with light tools",
+    "El YAML de la ontología hace el papel de OWL": "The ontology YAML plays the role of OWL",
+    "La validación de oag.py build hace el de SHACL: rechaza lo que no cumple el esquema":
+        "The validation in oag.py build plays the role of SHACL: it rejects what breaks the schema",
+    "Si el dominio crece, el YAML se traduce a OWL y SHACL": "If the domain grows, the YAML translates to OWL and SHACL",
     "Preguntas en castellano: sinónimos o un modelo pequeño en CPU":
         "Questions in Spanish: synonyms or a small model on CPU",
     "Sale en buena parte de las plantillas (ISSUE_NOTE, SHARP_EDGES, TEST_MAP)":
@@ -473,6 +503,8 @@ QUOTES.update({
         "OAG does not replace GraphRAG: it complements it. One discovers the structure; the other pins it as a contract.",
     "/clear antes de cada skill y aprobar una vez «python demo/...»: cada técnica responde solo con lo suyo.":
         "/clear before each skill and approve \"python demo/...\" once: each technique answers only with its own retrieval.",
+    "OWL dice qué puede existir y qué se deduce; SHACL comprueba que los datos lo cumplen.":
+        "OWL says what can exist and what follows; SHACL checks that the data complies.",
     "El idioma solo afecta al primer paso: con seis sinónimos o un modelo pequeño, OAG responde igual que en inglés.":
         "The language only affects the first step: with six synonyms or a small model, OAG answers as it does in English.",
     "Poco esfuerzo, bien acotado: ontología pequeña, extracción sin LLM y dos modos en /kg.":
@@ -480,6 +512,33 @@ QUOTES.update({
 })
 RUNS["PARTE 4 — La demo: de Naive RAG a OAG con Claude Code, dos preguntas, dónde gana cada técnica y si merece la pena"] = \
     ["PART 4 — ", "The demo: from Naive RAG to OAG with Claude Code, two questions, where each technique wins and whether it is worth it"]
+
+# Hybrid slide.
+PLAIN.update({
+    "Combinar las dos": "Combining the two",
+    "PARTE 4 · COMBINAR LAS DOS": "PART 4 · COMBINING THE TWO",
+    "Híbrido: GraphRAG propone, la ontología filtra": "Hybrid: GraphRAG proposes, the ontology filters",
+    "Pregunta A": "Question A",
+    "Pregunta B": "Question B",
+    "Híbrido": "Hybrid",
+    "Cómo funciona (demo/hybrid.py)": "How it works (demo/hybrid.py)",
+    "# híbrido y cierre": "# hybrid and close",
+    "Recall / precisión. Pregunta A: 53 candidatos del grafo; 22 se conectan al componente en la ontología; 15 cumplen sus reglas. El grafo no aportó ningún ticket que OAG no tuviera.":
+        "Recall / precision. Question A: 53 candidates from the graph; 22 connect to the component in the ontology; 15 meet its rules. The graph added no ticket OAG did not already have.",
+})
+BULLETS.update({
+    "GraphRAG a 2 saltos da la lista amplia: mucho recall, poca precisión":
+        "GraphRAG at 2 hops gives the broad list: high recall, low precision",
+    "Si la pregunta nombra un componente de la ontología, se filtra con sus clases, relaciones y reglas":
+        "If the question names an ontology component, the list is filtered with its classes, relations and rules",
+    "Si no nombra ninguno, se queda la lista del grafo sin tocar":
+        "If it names none, the graph's list is kept as it is",
+    "Las comunidades que el grafo encuentra fuera del esquema salen como propuesta para ampliar la ontología; la revisa una persona":
+        "The communities the graph finds outside the schema come out as a proposal to extend the ontology; a person reviews it",
+})
+QUOTES["No supera a la mejor en cada pregunta: evita elegir mal y dice qué modelar después."] = \
+    "It does not beat the best one on each question: it avoids picking wrong and says what to model next."
+KEEP.append("/demo-hybrid       /demo-compare")
 
 TRANSLATIONS: dict = {}
 TRANSLATIONS.update(PLAIN)

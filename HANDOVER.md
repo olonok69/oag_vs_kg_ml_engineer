@@ -1,7 +1,7 @@
 # Traspaso: OAG vs grafo de conocimiento de tickets
 
 > **Para quién:** cualquier persona o agente que continúe este trabajo, aquí o en otro proyecto.
-> **Fecha:** 2026-11-20, actualizado el 2026-11-21. **Estado:** investigación, presentación (33 slides, ES y EN), guía
+> **Fecha:** 2026-11-20, actualizado el 2026-11-22. **Estado:** investigación, presentación (35 slides, ES y EN), guía
 > y demo en directo terminadas; la adopción (Fases A–D) no ha empezado. La demo deja las dos primeras preguntas
 > del Paso 0 y una ontología mínima de partida.
 > Léelo entero antes de tocar nada: la sección 6 tiene las reglas que no se pueden romper.
@@ -24,7 +24,8 @@ metodología de agentes IA, en concreto al grafo de conocimiento de tickets? ¿Q
 | Confianza explícita (EXTRACTED vs INFERRED) | Acciones ligadas a la ontología |
 
 Nuestro grafo es **schema-emergent** (graphify decide los tipos al extraer), lo que lo acerca a GraphRAG más
-que a OG-RAG. Prueba en los datos: ~75% de las 672 aristas son genéricas (`references` 286, `relates_to` 221).
+que a OG-RAG. Prueba en los datos: en el grafo actual (453 ficheros, 3.977 nodos, 8.076 aristas) unos dos tercios
+de las aristas son genéricas (`references` 4.749 de 8.076); en la copia sanitizada de `reference/`, ~75 % de 672.
 Las plantillas de la metodología ya contienen una ontología implícita; falta escribirla y validar contra ella.
 
 Informe completo: [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md). Deck: [`presentacion/OAG_vs_KG_Presentacion.pptx`](presentacion/OAG_vs_KG_Presentacion.pptx).
@@ -48,7 +49,7 @@ Informe completo: [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md). Deck: [`presentacion
    `/demo-graphrag`, `/demo-oag`, `/demo-compare`) sobre el corpus completo de `/kg` (452 ficheros), con los
    datos reales en `data/` (fuera de git) y entorno con uv. Ver `demo/README.md`.
 7. **Guía de la demo y diagramas** en ES y EN (`docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md`, `docs/img/`) y deck
-   bilingüe con la Parte 4 (la demo); 33 slides desde el punto 10.
+   bilingüe con la Parte 4 (la demo); 35 slides desde el punto 11.
 8. **Dos escenarios** (decisión de juan): el objetivo no es demostrar que OAG siempre gana, sino enseñar dónde
    gana cada técnica y si merece la pena adoptarla. Pregunta A (reglas sobre un componente modelado): gana
    OAG con el esquema v2 (100 % de recall, 15 tickets frente a 53 de GraphRAG a dos saltos). Pregunta B
@@ -70,6 +71,13 @@ Informe completo: [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md). Deck: [`presentacion
    aprobación del permiso sirva para toda la demo. Pendiente: la prueba de Agentic RAG detectó que el hold-out
    de la pregunta A no excluye la viñeta del ticket excluido en `SHARP_EDGES` ni una nota `knowledge__` que
    describe su arreglo; hay que decidir si se excluyen (cambiaría algunas cifras).
+11. **Híbrido GraphRAG + OAG** (2026-11-22): `demo/hybrid.py` y `/demo-hybrid`. GraphRAG a 2 saltos propone; si
+   la pregunta nombra un componente de la ontología, se filtra por clases y relaciones y después por sus reglas
+   (la consulta de OAG v2); si no, se queda la lista del grafo y sus comunidades salen como propuesta para
+   ampliar la ontología, que revisa una persona. Resultado: A 100 % / 47 % (53, 22 y 15 tickets, igual que OAG
+   v2; el grafo no aporta ningún ticket que OAG no tuviera), B 83 % / 43 % (igual que GraphRAG). Iguala a la
+   mejor técnica en cada pregunta sin elegirla, no la supera. Punto débil: decidir si la pregunta cae en la
+   ontología. Slide «Combinar las dos» en la Parte 4.
 
 ---
 
@@ -134,7 +142,9 @@ Documentación completa en [`reference/KNOWLEDGE_GRAPH.md`](reference/KNOWLEDGE_
   nodos y aristas) → `kg_refresh.sh finalize` (copia artefactos + leak-check).
 - **Consulta (`/kg`):** `kg_query.sh <tema>` (vecinos), `kg_query.sh <A> <B>` (camino), `kg_query.sh find <substr>`.
   Determinista, sin LLM: lee `output/graph.json`.
-- **Cifras del grafo en este repo:** 116 ficheros (~196k palabras) → 507 nodos, 672 aristas, 35 comunidades;
+- **Cifras del grafo actual** (`/kg-refresh` del 20-11-2026, el que usa la demo, en `data/`): 453 ficheros
+  (~690k palabras) → 3.977 nodos, 8.076 aristas, 213 comunidades; 93 % EXTRACTED, 7 % INFERRED.
+- **Cifras de la copia sanitizada en este repo (`reference/`, 2026-11-20):** 116 ficheros (~196k palabras) → 507 nodos, 672 aristas, 35 comunidades;
   92% aristas EXTRACTED, 7% INFERRED. Nodos: `document` 420, `code` 58, `concept` 20, `rationale` 9.
   Aristas: `references` 286, `relates_to` 221, `rationale_for` 66, `fixes` 59, `semantically_similar_to` 22,
   `conceptually_related_to` 18.
@@ -248,8 +258,9 @@ Regla: si una relación no responde una pregunta del set de la línea base, fuer
 | `docs/EJECUTAR_DEMO.md`, `docs/RUN_DEMO.md` | Cómo ejecutar la demo en Claude Code, comando a comando (ES, EN) |
 | `docs/GUIA_TECNICA.md`, `docs/TECHNICAL_GUIDE.md` | Qué ejecuta cada skill por dentro, con enlaces al código (ES, EN) |
 | `docs/img/` | Diagramas SVG y PNG, generados por `build_diagrams.py` |
+| `docs/pdf/` | Guías e informe en PDF, generados por `docs/build_pdfs.py` (pandoc y Chrome) |
 | `presentacion/build_pptx_oag.py` | Generador del deck (python-pptx, idempotente; `--lang en` para inglés) |
-| `presentacion/OAG_vs_KG_Presentacion.pptx` | Deck de 33 slides (ES); `OAG_vs_KG_Presentation_EN.pptx` (EN) |
+| `presentacion/OAG_vs_KG_Presentacion.pptx` | Deck de 35 slides (ES); `OAG_vs_KG_Presentation_EN.pptx` (EN) |
 | `demo/`, `.claude/skills/demo-*` | Scripts, ontología mínima (`demo/oag/ontology.yaml`) y skills de la demo |
 | `reference/KNOWLEDGE_GRAPH.md` | Explicación del grafo de tickets |
 | `reference/knowledge-graph/` | Scripts, tests, diseño y grafo sanitizado (copia de `claude_code_ml_engineer/docs/`, 2026-11-20) |
