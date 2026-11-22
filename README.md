@@ -11,6 +11,7 @@ material de partida para adoptar lo útil.
 | [`HANDOVER.md`](HANDOVER.md) | Traspaso completo: qué se hizo, fuentes, plan accionable y lo que necesita otro agente |
 | [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md) | El informe: qué es OAG (OG-RAG, Palantir, Medium), comparación con nuestro grafo, qué adoptar y cómo medirlo |
 | [`docs/GUIA_DEMO.md`](docs/GUIA_DEMO.md) / [`docs/DEMO_GUIDE.md`](docs/DEMO_GUIDE.md) | Guía para presentar la demo (ES / EN): qué es OAG, conceptos, pipelines, la demo con dos escenarios, la evaluación, dónde gana cada técnica y si merece la pena |
+| [`docs/GUION_PRESENTACION.md`](docs/GUION_PRESENTACION.md) / [`docs/PRESENTATION_SCRIPT.md`](docs/PRESENTATION_SCRIPT.md) | Guion de la presentación slide a slide (ES / EN), para presentar en directo o grabar en vídeo; el mismo texto va en las notas del orador del deck |
 | [`docs/EJECUTAR_DEMO.md`](docs/EJECUTAR_DEMO.md) / [`docs/RUN_DEMO.md`](docs/RUN_DEMO.md) | Cómo ejecutar la demo en Claude Code (ES / EN): preparación, cómo llamar a cada skill, guion comando a comando y qué debe salir |
 | [`docs/GUIA_TECNICA.md`](docs/GUIA_TECNICA.md) / [`docs/TECHNICAL_GUIDE.md`](docs/TECHNICAL_GUIDE.md) | Guía técnica de la demo (ES / EN): qué ejecuta cada skill, en qué fichero y función, qué lee y qué escribe |
 | [`docs/pdf/`](docs/pdf/) | Las guías y el informe en PDF, generados con `python docs/build_pdfs.py` |

@@ -5,6 +5,9 @@
 > (ES) y `presentacion/OAG_vs_KG_Presentation_EN.pptx` (EN). Diagramas: `docs/img/` (se regeneran con
 > `python docs/img/build_diagrams.py --png`).
 
+El texto para leer slide a slide, en directo o en vídeo, está en el
+[guion de la presentación](GUION_PRESENTACION.md), que también va en las notas del orador del deck.
+
 Esta guía sirve para presentar Ontology-Augmented Generation (OAG) y ejecutar la demo en directo con
 Claude Code. Está ordenada como la sesión: primero los conceptos, después nuestro sistema, la demo, la
 evaluación y, al final, cuándo conviene cada técnica.

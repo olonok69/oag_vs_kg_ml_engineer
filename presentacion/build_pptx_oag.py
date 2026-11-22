@@ -12,6 +12,7 @@ Salida: OAG_vs_KG_Presentacion.pptx (16:9, 13.33 x 7.5").
 """
 from __future__ import annotations
 import os
+import sys
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
@@ -314,6 +315,64 @@ def diagram(slide, name, page=None):
     w, h = iw * scale, ih * scale
     slide.shapes.add_picture(path, Inches(box_x + (box_w - w) / 2), Inches(box_y + (box_h - h) / 2),
                              Inches(w), Inches(h))
+
+
+def add_notes(prs):
+    """Speaker notes (the presentation script) from speaker_notes.py, one entry per slide in order."""
+    from speaker_notes import NOTES
+    slides = list(prs.slides)
+    if len(slides) != len(NOTES):
+        sys.exit(f"speaker_notes.py has {len(NOTES)} entries for {len(slides)} slides: keep them in step")
+    for slide, n in zip(slides, NOTES):
+        slide.notes_slide.notes_text_frame.text = n[LANG]
+
+
+SCRIPT_HEAD = {
+    "es": ("Guion de la presentación", "presentacion/OAG_vs_KG_Presentacion.pptx", "PRESENTATION_SCRIPT.md",
+           "English version", "Slide", "min",
+           "Este guion es el texto para presentar el deck en directo o grabarlo en vídeo. Es el mismo que "
+           "llevan las notas del orador de cada slide en `{deck}`, así que se puede leer en la vista del "
+           "presentador mientras se pasan las slides. Se genera desde `presentacion/speaker_notes.py` al "
+           "regenerar el deck; no se edita a mano.\n\n"
+           "Las líneas que empiezan por **[DEMO]** son acciones en Claude Code, no texto para leer. Los "
+           "comandos, la preparación y lo que debe salir en cada paso están en [EJECUTAR_DEMO.md](EJECUTAR_DEMO.md). "
+           "Para un vídeo, conviene grabar las ejecuciones de la demo aparte y montarlas sobre esas líneas.\n\n"
+           "Duración orientativa: unos {total} minutos de exposición a ritmo pausado, más unos 25 de demo y las "
+           "preguntas."),
+    "en": ("Presentation script", "presentacion/OAG_vs_KG_Presentation_EN.pptx", "GUION_PRESENTACION.md",
+           "Versión en castellano", "Slide", "min",
+           "This script is the text to present the deck live or to record it on video. It is the same text "
+           "the speaker notes of each slide carry in `{deck}`, so it can be read in presenter view while "
+           "moving through the slides. It is generated from `presentacion/speaker_notes.py` when the deck is "
+           "rebuilt; do not edit it by hand.\n\n"
+           "Lines that start with **[DEMO]** are actions in Claude Code, not text to read. The commands, the "
+           "setup and what each step should show are in [RUN_DEMO.md](RUN_DEMO.md). For a video, record the "
+           "demo runs separately and edit them in over those lines.\n\n"
+           "Approximate length: about {total} minutes of talk at a calm pace, plus about 25 of demo and "
+           "questions."),
+}
+
+
+def write_script():
+    """docs/GUION_PRESENTACION.md (es) or docs/PRESENTATION_SCRIPT.md (en), from the same notes."""
+    from speaker_notes import NOTES
+    title, deck, other, other_label, word, unit, intro = SCRIPT_HEAD[LANG]
+    def minutes(n: dict) -> float:  # from the Spanish text at 110 words per minute, demo cues excluded
+        words = sum(len(p.split()) for p in n["es"].split("\n\n") if not p.startswith("[DEMO]"))
+        return max(0.5, round(words / 110 * 2) / 2)
+    total = round(sum(minutes(n) for n in NOTES) / 5) * 5
+    lines = [f"# {title}", "", f"> {other_label}: [{other}]({other}).", "",
+             intro.format(deck=deck, total=total), ""]
+    for i, n in enumerate(NOTES, 1):
+        mins = f"{minutes(n):g}".replace(".", "," if LANG == "es" else ".")
+        lines += [f"## {word} {i} · {n['title'][LANG]} ({mins} {unit})", ""]
+        for para in n[LANG].split("\n\n"):
+            lines += [f"**[DEMO]** {para[7:]}" if para.startswith("[DEMO] ") else para, ""]
+    name = "GUION_PRESENTACION.md" if LANG == "es" else "PRESENTATION_SCRIPT.md"
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", name)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines).rstrip() + "\n")
+    print(f"OK  ->  {path}")
 
 
 def build():
@@ -824,9 +883,11 @@ def build():
           [R("Repo: docs/GUIA_DEMO.md · docs/OAG_VS_KG.md · reference/KNOWLEDGE_GRAPH.md · demo/README.md", 11, MUTED, False)]],
          space_after=6)
 
+    add_notes(prs)
     name = "OAG_vs_KG_Presentacion.pptx" if LANG == "es" else "OAG_vs_KG_Presentation_EN.pptx"
     out = os.path.join(os.path.dirname(os.path.abspath(__file__)), name)
     prs.save(out)
+    write_script()
     print(f"OK  ->  {out}  ({len(prs.slides._sldIdLst)} slides)")
     if _MISSES:
         print(f"WARNING: {len(_MISSES)} lines without translation:")
