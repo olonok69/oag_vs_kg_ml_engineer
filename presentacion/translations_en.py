@@ -9,6 +9,9 @@ _B = "▸  "
 
 PLAIN = {
     "INVESTIGACIÓN · METODOLOGÍA DE AGENTES IA": "RESEARCH · AI AGENT METHODOLOGY",
+    "CHARLA Y DEMO · METODOLOGÍA DE AGENTES IA": "TALK AND DEMO · AI AGENT METHODOLOGY",
+    "Charla y demo en directo: dónde gana cada técnica y si merece la pena adoptarla":
+        "Talk and live demo: where each technique wins and whether it is worth adopting",
     "Fuentes: Sharma, Kumar & Li — OG-RAG (arXiv 2412.15235, EMNLP 2025) · docs de Palantir Foundry · L. Huang, \"From RAG to OAG\" (Medium) · reference/KNOWLEDGE_GRAPH.md":
         "Sources: Sharma, Kumar & Li — OG-RAG (arXiv 2412.15235, EMNLP 2025) · Palantir Foundry docs · L. Huang, \"From RAG to OAG\" (Medium) · reference/KNOWLEDGE_GRAPH.md",
     "LA PREGUNTA": "THE QUESTION",
@@ -249,6 +252,12 @@ BULLETS = {
         "Proprietary data, two domains · hand-made ontologies · answer relevance not always better (RAPTOR wins on wheat and news)",
     "Nodos: document 420 · code 58 · concept 20 · rationale 9": "Nodes: document 420 · code 58 · concept 20 · rationale 9",
     "~75% de las aristas son genéricas (references / relates_to)": "~75% of the edges are generic (references / relates_to)",
+    "~67% de las aristas son genéricas (references, relates_to y similares)": "~67% of the edges are generic (references, relates_to and similar)",
+    "Nodos: concept 2.102 · rationale 674 · símbolo 543 · ticket 441": "Nodes: concept 2,102 · rationale 674 · symbol 543 · ticket 441",
+    "references 4.749 · rationale_for 821": "references 4,749 · rationale_for 821",
+    "implements 594 · calls 398": "implements 594 · calls 398",
+    "conceptually_related_to 312 · relates_to 267 · semantically_similar_to 120": "conceptually_related_to 312 · relates_to 267 · semantically_similar_to 120",
+    "Grafo de /kg-refresh del 20-11-2026, el mismo que usa la demo": "/kg-refresh graph of 2026-11-20, the same one the demo uses",
     "Las clases existen en las plantillas, pero graphify no las conoce: cada refresh las reinventa (por eso solo <1% de las etiquetas de comunidad sobrevive).":
         "The classes exist in the templates, but graphify does not know them: every refresh reinvents them (which is why <1% of community labels survive).",
     "Conocimiento del dominio como grafo, no como chunks": "Domain knowledge as a graph, not as chunks",
@@ -313,7 +322,7 @@ QUOTES = {
 
 # Paragraphs with mixed formatting: one string per run.
 RUNS = {
-    "¿se parece a nuestro grafo de conocimiento de tickets?": ["does it resemble our ", "ticket knowledge graph", "?"],
+    "De Naive RAG a OAG sobre nuestro grafo de tickets": ["From Naive RAG to OAG on our ", "ticket graph"],
     "PARTE 1 — Qué es OAG: de RAG a ontologías · OG-RAG (Microsoft Research) · Palantir Foundry":
         ["PART 1 — ", "What OAG is: from RAG to ontologies · OG-RAG (Microsoft Research) · Palantir Foundry"],
     "PARTE 2 — Nuestro grafo de tickets frente a OAG: qué compartimos y en qué diferimos":
@@ -329,6 +338,7 @@ RUNS = {
 
 # Text that stays as it is (names, code, numbers).
 KEEP = [
+    "453 / ~690k",
     "git pull", "uv sync --group embed", "source .venv/bin/activate",
     "python demo/oag.py build --q letter-end-runin", "python demo/oag.py build --q comment-memo-landscape",
     "python demo/compare.py", "claude", "/demo-naive-rag    /demo-agentic-rag", "/demo-graphrag     /demo-oag",
@@ -368,6 +378,7 @@ PLAIN.update({
     "OAG, esquema v1": "OAG, schema v1",
     "OAG, esquema v2": "OAG, schema v2",
     "OAG, esquema v1 y v2": "OAG, schema v1 and v2",
+    "3.977 · 8.076 · 213": "3,977 · 8,076 · 213", "93% / 7%": "93% / 7%",
     "0,67": "0.67", "0,59": "0.59", "0,23": "0.23", "0,50": "0.50", "0,64": "0.64",
     "0,19": "0.19", "0,32": "0.32", "0,56": "0.56", "~1.100": "~1,100", "~2.500": "~2,500",
     "7 tickets esperados, escritos por quien resolvió el bug. Corpus completo: 452 ficheros. Por F1 Naive RAG queda a la par, pero se deja dos de los siete: en «qué no romper», un olvido es una regresión.":

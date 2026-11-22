@@ -332,12 +332,12 @@ def build():
     rect(s, -0.1, -0.1, 13.53, 7.7, fill=BG)
     rect(s, 0, 0, 13.333, 0.16, fill=CORAL)
     rect(s, 0, 7.34, 13.333, 0.16, fill=CORAL)
-    text(s, 1.0, 1.4, 11, 0.5, [[R("INVESTIGACIÓN · METODOLOGÍA DE AGENTES IA", 14, CORAL, True)]])
+    text(s, 1.0, 1.4, 11, 0.5, [[R("CHARLA Y DEMO · METODOLOGÍA DE AGENTES IA", 14, CORAL, True)]])
     text(s, 0.95, 2.0, 11.5, 2.0,
          [[R("Ontology-Augmented Generation", 50, TEXT, True)],
-          [R("¿se parece a nuestro ", 26, MUTED, False), R("grafo de conocimiento de tickets", 26, TEXT, True),
-           R("?", 26, MUTED, False)]],
-         space_after=10)
+          [R("De Naive RAG a OAG sobre nuestro ", 26, MUTED, False), R("grafo de tickets", 26, TEXT, True)],
+          [R("Charla y demo en directo: dónde gana cada técnica y si merece la pena adoptarla", 17, MUTED, False)]],
+         space_after=8)
     rect(s, 1.02, 4.2, 1.4, 0.05, fill=CORAL)
     text(s, 1.0, 4.45, 11.5, 1.7,
          [[R("PARTE 1 — ", 15, CORAL, True),
@@ -477,15 +477,16 @@ def build():
          title="Pipeline y consulta")
     table(s, 0.7, 4.15, [2.4, 3.9],
           [["Corpus → grafo", "Valor"],
-           ["Ficheros / palabras", "116 / ~196k"],
-           ["Nodos · aristas · comunidades", "507 · 672 · 35"],
-           ["Aristas EXTRACTED / INFERRED", "92% / 7%"]], row_h=0.38, size=10.5)
+           ["Ficheros / palabras", "453 / ~690k"],
+           ["Nodos · aristas · comunidades", "3.977 · 8.076 · 213"],
+           ["Aristas EXTRACTED / INFERRED", "93% / 7%"]], row_h=0.38, size=10.5)
     panel_bullets(s, 7.25, 1.82, 5.4, 4.35, "Tipos que salieron (emergentes)",
-                  ["Nodos: document 420 · code 58 · concept 20 · rationale 9",
-                   "references 286 · relates_to 221",
-                   "rationale_for 66 · fixes 59",
-                   "semantically_similar_to 22 · conceptually_related_to 18",
-                   "~75% de las aristas son genéricas (references / relates_to)"],
+                  ["Nodos: concept 2.102 · rationale 674 · símbolo 543 · ticket 441",
+                   "references 4.749 · rationale_for 821",
+                   "implements 594 · calls 398",
+                   "conceptually_related_to 312 · relates_to 267 · semantically_similar_to 120",
+                   "~67% de las aristas son genéricas (references, relates_to y similares)",
+                   "Grafo de /kg-refresh del 20-11-2026, el mismo que usa la demo"],
                   accent=BLUE)
 
     # ---- Nuestra pipeline

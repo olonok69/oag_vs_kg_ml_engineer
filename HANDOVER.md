@@ -24,7 +24,8 @@ metodología de agentes IA, en concreto al grafo de conocimiento de tickets? ¿Q
 | Confianza explícita (EXTRACTED vs INFERRED) | Acciones ligadas a la ontología |
 
 Nuestro grafo es **schema-emergent** (graphify decide los tipos al extraer), lo que lo acerca a GraphRAG más
-que a OG-RAG. Prueba en los datos: ~75% de las 672 aristas son genéricas (`references` 286, `relates_to` 221).
+que a OG-RAG. Prueba en los datos: en el grafo actual (453 ficheros, 3.977 nodos, 8.076 aristas) unos dos tercios
+de las aristas son genéricas (`references` 4.749 de 8.076); en la copia sanitizada de `reference/`, ~75 % de 672.
 Las plantillas de la metodología ya contienen una ontología implícita; falta escribirla y validar contra ella.
 
 Informe completo: [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md). Deck: [`presentacion/OAG_vs_KG_Presentacion.pptx`](presentacion/OAG_vs_KG_Presentacion.pptx).
@@ -134,7 +135,9 @@ Documentación completa en [`reference/KNOWLEDGE_GRAPH.md`](reference/KNOWLEDGE_
   nodos y aristas) → `kg_refresh.sh finalize` (copia artefactos + leak-check).
 - **Consulta (`/kg`):** `kg_query.sh <tema>` (vecinos), `kg_query.sh <A> <B>` (camino), `kg_query.sh find <substr>`.
   Determinista, sin LLM: lee `output/graph.json`.
-- **Cifras del grafo en este repo:** 116 ficheros (~196k palabras) → 507 nodos, 672 aristas, 35 comunidades;
+- **Cifras del grafo actual** (`/kg-refresh` del 20-11-2026, el que usa la demo, en `data/`): 453 ficheros
+  (~690k palabras) → 3.977 nodos, 8.076 aristas, 213 comunidades; 93 % EXTRACTED, 7 % INFERRED.
+- **Cifras de la copia sanitizada en este repo (`reference/`, 2026-11-20):** 116 ficheros (~196k palabras) → 507 nodos, 672 aristas, 35 comunidades;
   92% aristas EXTRACTED, 7% INFERRED. Nodos: `document` 420, `code` 58, `concept` 20, `rationale` 9.
   Aristas: `references` 286, `relates_to` 221, `rationale_for` 66, `fixes` 59, `semantically_similar_to` 22,
   `conceptually_related_to` 18.
@@ -248,6 +251,7 @@ Regla: si una relación no responde una pregunta del set de la línea base, fuer
 | `docs/EJECUTAR_DEMO.md`, `docs/RUN_DEMO.md` | Cómo ejecutar la demo en Claude Code, comando a comando (ES, EN) |
 | `docs/GUIA_TECNICA.md`, `docs/TECHNICAL_GUIDE.md` | Qué ejecuta cada skill por dentro, con enlaces al código (ES, EN) |
 | `docs/img/` | Diagramas SVG y PNG, generados por `build_diagrams.py` |
+| `docs/pdf/` | Guías e informe en PDF, generados por `docs/build_pdfs.py` (pandoc y Chrome) |
 | `presentacion/build_pptx_oag.py` | Generador del deck (python-pptx, idempotente; `--lang en` para inglés) |
 | `presentacion/OAG_vs_KG_Presentacion.pptx` | Deck de 33 slides (ES); `OAG_vs_KG_Presentation_EN.pptx` (EN) |
 | `demo/`, `.claude/skills/demo-*` | Scripts, ontología mínima (`demo/oag/ontology.yaml`) y skills de la demo |

@@ -40,9 +40,11 @@ propietarios, dos dominios, ontologías hechas a mano, y la relevancia de respue
 | Salida | Hechos en el prompt | Chunks + citas | Lista de lectura (tickets + zona de peligro) |
 | Acciones | No | Sí | Skills y gates del método |
 
-Datos del grafo actual: 507 nodos, 672 aristas, 35 comunidades; aristas `references` 286, `relates_to` 221,
-`rationale_for` 66, `fixes` 59, `semantically_similar_to` 22, `conceptually_related_to` 18. Unas tres cuartas
-partes de las aristas son genéricas: ahí es donde una ontología añadiría más.
+Datos del grafo actual (`/kg-refresh` del 20 de noviembre, 453 ficheros, el que usa la demo): 3.977 nodos,
+8.076 aristas, 213 comunidades; aristas `references` 4.749, `rationale_for` 821, `implements` 594, `calls` 398,
+`conceptually_related_to` 312, `relates_to` 267, `semantically_similar_to` 120. Unos dos tercios de las aristas
+son genéricas: ahí es donde una ontología añadiría más. (La copia sanitizada de `reference/`, de 116 ficheros,
+daba 507 nodos, 672 aristas y tres cuartas partes de aristas genéricas.)
 
 ## Qué adoptar
 

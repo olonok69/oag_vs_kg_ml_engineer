@@ -31,6 +31,7 @@ Investigación sobre Ontology-Augmented Generation (OAG) frente al grafo de cono
 | `docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md` | Guía de la demo en ES y EN |
 | `docs/EJECUTAR_DEMO.md`, `docs/RUN_DEMO.md` | Cómo ejecutar la demo en Claude Code: comandos y qué debe salir |
 | `docs/GUIA_TECNICA.md`, `docs/TECHNICAL_GUIDE.md` | Guía técnica de la demo (qué se ejecuta y dónde), con enlaces al código |
+| `docs/pdf/`, `docs/build_pdfs.py` | Guías e informe en PDF y su generador (pandoc y Chrome). Regenerar tras cambiar una guía |
 | `docs/img/build_diagrams.py` | Generador de los diagramas: SVG para las guías y PNG para el deck |
 | `presentacion/build_pptx_oag.py` | Generador del deck (python-pptx). El `.pptx` se regenera desde aquí; no editarlo a mano |
 | `presentacion/translations_en.py` | Traducciones para el deck en inglés |
@@ -47,6 +48,7 @@ python docs/img/build_diagrams.py --png        # SVG + PNG de los diagramas, tra
 python presentacion/build_pptx_oag.py          # deck ES
 python presentacion/build_pptx_oag.py --lang en   # deck EN (avisa de líneas sin traducir)
 soffice --headless --convert-to pdf presentacion/OAG_vs_KG_Presentacion.pptx   # revisión visual
+python docs/build_pdfs.py                      # PDF de las guías (docs/pdf/), tras cambiar alguna
 ```
 
 Para añadir o cambiar una slide se edita el generador, se regenera y se revisa el render. Los helpers de
