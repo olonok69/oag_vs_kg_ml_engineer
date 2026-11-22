@@ -82,7 +82,13 @@ mostrar el set.
 
 ## Lo que ha mostrado la demo (2026-11-21)
 
-Dos preguntas reales sobre el corpus completo de `/kg` (452 ficheros), una de cada tipo:
+Dos preguntas reales sobre el corpus completo de `/kg` (452 ficheros), una de cada tipo. Cada una tiene una
+lista de referencia con los tickets que una buena respuesta debe incluir. **Recall** es qué parte de esa lista
+encuentra la técnica (lo que se deja fuera); **precisión**, qué parte de lo que devuelve está en la lista (el
+ruido). Por ejemplo, GraphRAG a dos saltos devuelve 53 tickets con los 7 de referencia: recall 7/7 = 100 %,
+precisión 7/53 = 13 %. La lista es un mínimo, así que la precisión es una cota baja. Explicación completa en
+[`GUIA_DEMO.md`](GUIA_DEMO.md#qué-significan-recall-y-precisión-en-la-demo).
+
 
 - **Reglas sobre un componente modelado** («qué no romper al arreglar este bug»): OAG con la ontología
   corregida (v2) encuentra los 7 tickets esperados entre 15 resultados; GraphRAG a dos saltos también los

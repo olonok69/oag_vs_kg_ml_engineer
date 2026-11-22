@@ -236,7 +236,7 @@ Uno: la ontología es un YAML con cuatro clases, seis relaciones, los componente
 
 No hay modelo ni al construir ni al consultar. En producción la extracción se completaría con un modelo guiado por la misma ontología, y siempre validado.
 
-## Slide 25 · Cómo evaluamos (diagrama) (1,5 min)
+## Slide 25 · Cómo evaluamos (diagrama) (2 min)
 
 Cómo evaluamos.
 
@@ -244,7 +244,9 @@ Pregunta A: un bug real ya resuelto, planteado como si fuera nuevo: hay un fallo
 
 Pregunta B: explorar un área, el memo de comentarios. La respuesta esperada sale de una regla objetiva: los writeups cuyo título menciona el área. Son 29.
 
-Medimos recall, qué parte de lo esperado se encuentra; precisión, qué parte de lo devuelto es esperado; y coste, en tokens de contexto y llamadas al modelo.
+Medimos dos cosas, y conviene tenerlas claras porque salen en todas las tablas. Recall: de los tickets que había que encontrar, cuántos encuentra la técnica; mide lo que se deja fuera. Precisión: de lo que devuelve, cuánto está en la lista de referencia; mide el ruido. Un ejemplo de la pregunta A: si una técnica devuelve 53 tickets y entre ellos están los 7 de referencia, tiene un recall del 100 % y una precisión del 13 %. Es como pescar con una red enorme: sacas todos los peces que buscabas, pero con mucho más. Y la lista de referencia es un mínimo, así que un ticket de más no siempre es ruido.
+
+Además medimos el coste, en tokens de contexto y llamadas al modelo.
 
 Una advertencia que repetiré: dos preguntas no son una evaluación. Es una demostración. La evaluación seria es el set de 15 a 20 preguntas.
 

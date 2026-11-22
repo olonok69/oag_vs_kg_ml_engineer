@@ -236,7 +236,7 @@ One: the ontology is a YAML file with four classes, six relations, the component
 
 There is no model at build time or at query time. In production, extraction would be completed by a model guided by the same ontology, and always validated.
 
-## Slide 25 · How we evaluate (diagram) (1.5 min)
+## Slide 25 · How we evaluate (diagram) (2 min)
 
 How we evaluate.
 
@@ -244,7 +244,9 @@ Question A: a real bug that was already fixed, posed as if it were new: there is
 
 Question B: exploring an area, the comment memo. The expected answer comes from an objective rule: the writeups whose title mentions the area. There are 29.
 
-We measure recall, how much of the expected answer is found; precision, how much of what is returned is expected; and cost, in context tokens and calls to the model.
+We measure two things, and they are worth getting clear because they appear in every table. Recall: of the tickets that had to be found, how many the technique finds; it measures what is left out. Precision: of what it returns, how much is in the reference list; it measures the noise. An example from question A: if a technique returns 53 tickets and the 7 reference ones are among them, it has 100% recall and 13% precision. It is like fishing with a huge net: you catch every fish you were after, but with a lot more. And the reference list is a minimum, so an extra ticket is not always noise.
+
+We also measure cost, in context tokens and calls to the model.
 
 A warning I will repeat: two questions are not an evaluation. It is a demonstration. The serious evaluation is the set of 15 to 20 questions.
 

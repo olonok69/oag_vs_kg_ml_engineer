@@ -288,12 +288,47 @@ falls inside the ontology: an exploration question that names a component would 
 - **Hold-out**: in question A, the writeup and its notes are excluded from the corpus, the graph and the
   facts. B has no answer key to hide.
 - **Recall** = expected found / expected. **Precision** = expected found / returned. **F1** = harmonic
-  mean of the two.
+  mean of the two. Explanation and example just below.
 - **What counts as returned**: for Naive RAG, the tickets appearing in the chunks; for GraphRAG, those in
   the neighbours and the reading list; for OAG, the subject of each fact block and the origins of its
   invariants (not tickets that only appear as provenance).
 - **Cost**: context tokens and LLM calls during retrieval.
 - **Claude's answer**: each skill records the final answer; that is the comparison that matters live.
+
+### What recall and precision mean in the demo
+
+Each question has a reference list: the tickets a good answer must include (7 on question A, 29 on B).
+Each technique returns its own list of tickets, and the two metrics compare one with the other:
+
+- **Recall**: of the tickets that had to be found, how many did it find? It measures what is left out. A
+  recall of 71% on question A means 2 of the 7 are missing.
+- **Precision**: of the tickets it returned, how many are in the reference list? It measures the noise. A
+  precision of 13% means that of every 8 tickets returned, 7 are extra.
+
+Example with question A (7 reference tickets):
+
+| Technique | Returns | Of those, in the reference | Recall | Precision |
+|---|---|---|---|---|
+| Naive RAG | 8 | 5 | 5 / 7 = 71% | 5 / 8 = 62% |
+| GraphRAG, 2 hops | 53 | 7 | 7 / 7 = 100% | 7 / 53 = 13% |
+| OAG v2 | 15 | 7 | 7 / 7 = 100% | 7 / 15 = 47% |
+
+An analogy: fishing with a net. Recall says how many of the fish you were after you caught; precision, how
+much of what is in the net is those fish. With a huge net (GraphRAG at two hops) you catch them all, but
+with much more you did not want; with a rod (Naive RAG) you catch little and almost all of it good, but
+you miss fish.
+
+Three nuances when reading the tables:
+
+- **Which one matters more depends on the question.** In "what not to break", recall rules: a forgotten
+  ticket is a regression in production, while an extra one only costs reading it. In a one-off lookup,
+  precision rules.
+- **F1 sums both up in one number** (harmonic mean), useful for ranking, but it hides what fails. By F1,
+  Naive RAG is on par with OAG v2 on question A, even though it misses two of the seven.
+- **The reference list is a minimum, not a ceiling.** It was written by whoever fixed the bug (A) or comes
+  from a rule on titles (B). An extra ticket is not always noise: it may be relevant and missing from the
+  list. That is why the demo's precision is a lower bound, and it is worth looking at which tickets are
+  extra, not only how many.
 
 Results with the full corpus (452 files after the hold-out) and the graph rebuilt on 20 November.
 
