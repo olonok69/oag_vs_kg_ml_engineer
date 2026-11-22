@@ -291,13 +291,49 @@ ontología: una pregunta de exploración que nombre un componente se filtraría 
 - **Hold-out**: en la pregunta A, el writeup y sus notas se excluyen del corpus, del grafo y de los
   hechos. La B no tiene hoja de respuestas que esconder.
 - **Recall** = esperados encontrados / esperados. **Precisión** = esperados encontrados / devueltos.
-  **F1** = media armónica de las dos.
+  **F1** = media armónica de las dos. Explicación y ejemplo justo debajo.
 - **Qué cuenta como devuelto**: en Naive RAG, los tickets que aparecen en los trozos; en GraphRAG, los de
   los vecinos y la lista de lectura; en OAG, el sujeto de cada fact block y los orígenes de sus
   invariantes (no los tickets que solo figuran como procedencia).
 - **Coste**: tokens de contexto y llamadas LLM al recuperar.
 - **Respuesta de Claude**: cada skill registra la respuesta final; es la comparación que importa en
   directo.
+
+### Qué significan recall y precisión en la demo
+
+Cada pregunta tiene una lista de referencia: los tickets que una buena respuesta debe incluir (7 en la
+pregunta A, 29 en la B). Cada técnica devuelve su propia lista de tickets, y las dos métricas comparan
+una con otra:
+
+- **Recall** (exhaustividad): de los tickets que había que encontrar, ¿cuántos ha encontrado? Mide lo
+  que se deja fuera. Un recall del 71 % en la pregunta A significa que faltan 2 de los 7.
+- **Precisión**: de los tickets que ha devuelto, ¿cuántos están en la lista de referencia? Mide el ruido.
+  Una precisión del 13 % significa que de cada 8 tickets devueltos, 7 sobran.
+
+Ejemplo con la pregunta A (7 tickets de referencia):
+
+| Técnica | Devuelve | De ellos, en la referencia | Recall | Precisión |
+|---|---|---|---|---|
+| Naive RAG | 8 | 5 | 5 / 7 = 71 % | 5 / 8 = 62 % |
+| GraphRAG, 2 saltos | 53 | 7 | 7 / 7 = 100 % | 7 / 53 = 13 % |
+| OAG v2 | 15 | 7 | 7 / 7 = 100 % | 7 / 15 = 47 % |
+
+Una analogía: pescar con red. El recall dice cuántos de los peces que buscabas has sacado; la precisión,
+cuánto de lo que hay en la red son esos peces. Con una red enorme (GraphRAG a dos saltos) sacas todos, pero
+con mucho más de lo que no querías; con una caña (Naive RAG) sacas poco y casi todo bueno, pero te dejas
+peces.
+
+Tres matices para leer las tablas:
+
+- **Qué pesa más depende de la pregunta.** En «qué no romper» manda el recall: un ticket olvidado es una
+  regresión en producción, mientras que uno de más solo cuesta leerlo. En una búsqueda puntual manda la
+  precisión.
+- **F1 resume las dos en un número** (media armónica), útil para ordenar, pero esconde qué falla. Por F1,
+  Naive RAG queda a la par de OAG v2 en la pregunta A, aunque se deja dos de los siete.
+- **La lista de referencia es un mínimo, no un techo.** La escribió quien resolvió el bug (A) o sale de una
+  regla sobre los títulos (B). Un ticket de más no siempre es ruido: puede ser relevante y no estar en la
+  lista. Por eso la precisión de la demo es una cota baja y conviene mirar qué tickets sobran, no solo
+  cuántos.
 
 Resultados con el corpus completo (452 ficheros tras el hold-out) y el grafo reconstruido el 20 de
 noviembre.

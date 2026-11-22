@@ -379,7 +379,9 @@ Pregunta A: un bug real ya resuelto, planteado como si fuera nuevo: hay un fallo
 
 Pregunta B: explorar un área, el memo de comentarios. La respuesta esperada sale de una regla objetiva: los writeups cuyo título menciona el área. Son 29.
 
-Medimos recall, qué parte de lo esperado se encuentra; precisión, qué parte de lo devuelto es esperado; y coste, en tokens de contexto y llamadas al modelo.
+Medimos dos cosas, y conviene tenerlas claras porque salen en todas las tablas. Recall: de los tickets que había que encontrar, cuántos encuentra la técnica; mide lo que se deja fuera. Precisión: de lo que devuelve, cuánto está en la lista de referencia; mide el ruido. Un ejemplo de la pregunta A: si una técnica devuelve 53 tickets y entre ellos están los 7 de referencia, tiene un recall del 100 % y una precisión del 13 %. Es como pescar con una red enorme: sacas todos los peces que buscabas, pero con mucho más. Y la lista de referencia es un mínimo, así que un ticket de más no siempre es ruido.
+
+Además medimos el coste, en tokens de contexto y llamadas al modelo.
 
 Una advertencia que repetiré: dos preguntas no son una evaluación. Es una demostración. La evaluación seria es el set de 15 a 20 preguntas.
 
@@ -390,7 +392,9 @@ Question A: a real bug that was already fixed, posed as if it were new: there is
 
 Question B: exploring an area, the comment memo. The expected answer comes from an objective rule: the writeups whose title mentions the area. There are 29.
 
-We measure recall, how much of the expected answer is found; precision, how much of what is returned is expected; and cost, in context tokens and calls to the model.
+We measure two things, and they are worth getting clear because they appear in every table. Recall: of the tickets that had to be found, how many the technique finds; it measures what is left out. Precision: of what it returns, how much is in the reference list; it measures the noise. An example from question A: if a technique returns 53 tickets and the 7 reference ones are among them, it has 100% recall and 13% precision. It is like fishing with a huge net: you catch every fish you were after, but with a lot more. And the reference list is a minimum, so an extra ticket is not always noise.
+
+We also measure cost, in context tokens and calls to the model.
 
 A warning I will repeat: two questions are not an evaluation. It is a demonstration. The serious evaluation is the set of 15 to 20 questions.
 
