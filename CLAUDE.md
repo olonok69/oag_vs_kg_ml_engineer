@@ -29,6 +29,7 @@ Investigación sobre Ontology-Augmented Generation (OAG) frente al grafo de cono
 | `HANDOVER.md` | Traspaso completo: pregunta, fuentes, comparación, plan (Paso 0 y Fases A a D), reglas |
 | `docs/OAG_VS_KG.md` | Informe de investigación |
 | `docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md` | Guía de la demo en ES y EN |
+| `docs/GUION_PRESENTACION.md`, `docs/PRESENTATION_SCRIPT.md` | Guion para presentar slide a slide; se genera con el deck desde `presentacion/speaker_notes.py` y va en las notas del orador |
 | `docs/EJECUTAR_DEMO.md`, `docs/RUN_DEMO.md` | Cómo ejecutar la demo en Claude Code: comandos y qué debe salir |
 | `docs/GUIA_TECNICA.md`, `docs/TECHNICAL_GUIDE.md` | Guía técnica de la demo (qué se ejecuta y dónde), con enlaces al código |
 | `docs/pdf/`, `docs/build_pdfs.py` | Guías e informe en PDF y su generador (pandoc y Chrome). Regenerar tras cambiar una guía |
@@ -54,7 +55,9 @@ python docs/build_pdfs.py                      # PDF de las guías (docs/pdf/), 
 Para añadir o cambiar una slide se edita el generador, se regenera y se revisa el render. Los helpers de
 estilo (`base`, `cards`, `panel_bullets`, `code`, `table`, `steps`, `takeaway`) mantienen el estilo del
 deck. Las slides de diagrama usan `diagram(slide, "<nombre>")`, que inserta `docs/img/<nombre>.<lang>.png`.
-Un texto nuevo en el deck necesita su entrada en `translations_en.py`.
+Un texto nuevo en el deck necesita su entrada en `translations_en.py`. Cada slide tiene su entrada en
+`presentacion/speaker_notes.py` (notas del orador y guion, ES y EN, en el orden de las slides): al añadir,
+quitar o cambiar una slide, actualízala también; el generador para si el número no coincide.
 
 ## Demo
 

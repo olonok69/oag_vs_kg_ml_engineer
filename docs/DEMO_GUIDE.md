@@ -9,6 +9,9 @@ This guide is for presenting Ontology-Augmented Generation (OAG) and running the
 Code. It follows the order of the session: concepts first, then our system, the demo, the evaluation
 and, finally, when each technique fits.
 
+The text to read slide by slide, live or on video, is in the
+[presentation script](PRESENTATION_SCRIPT.md), which also goes in the deck's speaker notes.
+
 ## Running order
 
 | Block | Content | Approximate time |

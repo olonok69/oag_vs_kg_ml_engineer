@@ -78,6 +78,10 @@ Informe completo: [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md). Deck: [`presentacion
    v2; el grafo no aporta ningún ticket que OAG no tuviera), B 83 % / 43 % (igual que GraphRAG). Iguala a la
    mejor técnica en cada pregunta sin elegirla, no la supera. Punto débil: decidir si la pregunta cae en la
    ontología. Slide «Combinar las dos» en la Parte 4.
+12. **Guion de la presentación** (2026-11-22): `presentacion/speaker_notes.py` tiene el texto de cada slide en ES y
+   EN. El generador lo pone en las notas del orador de los dos decks y escribe `docs/GUION_PRESENTACION.md` y
+   `docs/PRESENTATION_SCRIPT.md`, con marcas **[DEMO]** donde se cambia a Claude Code. Unos 40 minutos de
+   exposición más unos 25 de demo.
 
 ---
 
@@ -255,6 +259,7 @@ Regla: si una relación no responde una pregunta del set de la línea base, fuer
 | `HANDOVER.md` | Este documento |
 | `docs/OAG_VS_KG.md` | Informe de investigación |
 | `docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md` | Guía de la presentación y la demo (ES, EN) |
+| `docs/GUION_PRESENTACION.md`, `docs/PRESENTATION_SCRIPT.md` | Guion slide a slide (ES, EN); se genera con el deck desde `presentacion/speaker_notes.py`, que también rellena las notas del orador |
 | `docs/EJECUTAR_DEMO.md`, `docs/RUN_DEMO.md` | Cómo ejecutar la demo en Claude Code, comando a comando (ES, EN) |
 | `docs/GUIA_TECNICA.md`, `docs/TECHNICAL_GUIDE.md` | Qué ejecuta cada skill por dentro, con enlaces al código (ES, EN) |
 | `docs/img/` | Diagramas SVG y PNG, generados por `build_diagrams.py` |
