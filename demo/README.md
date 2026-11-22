@@ -21,6 +21,7 @@ en distinta medida.
 | `/demo-agentic-rag` | Agentic RAG | Claude busca y lee en bucle con Grep/Read | (Claude) + `demo/record_answer.py` |
 | `/demo-graphrag` | GraphRAG | Nuestro skill `/kg`: vecinos en el grafo de tickets y lista de lectura | `demo/graphrag.py` |
 | `/demo-oag` | OAG | Hechos tipados, validados contra `demo/oag/ontology.yaml`, seleccionados por set cover | `demo/oag.py` |
+| `/demo-hybrid` | Híbrido | GraphRAG propone y la ontología filtra si la pregunta cae en ella; si no, lista del grafo y propuesta para la ontología | `demo/hybrid.py` |
 | `/demo-compare` | Comparativa | Recall, precisión, F1, tokens de contexto y llamadas LLM, por escenario e idioma | `demo/compare.py` |
 | (todas) | Capa semántica | Embeddings multilingües compartidos por las tres técnicas deterministas | `demo/semantic.py` |
 
@@ -107,7 +108,8 @@ skill. La primera vez que una skill ejecute `python demo/...`, aprueba el comand
 
 Primer escenario: `/demo-naive-rag`, `/demo-agentic-rag`, `/demo-graphrag`, `/demo-oag`.
 Segundo escenario: `/demo-graphrag comment-memo-landscape` y `/demo-oag comment-memo-landscape` (y, si hay
-tiempo, `/demo-naive-rag comment-memo-landscape`). Al final, `/demo-compare`. Cada skill ejecuta su
+tiempo, `/demo-naive-rag comment-memo-landscape`). Después, `/demo-hybrid` en las dos preguntas para
+combinar GraphRAG y OAG. Al final, `/demo-compare`. Cada skill ejecuta su
 script, responde usando solo lo que ha recuperado y registra la respuesta.
 
 Los scripts también funcionan sin Claude Code:
@@ -116,6 +118,7 @@ Los scripts también funcionan sin Claude Code:
 python demo/naive_rag.py [--q <id>] [--k 5] [--embed] [--lang es]
 python demo/graphrag.py [--q <id>] [--hops 2] [--lang es] [--semantic] [--full] [--native]
 python demo/oag.py query [--q <id>] [--schema 1|2|3] [--lang es] [--semantic] [--min-sim 0.42]
+python demo/hybrid.py [--q <id>] [--hops 2] [--lang es] [--semantic]
 python demo/compare.py [--q <id>]
 ```
 

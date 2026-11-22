@@ -364,8 +364,8 @@ KEEP = [
 
 # Part 4 with two questions (where each technique wins).
 PLAIN.update({
-    "Cinco skills de Claude Code, dos preguntas reales y la misma vara de medir.":
-        "Five Claude Code skills, two real questions and the same yardstick.",
+    "Seis skills de Claude Code, dos preguntas reales y la misma vara de medir.":
+        "Six Claude Code skills, two real questions and the same yardstick.",
     "Dos preguntas, dos ganadores": "Two questions, two winners",
     "De OAG v1 a v2": "From OAG v1 to v2",
     "Dónde gana cada técnica": "Where each technique wins",
@@ -512,6 +512,33 @@ QUOTES.update({
 })
 RUNS["PARTE 4 — La demo: de Naive RAG a OAG con Claude Code, dos preguntas, dónde gana cada técnica y si merece la pena"] = \
     ["PART 4 — ", "The demo: from Naive RAG to OAG with Claude Code, two questions, where each technique wins and whether it is worth it"]
+
+# Hybrid slide.
+PLAIN.update({
+    "Combinar las dos": "Combining the two",
+    "PARTE 4 · COMBINAR LAS DOS": "PART 4 · COMBINING THE TWO",
+    "Híbrido: GraphRAG propone, la ontología filtra": "Hybrid: GraphRAG proposes, the ontology filters",
+    "Pregunta A": "Question A",
+    "Pregunta B": "Question B",
+    "Híbrido": "Hybrid",
+    "Cómo funciona (demo/hybrid.py)": "How it works (demo/hybrid.py)",
+    "# híbrido y cierre": "# hybrid and close",
+    "Recall / precisión. Pregunta A: 53 candidatos del grafo; 22 se conectan al componente en la ontología; 15 cumplen sus reglas. El grafo no aportó ningún ticket que OAG no tuviera.":
+        "Recall / precision. Question A: 53 candidates from the graph; 22 connect to the component in the ontology; 15 meet its rules. The graph added no ticket OAG did not already have.",
+})
+BULLETS.update({
+    "GraphRAG a 2 saltos da la lista amplia: mucho recall, poca precisión":
+        "GraphRAG at 2 hops gives the broad list: high recall, low precision",
+    "Si la pregunta nombra un componente de la ontología, se filtra con sus clases, relaciones y reglas":
+        "If the question names an ontology component, the list is filtered with its classes, relations and rules",
+    "Si no nombra ninguno, se queda la lista del grafo sin tocar":
+        "If it names none, the graph's list is kept as it is",
+    "Las comunidades que el grafo encuentra fuera del esquema salen como propuesta para ampliar la ontología; la revisa una persona":
+        "The communities the graph finds outside the schema come out as a proposal to extend the ontology; a person reviews it",
+})
+QUOTES["No supera a la mejor en cada pregunta: evita elegir mal y dice qué modelar después."] = \
+    "It does not beat the best one on each question: it avoids picking wrong and says what to model next."
+KEEP.append("/demo-hybrid       /demo-compare")
 
 TRANSLATIONS: dict = {}
 TRANSLATIONS.update(PLAIN)

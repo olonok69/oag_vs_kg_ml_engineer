@@ -28,6 +28,9 @@ flowchart LR
     N --> R[data/runs/&lt;id&gt;/*.json]
     G --> R
     O --> R
+    G -.-> H[hybrid.py]
+    O -.-> H
+    H --> R
     A[Claude: Grep/Read] -- record_answer.py --> R
     R --> CMP[compare.py] --> MD[data/runs/compare.md]
 ```
@@ -42,6 +45,7 @@ Cuatro técnicas leen el mismo corpus y la misma pregunta, y cada una deja su re
 | Naive RAG | [`demo/naive_rag.py`](../demo/naive_rag.py) | Trozos de texto, TF-IDF (o embeddings multilingües) y top-k |
 | GraphRAG | [`demo/graphrag.py`](../demo/graphrag.py) | La consulta de `/kg` sobre `graph.json`: vecinos, lista de lectura y temas |
 | OAG | [`demo/oag.py`](../demo/oag.py) | `build`: hechos tipados validados contra la ontología. `query`: set cover de fact blocks |
+| Híbrido | [`demo/hybrid.py`](../demo/hybrid.py) | GraphRAG propone y la ontología filtra si la pregunta cae en ella; si no, propone qué modelar |
 | Ontología | [`demo/oag/ontology.yaml`](../demo/oag/ontology.yaml) | Clases, relaciones, restricciones, componentes con sinónimos y reglas de extracción |
 | Agentic RAG | [`.claude/skills/demo-agentic-rag/SKILL.md`](../.claude/skills/demo-agentic-rag/SKILL.md) | Claude busca y lee con Grep/Read; registra su respuesta |
 | Capa semántica | [`demo/semantic.py`](../demo/semantic.py) | Embeddings multilingües con caché; los usan las tres técnicas deterministas con `--embed` o `--semantic` |
@@ -247,6 +251,30 @@ reproduce la primera ontología. La explicación divulgativa de v1 y v2 está en
 Salida: `data/runs/<id>/oag.json` (v2), `oag_v1.json` u `oag_v3.json`, con los sufijos `_es` y `_sem` según la
 variante.
 
+### 7.4 El híbrido: GraphRAG propone, la ontología filtra
+
+[`demo/hybrid.py`](../demo/hybrid.py) ([`main`](../demo/hybrid.py#L55)) no recupera nada por su cuenta: combina
+las dos técnicas anteriores, sin LLM.
+
+1. Lanza `graphrag.py` a 2 saltos y `oag.py query` con los mismos flags (`--q`, `--lang`, `--semantic`) y lee sus
+   resultados de `data/runs/<id>/` ([líneas 72-73](../demo/hybrid.py#L72)). Así las cifras son exactamente las
+   de cada técnica.
+2. Si la pregunta se asocia a algún componente de la ontología ([línea 85](../demo/hybrid.py#L85)), filtra los
+   candidatos del grafo en dos pasos: primero los que la ontología conecta con el componente, por clases y
+   relaciones ([`linked_to`](../demo/hybrid.py#L43)), y después los que cumplen sus reglas, que son los que
+   devuelve la consulta de OAG v2 ([líneas 87-89](../demo/hybrid.py#L87)). Informa de los tickets que OAG
+   encuentra y el grafo no propuso.
+3. Si no se asocia a ninguno ([línea 104](../demo/hybrid.py#L104)), la respuesta es la lista de GraphRAG sin
+   tocar, y las comunidades del vecindario se imprimen como propuesta para ampliar la ontología. La propuesta
+   no se aplica: la revisa una persona.
+
+Resultado en las dos preguntas: en A, 53 candidatos, 22 conectados al componente y 15 que cumplen las reglas
+(100 % / 47 %, igual que OAG v2; el grafo no aporta ningún ticket que OAG no tuviera). En B, la lista de GraphRAG
+(83 % / 43 %). El híbrido iguala a la mejor técnica en cada pregunta sin tener que elegirla; su punto débil es
+decidir si la pregunta cae en la ontología.
+
+Salida: `data/runs/<id>/hybrid.json`, con `route` (`ontology` o `graphrag`), `candidates` y `proposal`.
+
 ## 8. La capa semántica (pregunta en castellano)
 
 El corpus está en inglés y las tres técnicas deterministas comparan palabras. Con `--lang es` reciben la
@@ -286,22 +314,22 @@ download.pytorch.org (y download-r2.pytorch.org). Después se puede trabajar sin
 ## 9. Métricas y comparativa
 
 **Puntuación** ([`score`](../demo/lib.py#L126)): recall = esperados encontrados / esperados; precisión =
-esperados encontrados / devueltos. F1 se calcula en [`compare.py`](../demo/compare.py#L68). Tokens de contexto =
+esperados encontrados / devueltos. F1 se calcula en [`compare.py`](../demo/compare.py#L70). Tokens de contexto =
 caracteres / 4 ([`approx_tokens`](../demo/lib.py#L138)).
 
 **Qué cuenta como devuelto** depende de lo que cada técnica afirma: los IDs de los trozos (Naive RAG), los del
 contexto del grafo (GraphRAG), los sujetos y orígenes de los fact blocks (OAG) y los que Claude da como respuesta
 (Agentic RAG). El criterio y sus límites están en la [guía de la demo, sección 6](GUIA_DEMO.md#6-cómo-evaluamos).
 
-**`compare.py`** ([`main`](../demo/compare.py#L94)), para cada pregunta o solo `--q`:
+**`compare.py`** ([`main`](../demo/compare.py#L96)), para cada pregunta o solo `--q`:
 
-1. Relanza Naive RAG, GraphRAG a 1 y 2 saltos, OAG v1 y v2 ([líneas 104-112](../demo/compare.py#L104)); si no hay
+1. Relanza Naive RAG, GraphRAG a 1 y 2 saltos, OAG v1 y v2 y el híbrido ([líneas 107-115](../demo/compare.py#L107)); si no hay
    hechos, ejecuta antes `oag.py build`. Después, las variantes en castellano llano sin modelo y, si está
-   instalado el grupo `embed` ([`has_embed`](../demo/compare.py#L54)), las semánticas
-   ([líneas 113-122](../demo/compare.py#L113)).
+   instalado el grupo `embed` ([`has_embed`](../demo/compare.py#L56)), las semánticas
+   ([líneas 116-125](../demo/compare.py#L116)).
 2. Lee `data/runs/<id>/*.json`, incluidos Agentic RAG y las respuestas registradas de Claude
-   ([`table`](../demo/compare.py#L73)).
-3. Imprime dos tablas por pregunta, en inglés y en castellano llano ([`order_es`](../demo/compare.py#L39)), y
+   ([`table`](../demo/compare.py#L75)).
+3. Imprime dos tablas por pregunta, en inglés y en castellano llano ([`order_es`](../demo/compare.py#L41)), y
    las guarda en `data/runs/compare.md`.
 
 `record_answer.py` añade a cada resultado la respuesta final de Claude (`answer`, `answer_score`), que aparece en

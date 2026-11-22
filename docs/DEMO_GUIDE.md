@@ -17,7 +17,7 @@ and, finally, when each technique fits.
 | 2 | Concepts: ontology, facts, schema-first | 10 min |
 | 3 | From RAG to OAG and the OG-RAG pipeline | 10 min |
 | 4 | Our ticket graph: what it does and what we learned | 10 min |
-| 5 | Live demo: two questions, five skills | 25 min |
+| 5 | Live demo: two questions, six skills | 25 min |
 | 6 | Evaluation, results, where each technique wins and whether it is worth it | 15 min |
 
 ---
@@ -154,7 +154,7 @@ attribution, used before acting). It lacks the up-front schema, validation and r
 
 ## 5. The demo
 
-Five Claude Code skills answer the same real questions over the same corpus. The demo does not look for
+Six Claude Code skills answer the same real questions over the same corpus. The demo does not look for
 an overall winner: it has two questions chosen to show where each technique wins and why. Technical
 detail in `demo/README.md`.
 
@@ -219,6 +219,7 @@ Question B:
 |---|---|---|
 | `/demo-graphrag comment-memo-landscape` | The extractor's neighbours at two hops and the themes (named communities) | Nobody modelled this area and the graph finds it and groups it |
 | `/demo-oag comment-memo-landscape` | The query with no components and no facts | OAG only sees what its schema declares. To cover the area it has to be modelled first |
+| `/demo-hybrid` and `/demo-hybrid comment-memo-landscape` | The 53, 22, 15 funnel on A; on B, the graph's list and the proposal for the ontology | Matches the best one on each question without choosing it; does not beat it (see "Combining GraphRAG and OAG") |
 | `/demo-compare` | The English and plain Spanish tables | Where each one wins, with its limits |
 
 Question in plain Spanish (optional, section 6):
@@ -250,6 +251,30 @@ The first ontology failed question A in two ways, and both were schema problems,
 `python demo/oag.py query --schema 1` reproduces v1. It has to be told honestly: v2 was written after
 seeing what failed. That is the normal way to maintain an ontology, but the result can only be credited
 to the technique once it is validated on new questions.
+
+### Combining GraphRAG and OAG: the hybrid
+
+The two questions have different winners, so the natural question is whether they can be combined.
+`/demo-hybrid` (`demo/hybrid.py`) tries it in the simplest way, with no LLM:
+
+1. GraphRAG at two hops proposes the broad candidate list: high recall, low precision.
+2. If the question names an ontology component, the list goes through two filters: the tickets the
+   ontology connects to the component (classes and relations) and, of those, the ones that meet its rules
+   (the same-component constraint and `calls`).
+3. If it names none, the ontology has nothing to say: the graph's list is kept, and the communities the
+   graph finds come out as a proposal to extend the ontology, which a person reviews.
+
+| Technique | Question A (recall / precision) | Question B (recall / precision) |
+|---|---|---|
+| GraphRAG (/kg, 2 hops) | 100% / 13% (53 tickets) | 83% / 43% |
+| OAG v2 | 100% / 47% (15 tickets) | 0% |
+| Hybrid | 100% / 47% (53, 22 and 15) | 83% / 43% |
+
+What it teaches, told plainly: the hybrid does not beat the best technique on either question; it matches
+the best one on both without having to choose it. On question A the graph adds no ticket OAG did not
+already have, so the filter is OAG with a different explanation (the 53, 22, 15 funnel). What it does add
+is the automatic route and a list of what to model next. Its weak point is deciding whether the question
+falls inside the ontology: an exploration question that names a component would be filtered by mistake.
 
 ## 6. How we evaluate
 
@@ -403,6 +428,7 @@ moving up. A large ontology "for completeness" is the main risk of OAG.
 | "What is there about this area and how is it organised" | GraphRAG (/kg) | Discovers structure without a prior schema and groups it into themes |
 | "Where is this identifier mentioned" | Naive RAG or search | Cheap and immediate; needs no structure |
 | "Investigate this new problem" | Agentic RAG | Plans and searches again; costly and variable |
+| I do not know in advance whether it is about rules or exploration | Hybrid (GraphRAG + OAG) | Filters with the ontology if the question falls inside it; otherwise keeps the graph's list |
 | Any of the above, in Spanish and without code names | The same, with a semantic layer | Synonyms in the ontology or multilingual embeddings in the first step |
 
 OAG does not replace GraphRAG: it complements it. GraphRAG discovers the structure; OAG pins the stable

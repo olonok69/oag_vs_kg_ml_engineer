@@ -4,7 +4,8 @@
     python demo/compare.py [--q <id>] [--no-run]
 
 For every question in data/questions.yaml (or only --q), re-runs Naive RAG,
-GraphRAG (/kg) at one and two hops and OAG with schema v1 and v2, then reads
+GraphRAG (/kg) at one and two hops, OAG with schema v1 and v2 and the hybrid
+(demo/hybrid.py), then reads
 data/runs/<id>/*.json (Agentic RAG and Claude's recorded answers come from
 /demo-agentic-rag and record_answer.py).
 
@@ -33,6 +34,7 @@ ORDER = [
     ("oag_v1", "OAG, esquema v1", "hechos tipados, primera ontología"),
     ("oag", "OAG, esquema v2", "hechos tipados, ontología corregida"),
     ("naive_rag_sem", "Naive RAG, embeddings", "trozos por similitud de significado"),
+    ("hybrid", "Híbrido GraphRAG + OAG", "GraphRAG propone, la ontología filtra si cubre la pregunta"),
 ]
 
 
@@ -110,6 +112,7 @@ def main() -> None:
                                check=True, stdout=subprocess.DEVNULL)
             run(q["id"], ["oag.py", "query", "--schema", "1"])
             run(q["id"], ["oag.py", "query", "--schema", "2"])
+            run(q["id"], ["hybrid.py"])
             hops = str(q.get("hops", 1))
             run(q["id"], ["naive_rag.py", "--lang", "es"])
             run(q["id"], ["graphrag.py", "--lang", "es", "--hops", hops])

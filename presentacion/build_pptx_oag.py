@@ -645,8 +645,9 @@ def build():
     # PARTE 4
     # =========================================================================
     s, pg = new()
-    divider(s, 4, "La demo", "Cinco skills de Claude Code, dos preguntas reales y la misma vara de medir.",
-            ["OAG en la demo", "Cómo evaluamos", "Dos preguntas, dos ganadores", "De OAG v1 a v2",
+    divider(s, 4, "La demo", "Seis skills de Claude Code, dos preguntas reales y la misma vara de medir.",
+            ["OAG en la demo", "Cómo evaluamos", "Dos preguntas, dos ganadores", "Combinar las dos",
+             "De OAG v1 a v2",
              "La pregunta en castellano", "Dónde gana cada técnica", "¿Merece la pena en nuestro caso?"], page=pg)
 
     # ---- Cómo ejecutarla
@@ -670,8 +671,8 @@ def build():
           "/demo-oag comment-memo-landscape",
           "# en castellano llano (opcional)",
           "/demo-oag letter-end-runin --lang es",
-          "# cierre",
-          "/demo-compare"], title="2 · Dentro de Claude Code")
+          "# híbrido y cierre",
+          "/demo-hybrid       /demo-compare"], title="2 · Dentro de Claude Code")
     takeaway(s, "/clear antes de cada skill y aprobar una vez «python demo/...»: cada técnica responde solo con lo suyo.")
 
     s, pg = new()
@@ -716,6 +717,26 @@ def build():
              "OAG no encuentra ningún componente de su ontología en la pregunta y no devuelve nada.",
              11, FAINT, False)]])
     takeaway(s, "GraphRAG descubre lo que nadie ha modelado; OAG solo ve lo que su esquema declara.")
+
+    # ---- Híbrido
+    s, pg = new()
+    base(s, "Parte 4 · Combinar las dos", "Híbrido: GraphRAG propone, la ontología filtra", page=pg)
+    table(s, 0.7, 2.0, [3.3, 1.6, 1.6],
+          [["Técnica", "Pregunta A", "Pregunta B"],
+           ["GraphRAG (/kg, 2 saltos)", "100% / 13%", "83% / 43%"],
+           ["OAG, esquema v2", "100% / 47%", "0%"],
+           ["Híbrido", "100% / 47%", "83% / 43%"]], row_h=0.5, size=11.5)
+    text(s, 0.7, 4.2, 6.5, 1.2,
+         [[R("Recall / precisión. Pregunta A: 53 candidatos del grafo; 22 se conectan al componente en la "
+             "ontología; 15 cumplen sus reglas. El grafo no aportó ningún ticket que OAG no tuviera.",
+             10.5, FAINT, False)]])
+    panel_bullets(s, 7.55, 2.0, 5.1, 3.4, "Cómo funciona (demo/hybrid.py)",
+                  ["GraphRAG a 2 saltos da la lista amplia: mucho recall, poca precisión",
+                   "Si la pregunta nombra un componente de la ontología, se filtra con sus clases, relaciones y reglas",
+                   "Si no nombra ninguno, se queda la lista del grafo sin tocar",
+                   "Las comunidades que el grafo encuentra fuera del esquema salen como propuesta para ampliar la ontología; la revisa una persona"],
+                  accent=GREEN)
+    takeaway(s, "No supera a la mejor en cada pregunta: evita elegir mal y dice qué modelar después.")
 
     # ---- v1 -> v2
     s, pg = new()

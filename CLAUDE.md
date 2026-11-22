@@ -58,7 +58,7 @@ Un texto nuevo en el deck necesita su entrada en `translations_en.py`.
 
 ## Demo
 
-Cinco skills responden a las mismas preguntas reales sobre el mismo corpus. Hay dos escenarios en
+Seis skills responden a las mismas preguntas reales sobre el mismo corpus. Hay dos escenarios en
 `data/questions.yaml`: `letter-end-runin` (reglas sobre un componente modelado, gana OAG) y
 `comment-memo-landscape` (explorar un área sin modelar, gana GraphRAG). Las skills y los scripts aceptan
 el id (`--q <id>`):
@@ -67,7 +67,8 @@ el id (`--q <id>`):
 2. `/demo-agentic-rag`: Claude busca y lee en bucle.
 3. `/demo-graphrag`: nuestro skill `/kg` sobre `data/kg/output/graph.json`.
 4. `/demo-oag`: hechos tipados validados contra la ontología (`--schema 1` reproduce la primera versión).
-5. `/demo-compare`: recall, precisión y coste.
+5. `/demo-hybrid`: GraphRAG propone y la ontología filtra si la pregunta cae en ella.
+6. `/demo-compare`: recall, precisión y coste.
 
 Las dos preguntas tienen una versión en castellano llano sin nombres de código (`--lang es`). La capa
 semántica (`demo/semantic.py`, embeddings multilingües) se activa con `--embed` en Naive RAG y `--semantic`

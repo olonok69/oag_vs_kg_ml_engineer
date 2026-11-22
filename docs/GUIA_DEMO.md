@@ -17,7 +17,7 @@ evaluación y, al final, cuándo conviene cada técnica.
 | 2 | Conceptos: ontología, hechos, schema-first | 10 min |
 | 3 | De RAG a OAG y el pipeline de OG-RAG | 10 min |
 | 4 | Nuestro grafo de tickets: qué hace y qué aprendimos | 10 min |
-| 5 | Demo en directo: dos preguntas, cinco skills | 25 min |
+| 5 | Demo en directo: dos preguntas, seis skills | 25 min |
 | 6 | Evaluación, resultados, dónde gana cada técnica y si merece la pena | 15 min |
 
 ---
@@ -154,7 +154,7 @@ sola vez, atribución, uso antes de actuar). Le falta el esquema previo, la vali
 
 ## 5. La demo
 
-Cinco skills de Claude Code responden a las mismas preguntas reales sobre el mismo corpus. La demo no
+Seis skills de Claude Code responden a las mismas preguntas reales sobre el mismo corpus. La demo no
 busca un ganador absoluto: tiene dos preguntas elegidas para enseñar dónde gana cada técnica y por qué.
 Detalle técnico en `demo/README.md`.
 
@@ -219,6 +219,7 @@ Pregunta B:
 |---|---|---|
 | `/demo-graphrag comment-memo-landscape` | Vecinos del extractor a dos saltos y los temas (comunidades con nombre) | Nadie ha modelado esta área y el grafo la encuentra y la agrupa |
 | `/demo-oag comment-memo-landscape` | La consulta sin componentes y sin hechos | OAG solo ve lo que su esquema declara. Para cubrir el área hay que modelarla primero |
+| `/demo-hybrid` y `/demo-hybrid comment-memo-landscape` | El embudo 53, 22, 15 en A; en B, la lista del grafo y la propuesta para la ontología | Iguala a la mejor en cada pregunta sin elegirla; no la supera (ver «Combinar GraphRAG y OAG») |
 | `/demo-compare` | Las tablas en inglés y en castellano llano | Dónde gana cada una, con sus límites |
 
 Pregunta en castellano llano (opcional, apartado 6):
@@ -252,6 +253,31 @@ técnica:
 `python demo/oag.py query --schema 1` reproduce la v1. Hay que contarlo con honestidad: la v2 se escribió
 después de ver qué fallaba. Es la forma normal de mantener una ontología, pero el resultado solo se puede
 atribuir a la técnica cuando se valide con preguntas nuevas.
+
+### Combinar GraphRAG y OAG: el híbrido
+
+Las dos preguntas tienen ganadores distintos, así que la pregunta natural es si se pueden combinar.
+`/demo-hybrid` (`demo/hybrid.py`) lo prueba de la forma más sencilla, sin LLM:
+
+1. GraphRAG a dos saltos propone la lista amplia de candidatos: mucho recall, poca precisión.
+2. Si la pregunta nombra un componente de la ontología, la lista pasa dos filtros: los tickets que la
+   ontología conecta con el componente (clases y relaciones) y, de ellos, los que cumplen sus reglas
+   (la restricción de mismo componente y `calls`).
+3. Si no nombra ninguno, la ontología no tiene nada que decir: se queda la lista del grafo, y las
+   comunidades que el grafo encuentra salen como propuesta para ampliar la ontología, que revisa una
+   persona.
+
+| Técnica | Pregunta A (recall / precisión) | Pregunta B (recall / precisión) |
+|---|---|---|
+| GraphRAG (/kg, 2 saltos) | 100 % / 13 % (53 tickets) | 83 % / 43 % |
+| OAG v2 | 100 % / 47 % (15 tickets) | 0 % |
+| Híbrido | 100 % / 47 % (53, 22 y 15) | 83 % / 43 % |
+
+Lo que enseña, contado sin adornos: el híbrido no supera a la mejor técnica en ninguna pregunta; iguala a
+la mejor en las dos sin tener que elegirla. En la pregunta A el grafo no aporta ningún ticket que OAG no
+tuviera, así que el filtro es OAG con otra explicación (el embudo 53, 22, 15). Lo que sí aporta es la
+ruta automática y una lista de qué modelar después. Su punto débil es decidir si la pregunta cae en la
+ontología: una pregunta de exploración que nombre un componente se filtraría por error.
 
 ## 6. Cómo evaluamos
 
@@ -407,6 +433,7 @@ nivel. Una ontología grande «por completitud» es el principal riesgo de OAG.
 | «Qué hay sobre esta área y cómo se organiza» | GraphRAG (/kg) | Descubre estructura sin esquema previo y agrupa en temas |
 | «Dónde se menciona este identificador» | Naive RAG o búsqueda | Barato e inmediato; no necesita estructura |
 | «Investiga este problema nuevo» | Agentic RAG | Planifica y vuelve a buscar; caro y variable |
+| No sé de antemano si es de reglas o de exploración | Híbrido (GraphRAG + OAG) | Filtra con la ontología si la pregunta cae en ella; si no, deja la lista del grafo |
 | Cualquiera de las anteriores, en castellano y sin nombres de código | La misma, con capa semántica | Sinónimos en la ontología o embeddings multilingües en el primer paso |
 
 OAG no sustituye a GraphRAG: lo completa. GraphRAG descubre la estructura; OAG fija la parte estable

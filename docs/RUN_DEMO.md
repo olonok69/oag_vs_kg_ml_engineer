@@ -31,7 +31,7 @@ Notes:
 
 ## 2. How to call a skill
 
-Inside Claude Code, a skill is invoked by typing `/` and its name. Typing `/demo` lists all five. Whatever
+Inside Claude Code, a skill is invoked by typing `/` and its name. Typing `/demo` lists all six. Whatever
 follows the name is passed as arguments:
 
 ```
@@ -82,6 +82,13 @@ the previous technique retrieved and the comparison stops being fair.
 | `/demo-oag letter-end-runin --lang es` | v2 (no components), v3 (Spanish synonyms) and `--semantic` | 0%, 100% and 100% |
 | `/demo-graphrag comment-memo-landscape --lang es` | Seed by name, then by similarity | 0%, then 59% / 25% |
 
+### Combining GraphRAG and OAG
+
+| Command | What it does | What should come out |
+|---|---|---|
+| `/demo-hybrid` | GraphRAG at 2 hops proposes; the ontology filters (component, rules) | 53 candidates, 22 and 15: 100% / 47%, the same as OAG v2 |
+| `/demo-hybrid comment-memo-landscape` | No components: the graph's list and a proposal for the ontology | 83% / 43%, the same as GraphRAG, and the communities to review |
+
 ### Close
 
 | Command | What it does | What should come out |
@@ -98,6 +105,7 @@ The scripts run on their own, with the same output the skills see:
 python demo/naive_rag.py --q letter-end-runin [--embed] [--lang es]
 python demo/graphrag.py --q comment-memo-landscape [--hops 2] [--semantic] [--lang es]
 python demo/oag.py query --q letter-end-runin [--schema 1|2|3] [--semantic] [--lang es]
+python demo/hybrid.py --q letter-end-runin [--semantic] [--lang es]
 python demo/compare.py
 ```
 
