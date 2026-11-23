@@ -15,6 +15,7 @@ uv sync --group embed                        # entorno con la capa semántica (s
 source .venv/bin/activate                    # imprescindible: las skills llaman a `python`
 python demo/oag.py build --q letter-end-runin
 python demo/oag.py build --q comment-memo-landscape
+python demo/holdout.py --q letter-end-runin    # vista sin la hoja de respuestas para Agentic RAG
 python demo/compare.py                       # comprueba que todo responde y precalienta la caché
 claude                                       # Claude Code, desde la raíz del repo y con el venv activo
 ```

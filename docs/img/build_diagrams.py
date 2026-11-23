@@ -325,7 +325,7 @@ ES = dict(
                    ("OAG, esquema v2", 0, 0, 0, False)],
              lesson="Gana GraphRAG: descubre el área sin que nadie la modele y la agrupa en temas (comunidades). OAG no ve lo que su esquema no declara."),
     ],
-    sc_note="Corpus completo (452 ficheros). OAG v2 se corrigió tras ver el fallo de v1: es evolución del esquema. demo/compare.py.",
+    sc_note="Corpus completo (453 ficheros). OAG v2 se corrigió tras ver el fallo de v1: es evolución del esquema. demo/compare.py.",
     evo_eyebrow="De RAG a OAG", evo_title="Seis generaciones de recuperación aumentada",
     evo_steps=[
         ("Naive RAG", "Trocear, vectorizar y recuperar el top-k por similitud.", "Recupera: trozos"),
@@ -422,7 +422,7 @@ EN = dict(
                    ("OAG, schema v2", 0, 0, 0, False)],
              lesson="GraphRAG wins: it discovers the area without anyone modelling it and groups it into themes (communities). OAG cannot see what its schema does not declare."),
     ],
-    sc_note="Full corpus (452 files). OAG v2 was fixed after seeing v1 fail: schema evolution. demo/compare.py.",
+    sc_note="Full corpus (453 files). OAG v2 was fixed after seeing v1 fail: schema evolution. demo/compare.py.",
     evo_eyebrow="From RAG to OAG", evo_title="Six generations of retrieval augmentation",
     evo_steps=[
         ("Naive RAG", "Chunk, vectorise and retrieve the top-k by similarity.", "Retrieves: chunks"),

@@ -286,7 +286,9 @@ falls inside the ontology: an exploration question that names a component would 
 - **Expected answer**: in question A, the tickets the bug's writeup says to respect (7); in B, the
   writeups whose title mentions the area (29), an objective rule rather than a hand-picked list.
 - **Hold-out**: in question A, the writeup and its notes are excluded from the corpus, the graph and the
-  facts. B has no answer key to hide.
+  facts, and so is everything derived from the reserved ticket: the notes written about it and every
+  passage that mentions it in the rest of the corpus (a SHARP_EDGES bullet, STATUS rows, a line of the
+  memory index). B has no answer key to hide.
 - **Recall** = expected found / expected. **Precision** = expected found / returned. **F1** = harmonic
   mean of the two. Explanation and example just below.
 - **What counts as returned**: for Naive RAG, the tickets appearing in the chunks; for GraphRAG, those in
@@ -330,7 +332,7 @@ Three nuances when reading the tables:
   list. That is why the demo's precision is a lower bound, and it is worth looking at which tickets are
   extra, not only how many.
 
-Results with the full corpus (452 files after the hold-out) and the graph rebuilt on 20 November.
+Results with the full corpus (453 files; 450 in question A after the hold-out) and the graph rebuilt on 20 November.
 
 ![Two questions, two winners](img/scenarios.en.svg)
 
@@ -370,7 +372,7 @@ How to read them:
   table headers...). OAG returns nothing, because the question names no component of its ontology: it
   does not fail with noise, it fails silently. Naive RAG is right in the little it returns, but a top-5
   cannot answer "everything about X".
-- **Naive RAG loses recall as the corpus grows** (100% with 14 files, 71% with 452). With few files the
+- **Naive RAG loses recall as the corpus grows** (100% with 14 files, 71% with 450). With few files the
   `SHARP_EDGES` index was retrieved, and that is already an implicit, hand-written ontology.
 - **Two questions are not an evaluation.** The expected list is a floor and OAG v2 was fixed after seeing
   the failure. The real evaluation is Step 0 in `HANDOVER.md`: 15 to 20 questions with known answers,
@@ -399,7 +401,7 @@ the step where it compares the question with the corpus:
 | Technique | Recall | Precision | F1 | IDs |
 |---|---|---|---|---|
 | Naive RAG, TF-IDF | 14% | 25% | 0.18 | 4 |
-| Naive RAG, embeddings | 43% | 38% | 0.40 | 8 |
+| Naive RAG, embeddings | 43% | 30% | 0.35 | 10 |
 | GraphRAG (1 hop), seed by name | 0% | - | 0 | 0 |
 | GraphRAG (1 hop), seed by similarity | 43% | 75% | 0.55 | 4 |
 | OAG v2, English labels | 0% | - | 0 | 0 |
@@ -429,7 +431,7 @@ How to read them:
   (similarity 0.89) instead of `CommentMemoExtractor`, and it reaches 59% against 83% with the hand-picked
   seed. The model understands the topic; knowing which node is central is still domain knowledge.
 - **Embeddings are not better at everything.** In Spanish, Naive RAG clearly improves; in English, on
-  question A, embeddings give 57% against 71% for TF-IDF (on B, 28% against 10%). In a technical corpus
+  question A, embeddings give 43% against 71% for TF-IDF (on B, 28% against 10%). In a technical corpus
   full of identifiers, exact word matching matters.
 - **On question B, OAG stays empty with the semantic layer too, and that is right.** The threshold stops
   the comment memo from being mapped to a component it is not (the highest similarity is 0.35). The

@@ -22,12 +22,16 @@ Objetivo: mostrar a Claude recuperando por sí mismo (planificar, buscar, leer, 
 que cuesta. Ver `demo/README.md`.
 
 Reglas:
-- Solo puedes leer ficheros de `data/corpus/`. Nada de `data/kg/`, `data/oag/`, `data/runs/` ni
-  `data/questions.yaml` salvo los campos `pregunta`, `pregunta_llana` y `scenario` de la pregunta elegida.
-- No leas los ficheros de `holdout_files` de `data/questions.yaml`: son la hoja de respuestas.
+- Solo puedes leer ficheros de `data/holdout/<id>/`, la vista del corpus sin la hoja de respuestas (sin el
+  writeup reservado, sin las notas escritas sobre él y sin los pasajes que lo mencionan). Es lo mismo que ven
+  las demás técnicas. Nada de `data/corpus/`, `data/kg/`, `data/oag/`, `data/runs/` ni `data/questions.yaml`
+  salvo los campos `pregunta`, `pregunta_llana` y `scenario` de la pregunta elegida.
+- No leas `data/holdout/<id>/_holdout_report.json`: dice qué se quitó.
 - Máximo 12 llamadas a herramientas de búsqueda o lectura. Cuéntalas.
 
 Pasos:
+0. Ejecuta `python demo/holdout.py` (con `--q <id>` si se eligió pregunta) para generar la vista. No cuenta
+   para el máximo de llamadas.
 1. Lee el campo `pregunta` de la pregunta elegida y di en una línea tu plan de búsqueda.
 2. Busca con Grep y lee con Read (por rangos, no ficheros enteros si son grandes). Narra cada paso en una
    línea: qué buscas y qué has aprendido.

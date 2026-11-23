@@ -21,7 +21,7 @@ vaya a implementar algo debe leerlo entero y empezar por la sección 7 (instrucc
   grafo, construcción cara una vez, consulta sin LLM y atribución a fichero fuente. Le falta la otra mitad:
   un esquema escrito **antes** de extraer (schema-first), validar el grafo contra él y devolver hechos con
   tipo en lugar de solo «qué leer».
-- **Lo que mostró la demo**, con dos preguntas reales sobre el corpus completo de `/kg` (452 ficheros):
+- **Lo que mostró la demo**, con dos preguntas reales sobre el corpus completo de `/kg` (453 ficheros):
   - En una pregunta de **reglas** sobre un componente modelado («qué no romper al arreglar este bug»), OAG
     encuentra los 7 tickets de referencia entre 15 resultados. GraphRAG (nuestro `/kg`) también los encuentra,
     pero entre 53.
@@ -141,11 +141,14 @@ Ninguna técnica llama a un LLM para recuperar, salvo Agentic RAG.
     no, queda la lista del grafo y sus comunidades salen como propuesta para ampliar la ontología. Iguala a
     la mejor técnica en cada pregunta sin elegirla. En la pregunta A el grafo no aportó ningún ticket que OAG
     no tuviera. Su valor es el enrutado automático y la lista de qué modelar después.
-11. **Con poco corpus todo parece funcionar.** Con 14 ficheros, Naive RAG tenía un 100 % de recall; con 452,
+11. **Con poco corpus todo parece funcionar.** Con 14 ficheros, Naive RAG tenía un 100 % de recall; con 450,
     un 71 %. Evaluar siempre con el corpus completo.
 12. **El hold-out se escapa por rincones.** El writeup que sirve de hoja de respuestas se excluyó, pero una
-    viñeta de SHARP_EDGES y una nota de memoria describían su arreglo, y una técnica llegó a ellas. El
-    hold-out tiene que excluir todo lo que derive del ticket reservado, no solo su fichero.
+    viñeta de SHARP_EDGES y dos knowledge items describían su arreglo, y una técnica llegó a ellos. El
+    hold-out tiene que excluir todo lo que derive del ticket reservado, no solo su fichero. En la demo ya se
+    hace (`lib.holdout_view`): fuera las notas sobre el ticket y cada pasaje que lo menciona. Al corregirlo
+    solo cambió Naive RAG con embeddings (del 57 % al 43 % de recall en la pregunta A); el resto de cifras de
+    este documento ya son las del hold-out completo.
 13. **F1 esconde lo que importa.** Por F1, Naive RAG queda casi a la par de OAG v2 en la pregunta A, pero se
     deja 2 de los 7. En «qué no romper» un olvido es una regresión: hay que mirar qué tickets faltan, no solo
     cuántos.
@@ -304,7 +307,7 @@ Detalle en la sección 6. Entregable: `data/knowledge-graph/eval/questions.yaml`
 | `demo/oag/ontology.yaml` | Ontología de partida (Fase A) |
 | `demo/oag.py` (`build`, validación, `query`) | Parser, validación y set cover (Fases B y D) |
 | `demo/hybrid.py` | Enrutado entre `facts` y `/kg`, y propuesta de qué modelar (Fase D) |
-| `demo/lib.py` (`score`, `ticket_ids`, hold-out) | Métricas y extracción de IDs para el Paso 0 |
+| `demo/lib.py` (`score`, `ticket_ids`, `holdout_view`) | Métricas, extracción de IDs y hold-out completo para el Paso 0 |
 | `demo/compare.py`, `demo/questions.example.yaml` | Formato del set de preguntas y arnés de comparación |
 | `demo/semantic.py` | Capa semántica opcional para preguntas en castellano |
 | `docs/GUIA_TECNICA.md` | Qué hace cada función, con enlaces a las líneas |
@@ -433,7 +436,6 @@ Plan y lecciones en `docs/HANDOVER_LAMBDA.md` del repo `oag_vs_kg_ml_engineer`.
 
 | Tema | Riesgo | Qué hacer |
 |---|---|---|
-| Fuga del hold-out en la pregunta A de la demo | Cifras algo optimistas en técnicas que llegan a la viñeta o a la nota | Excluir todo lo derivado del ticket reservado (sección 6) y volver a medir |
 | Ontología v2 escrita tras ver el fallo | Sobreajuste a una pregunta | Validar con preguntas nuevas |
 | Umbral semántico calibrado con dos preguntas | No generaliza | Recalibrar con el set completo o usar sinónimos en la ontología |
 | Mantenimiento de la ontología | Se queda atrás respecto a los tickets | Mantenerla pequeña; revisar en cada refresh lo que el grafo propone fuera del esquema |

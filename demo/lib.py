@@ -1,8 +1,9 @@
 """Shared helpers for the Naive RAG -> OAG demo.
 
 Paths, corpus loading with hold-out, ticket-id extraction and scoring.
-All techniques read the same corpus (data/corpus) minus the hold-out files,
-so their results are comparable.
+All techniques read the same corpus (data/corpus) minus the hold-out: the reserved
+files, the notes written about the reserved ticket, and every passage that mentions it
+(see holdout_view). Their results are therefore comparable and free of the answer sheet.
 """
 from __future__ import annotations
 
@@ -99,17 +100,119 @@ class Doc:
     text: str
 
 
-def load_corpus(q: dict | None = None) -> list[Doc]:
+def holdout_pattern(q: dict | None) -> re.Pattern | None:
+    """Matches a hold-out ticket by id (TKT-104) or by bare number in a list (104/157)."""
+    nums = [h.split("-")[-1] for h in (q or {}).get("holdout", [])]
+    if not nums:
+        return None
+    return re.compile(r"(?<![A-Za-z0-9.])(?:(?:SST|TKT)-?)?(?:" + "|".join(nums) + r")(?![0-9])", re.IGNORECASE)
+
+
+def derived_file(text: str, pat: re.Pattern) -> bool:
+    """A note written about the hold-out ticket: its frontmatter `tickets:` or its title names it."""
+    head = text[:1500]
+    if head.startswith("---"):
+        fm = head.split("---", 2)[1] if head.count("---") >= 2 else head
+        for line in fm.splitlines():
+            if line.lower().startswith(("tickets:", "title:")) and pat.search(line):
+                return True
+    first = text.lstrip().splitlines()[0] if text.strip() else ""
+    return first.startswith("#") and bool(pat.search(first))
+
+
+def redact(text: str, pat: re.Pattern) -> tuple[str, int]:
+    """Drop every passage that mentions the hold-out ticket.
+
+    A passage is a section whose heading names it, a table row, a list item (with its continuation
+    lines) or a paragraph. Returns the text and the number of passages dropped.
+    """
+    lines = text.splitlines()
+    out: list[str] = []
+    dropped = 0
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        h = re.match(r"(#{1,6})\s", line)
+        if h and pat.search(line):            # whole section
+            level = len(h.group(1))
+            i += 1
+            while i < len(lines):
+                h2 = re.match(r"(#{1,6})\s", lines[i])
+                if h2 and len(h2.group(1)) <= level:
+                    break
+                i += 1
+            dropped += 1
+            continue
+        if line.lstrip().startswith("|"):     # table row
+            if pat.search(line):
+                dropped += 1
+            else:
+                out.append(line)
+            i += 1
+            continue
+        item = re.match(r"(\s*(?:>\s*)*)(?:[-*+]|\d+\.)\s", line)
+        if item:                              # list item and its indented continuation
+            indent = len(item.group(1)) + 1
+            block = [line]
+            i += 1
+            while i < len(lines) and lines[i].strip() and not re.match(r"\s*(?:>\s*)*(?:[-*+]|\d+\.)\s", lines[i]) \
+                    and not lines[i].lstrip().startswith(("#", "|")) and len(lines[i]) - len(lines[i].lstrip()) >= indent:
+                block.append(lines[i])
+                i += 1
+            if pat.search("\n".join(block)):
+                dropped += 1
+            else:
+                out.extend(block)
+            continue
+        if line.strip():                      # paragraph
+            block = [line]
+            i += 1
+            while i < len(lines) and lines[i].strip() and not re.match(r"(#{1,6})\s|\s*(?:>\s*)*(?:[-*+]|\d+\.)\s", lines[i]) \
+                    and not lines[i].lstrip().startswith("|"):
+                block.append(lines[i])
+                i += 1
+            if pat.search("\n".join(block)):
+                dropped += 1
+            else:
+                out.extend(block)
+            continue
+        out.append(line)
+        i += 1
+    return "\n".join(out) + ("\n" if text.endswith("\n") else ""), dropped
+
+
+def holdout_view(q: dict | None = None) -> tuple[list[Doc], dict]:
+    """The corpus every technique sees: hold-out files out, notes about the hold-out ticket out,
+    and every passage that mentions it removed from the rest. Returns the docs and a report."""
     if not os.path.isdir(CORPUS):
         sys.exit(f"No corpus at {CORPUS}. Copy the .md files into data/corpus/.")
     skip = set(q["holdout_files"]) if q else set()
-    docs = []
+    pat = holdout_pattern(q)
+    docs: list[Doc] = []
+    report = {"holdout_files": sorted(skip), "derived_files": [], "redacted": {}}
     for name in sorted(os.listdir(CORPUS)):
         if not name.endswith(".md") or name in skip:
             continue
         with open(os.path.join(CORPUS, name), encoding="utf-8", errors="replace") as f:
-            docs.append(Doc(name, f.read()))
-    return docs
+            text = f.read()
+        if pat and pat.search(text):
+            if derived_file(text, pat):
+                report["derived_files"].append(name)
+                continue
+            text, n = redact(text, pat)
+            report["redacted"][name] = n
+        docs.append(Doc(name, text))
+    return docs, report
+
+
+def excluded_files(q: dict | None) -> set[str]:
+    """Files no technique may read or cite: the hold-out files and the notes derived from them."""
+    _, rep = holdout_view(q)
+    return set(rep["holdout_files"]) | set(rep["derived_files"])
+
+
+def load_corpus(q: dict | None = None) -> list[Doc]:
+    return holdout_view(q)[0]
 
 
 def ticket_ids(text: str, q: dict | None = None) -> list[str]:

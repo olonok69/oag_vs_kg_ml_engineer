@@ -266,7 +266,7 @@ Two questions, two winners. That is exactly what we wanted to show.
 
 ## Slide 27 · Question A: rules about a modelled component (1.5 min)
 
-Question A in detail. Seven expected tickets, full corpus of 452 files.
+Question A in detail. Seven expected tickets, full corpus of 453 files.
 
 Naive RAG finds five of the seven, with good precision. GraphRAG at one hop, the same with less context. At two hops it finds everything, but among 53 tickets: precision drops to 13%. OAG with the first ontology, six out of seven. With the corrected ontology, all seven in 15 tickets.
 

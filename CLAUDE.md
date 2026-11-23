@@ -89,7 +89,8 @@ python demo/oag.py build --q comment-memo-landscape
 
 Origen de los datos: `D:\repos3\ILS_2\document-parser-lambda\data\knowledge-graph\` (`_corpus/` y
 `output/graph.json`). La pregunta y la respuesta esperada están en `data/questions.yaml`; el ticket que
-sirve de hoja de respuestas se excluye de todas las técnicas (`holdout`).
+sirve de hoja de respuestas se excluye de todas las técnicas (`holdout`), junto con las notas escritas sobre él
+y cada pasaje que lo menciona (`lib.holdout_view`; `python demo/holdout.py` escribe esa vista para Agentic RAG).
 
 Si cambias el código de la demo, actualiza los enlaces a líneas (`#L`) de `docs/GUIA_TECNICA.md` y
 `docs/TECHNICAL_GUIDE.md`.

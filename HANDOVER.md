@@ -46,7 +46,7 @@ Informe completo: [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md). Deck: [`presentacion
    sin PR, sin fusionar). **Obsoleta**: el 2026-11-20 juan creó este repo y todo se movió aquí (commit
    inicial `9f34423` en `main`).
 6. **Demo en directo** (2026-11-21): cinco skills de Claude Code (`/demo-naive-rag`, `/demo-agentic-rag`,
-   `/demo-graphrag`, `/demo-oag`, `/demo-compare`) sobre el corpus completo de `/kg` (452 ficheros), con los
+   `/demo-graphrag`, `/demo-oag`, `/demo-compare`) sobre el corpus completo de `/kg` (453 ficheros), con los
    datos reales en `data/` (fuera de git) y entorno con uv. Ver `demo/README.md`.
 7. **Guía de la demo y diagramas** en ES y EN (`docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md`, `docs/img/`) y deck
    bilingüe con la Parte 4 (la demo); 35 slides desde el punto 11.
@@ -68,9 +68,9 @@ Informe completo: [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md). Deck: [`presentacion
 10. **Cómo ejecutarla en Claude Code**: chuleta `docs/EJECUTAR_DEMO.md` (EN: `docs/RUN_DEMO.md`) con la
    preparación, cómo se invoca cada skill y lo que debe salir, y una slide con los comandos. Las cinco skills se
    probaron en Claude Code. Las skills ejecutan siempre `python demo/...` desde la raíz para que una sola
-   aprobación del permiso sirva para toda la demo. Pendiente: la prueba de Agentic RAG detectó que el hold-out
-   de la pregunta A no excluye la viñeta del ticket excluido en `SHARP_EDGES` ni una nota `knowledge__` que
-   describe su arreglo; hay que decidir si se excluyen (cambiaría algunas cifras).
+   aprobación del permiso sirva para toda la demo. La prueba de Agentic RAG detectó que el hold-out de la pregunta
+   A no excluía la viñeta del ticket reservado en `SHARP_EDGES` ni las notas `knowledge__` que describen su
+   arreglo. Se corrigió el 2026-11-23 (punto 13).
 11. **Híbrido GraphRAG + OAG** (2026-11-22): `demo/hybrid.py` y `/demo-hybrid`. GraphRAG a 2 saltos propone; si
    la pregunta nombra un componente de la ontología, se filtra por clases y relaciones y después por sus reglas
    (la consulta de OAG v2); si no, se queda la lista del grafo y sus comunidades salen como propuesta para
@@ -82,6 +82,13 @@ Informe completo: [`docs/OAG_VS_KG.md`](docs/OAG_VS_KG.md). Deck: [`presentacion
    EN. El generador lo pone en las notas del orador de los dos decks y escribe `docs/GUION_PRESENTACION.md` y
    `docs/PRESENTATION_SCRIPT.md`, con marcas **[DEMO]** donde se cambia a Claude Code. Unos 40 minutos de
    exposición más unos 25 de demo.
+13. **Hold-out completo** (2026-11-23): `lib.holdout_view` quita, además de los ficheros reservados, las notas
+   cuyo título o `tickets:` nombran el ticket reservado y cada pasaje que lo menciona en el resto del corpus
+   (sección, fila de tabla, viñeta o párrafo). En la pregunta A salen 2 notas y 20 pasajes de 11 ficheros. El
+   grafo aplica la misma regla y quita también los nodos que solo colgaban de lo eliminado. Agentic RAG lee la
+   misma vista en disco (`python demo/holdout.py`). Solo cambió Naive RAG con embeddings: en inglés baja del
+   57 % al 43 % de recall, y en castellano la precisión baja del 38 % al 30 %. Las demás cifras, OAG y GraphRAG
+   incluidos, no cambian. La ejecución registrada de Agentic RAG es anterior a la corrección.
 
 ---
 

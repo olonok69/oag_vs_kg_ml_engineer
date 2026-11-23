@@ -755,7 +755,7 @@ def build():
            ["OAG, esquema v2", "100%", "47%", "0,64", "15", "~2.500", "-"],
            ["Agentic RAG", "en directo", "en directo", "-", "variable", "variable", "-"]], row_h=0.44, size=11.5)
     text(s, 0.7, 5.75, 11.9, 0.5,
-         [[R("7 tickets esperados, escritos por quien resolvió el bug. Corpus completo: 452 ficheros. "
+         [[R("7 tickets esperados, escritos por quien resolvió el bug. Corpus completo: 453 ficheros. "
              "Por F1 Naive RAG queda a la par, pero se deja dos de los siete: en «qué no romper», un olvido es una regresión.",
              11, FAINT, False)]])
     takeaway(s, "OAG v2 encuentra todo en 15 tickets, no en 53, y dice por qué importa cada uno.")
@@ -817,7 +817,7 @@ def build():
     table(s, 0.7, 1.95, [4.4, 2.2, 2.2, 3.1],
           [["Técnica", "Pregunta A (R / P)", "Pregunta B (R / P)", "Qué compara con la pregunta"],
            ["Naive RAG, TF-IDF", "14% / 25%", "0% / 0%", "Palabras"],
-           ["Naive RAG, embeddings", "43% / 38%", "10% / 50%", "Significado"],
+           ["Naive RAG, embeddings", "43% / 30%", "10% / 50%", "Significado"],
            ["GraphRAG, semilla por nombre", "0%", "0%", "Nombre del nodo"],
            ["GraphRAG, semilla por similitud", "43% / 75%", "59% / 25%", "Significado de la etiqueta"],
            ["OAG v2, etiquetas en inglés", "0%", "0%", "Sinónimos en inglés"],

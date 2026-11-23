@@ -66,11 +66,11 @@ source .venv/bin/activate                # activar antes de lanzar claude: las s
 ```
 
 **Datos.** Todo lo real vive en `data/`, que está en [`.gitignore`](../.gitignore). Las rutas se definen en
-[`lib.py`, líneas 15-22](../demo/lib.py#L15).
+[`lib.py`, líneas 16-23](../demo/lib.py#L16).
 
 | Ruta | Origen | Lo usa |
 |---|---|---|
-| `data/corpus/*.md` | `_corpus/` de `/kg` en el repo lambda (452 ficheros tras el hold-out) | Las cuatro técnicas |
+| `data/corpus/*.md` | `_corpus/` de `/kg` en el repo lambda (453 ficheros; 450 en la pregunta A tras el hold-out) | Las cuatro técnicas |
 | `data/kg/output/graph.json` | `output/graph.json` de `/kg-refresh` | `graphrag.py` |
 | `data/kg/output/community_labels.json` | `community_labels.json` de `/kg-refresh` | `graphrag.py` (temas) |
 | `data/kg/kg_query.sh` | wrapper de `/kg` | `graphrag.py --native` |
@@ -100,15 +100,19 @@ source .venv/bin/activate                # activar antes de lanzar claude: las s
 
 Funciones implicadas:
 
-- [`add_question_arg`](../demo/lib.py#L36) añade `--q` a cada script (también se puede usar la variable de
+- [`add_question_arg`](../demo/lib.py#L37) añade `--q` a cada script (también se puede usar la variable de
   entorno `DEMO_Q`).
-- [`list_questions`](../demo/lib.py#L60) y [`load_question`](../demo/lib.py#L79) leen el fichero. Aceptan el
+- [`list_questions`](../demo/lib.py#L61) y [`load_question`](../demo/lib.py#L80) leen el fichero. Aceptan el
   formato antiguo de una sola pregunta.
-- [`add_lang_arg`](../demo/lib.py#L41) añade `--lang en|es`; [`spanish_question`](../demo/lib.py#L46) y
-  [`spanish_topic`](../demo/lib.py#L51) devuelven `pregunta_llana` y `tema`, y
-  [`run_key`](../demo/lib.py#L55) nombra el resultado según la variante (`naive_rag_es_sem`, `oag_v3_es`...).
-- [`load_corpus`](../demo/lib.py#L102) carga `data/corpus/*.md` saltándose `holdout_files`.
-- [`ticket_ids`](../demo/lib.py#L115) extrae IDs con [`TICKET_RE`](../demo/lib.py#L24) y quita los del
+- [`add_lang_arg`](../demo/lib.py#L42) añade `--lang en|es`; [`spanish_question`](../demo/lib.py#L47) y
+  [`spanish_topic`](../demo/lib.py#L52) devuelven `pregunta_llana` y `tema`, y
+  [`run_key`](../demo/lib.py#L56) nombra el resultado según la variante (`naive_rag_es_sem`, `oag_v3_es`...).
+- [`holdout_view`](../demo/lib.py#L184) es el corpus que ven todas las técnicas: quita `holdout_files`, las
+  notas cuyo título o `tickets:` nombran el ticket reservado ([`derived_file`](../demo/lib.py#L111)) y, en el
+  resto, cada sección, fila de tabla, viñeta o párrafo que lo menciona ([`redact`](../demo/lib.py#L123)).
+  Devuelve también un informe de lo quitado. [`load_corpus`](../demo/lib.py#L214) la usa, y
+  `python demo/holdout.py --q <id>` la escribe en `data/holdout/<id>/` para Agentic RAG.
+- [`ticket_ids`](../demo/lib.py#L218) extrae IDs con [`TICKET_RE`](../demo/lib.py#L25) y quita los del
   `holdout`. Así ninguna técnica puede «acertar» citando la hoja de respuestas.
 
 Las dos preguntas actuales y por qué se eligieron están en la
@@ -139,8 +143,9 @@ noción de ticket, componente ni relación.
 ## 5. Agentic RAG
 
 **Skill:** [`/demo-agentic-rag`](../.claude/skills/demo-agentic-rag/SKILL.md). No hay script de recuperación:
-Claude planifica, busca con Grep y lee con Read, con un máximo de 12 llamadas y sin acceso a `data/kg/`,
-`data/oag/`, `data/runs/` ni a los ficheros del hold-out. Al final registra su respuesta:
+Claude genera primero la vista sin hoja de respuestas (`python demo/holdout.py`) y después planifica, busca
+con Grep y lee con Read solo en `data/holdout/<id>/`, con un máximo de 12 llamadas y sin acceso a `data/kg/`,
+`data/oag/` ni `data/runs/`. Al final registra su respuesta:
 
 ```bash
 python demo/record_answer.py [--q <id>] agentic_rag "<ids>" --tool-calls <n> --tokens <aprox>
@@ -162,17 +167,19 @@ Es la misma consulta que hace `/kg` (`kg_query.sh <tema>`, equivalente a `graphi
 en Python para aplicar el hold-out y limitarla al corpus de la demo.
 
 1. Carga `graph.json` y quita los nodos del hold-out y los que no vienen del corpus de la demo
-   ([`load_graph`](../demo/graphrag.py#L35)). `--full` usa el grafo entero.
+   ([`load_graph`](../demo/graphrag.py#L35)). Del hold-out sale todo nodo cuyo fichero fuente esté excluido,
+   cuyo id o etiqueta nombre el ticket reservado o una nota excluida, y los que se quedan sin ningún vecino
+   al quitar los anteriores. `--full` usa el grafo entero.
 2. Resuelve el tema a un nodo semilla: coincidencia exacta de id o etiqueta y, si no, por subcadena; en caso
-   de empate, el nodo con más aristas ([`resolve`](../demo/graphrag.py#L64)). Con `--semantic`, el nodo cuya
-   etiqueta más se parece al tema ([`resolve_semantic`](../demo/graphrag.py#L76), apartado 8). Si no hay
-   semilla, guarda un resultado vacío en lugar de fallar ([línea 118](../demo/graphrag.py#L118)).
-3. Recorre los vecinos por anchura hasta `--hops` saltos ([línea 133](../demo/graphrag.py#L133)), guardando
+   de empate, el nodo con más aristas ([`resolve`](../demo/graphrag.py#L79)). Con `--semantic`, el nodo cuya
+   etiqueta más se parece al tema ([`resolve_semantic`](../demo/graphrag.py#L91), apartado 8). Si no hay
+   semilla, guarda un resultado vacío en lugar de fallar ([línea 133](../demo/graphrag.py#L133)).
+3. Recorre los vecinos por anchura hasta `--hops` saltos ([línea 148](../demo/graphrag.py#L148)), guardando
    relación y confianza de cada arista.
 4. Construye el contexto (semilla y vecinos con su fichero de origen) y la lista de lectura
-   ([líneas 148-149](../demo/graphrag.py#L148)).
+   ([líneas 163-164](../demo/graphrag.py#L163)).
 5. Agrupa los vecinos en temas con los nombres de comunidad de `community_labels.json`
-   ([`community_names`](../demo/graphrag.py#L54), [línea 152](../demo/graphrag.py#L152)). Es lo que responde
+   ([`community_names`](../demo/graphrag.py#L69), [línea 167](../demo/graphrag.py#L167)). Es lo que responde
    «en qué temas se agrupan» en la pregunta de exploración.
 6. Imprime el reparto de relaciones y cuántas son genéricas (`references`, `relates_to`...).
 7. Devuelto = los IDs de ticket del contexto.
@@ -299,7 +306,7 @@ interpretación en la [guía de la demo](GUIA_DEMO.md#la-misma-pregunta-en-caste
 | Técnica | Opción | Qué compara | Código |
 |---|---|---|---|
 | Naive RAG | `--embed` | La pregunta con cada trozo de 180 palabras | [`embed_rank`](../demo/naive_rag.py#L62) |
-| GraphRAG | `--semantic` | El tema con la etiqueta de cada nodo (3.977); semilla = el más parecido, e imprime los cinco primeros | [`resolve_semantic`](../demo/graphrag.py#L76) |
+| GraphRAG | `--semantic` | El tema con la etiqueta de cada nodo (3.977); semilla = el más parecido, e imprime los cinco primeros | [`resolve_semantic`](../demo/graphrag.py#L91) |
 | OAG | `--semantic` | Cada cláusula de la pregunta con la descripción de cada componente (`label` y `alt_labels` en inglés); entran los que superan `--min-sim` | [`components_semantic`](../demo/oag.py#L63), [línea 307](../demo/oag.py#L307) |
 | OAG | `--schema 3` | Sin modelo: los sinónimos en castellano de la ontología, por coincidencia de texto | [`components_in`](../demo/oag.py#L52), [`labels`](../demo/oag/ontology.yaml#L43) |
 
@@ -313,9 +320,9 @@ download.pytorch.org (y download-r2.pytorch.org). Después se puede trabajar sin
 
 ## 9. Métricas y comparativa
 
-**Puntuación** ([`score`](../demo/lib.py#L126)): recall = esperados encontrados / esperados; precisión =
+**Puntuación** ([`score`](../demo/lib.py#L229)): recall = esperados encontrados / esperados; precisión =
 esperados encontrados / devueltos. F1 se calcula en [`compare.py`](../demo/compare.py#L70). Tokens de contexto =
-caracteres / 4 ([`approx_tokens`](../demo/lib.py#L138)).
+caracteres / 4 ([`approx_tokens`](../demo/lib.py#L241)).
 
 **Qué cuenta como devuelto** depende de lo que cada técnica afirma: los IDs de los trozos (Naive RAG), los del
 contexto del grafo (GraphRAG), los sujetos y orígenes de los fact blocks (OAG) y los que Claude da como respuesta
@@ -365,7 +372,7 @@ si llama a otro), reconstruir los hechos y comprobar en el informe de `build` qu
 haría que OAG respondiera la pregunta de exploración.
 
 **Añadir un idioma.** Escribir `pregunta_llana` y `tema` en ese idioma (o un campo nuevo y su opción en
-[`add_lang_arg`](../demo/lib.py#L41)) y, para OAG sin modelo, sus sinónimos en la ontología. El modelo por
+[`add_lang_arg`](../demo/lib.py#L42)) y, para OAG sin modelo, sus sinónimos en la ontología. El modelo por
 defecto ya es multilingüe.
 
 **Cambiar la ontología sin romper la comparación.** Marcar lo nuevo con `since: <versión>` y ampliar `choices`
@@ -385,6 +392,6 @@ de `--schema` en [`oag.py`](../demo/oag.py#L269). Así la demo puede enseñar el
 | `The semantic layer needs sentence-transformers` | Falta el grupo `embed` | `uv sync --group embed` |
 | Error al descargar el modelo (403, `Cannot reach`) | La red no permite huggingface.co o `*.hf.co` | Permitir esos dominios, o copiar `~/.cache/huggingface` de otra máquina y usar `HF_HUB_OFFLINE=1` |
 | Los resultados no cambian tras actualizar el corpus | Hechos antiguos | Volver a ejecutar `build` para cada pregunta |
-| Caracteres raros en Windows | Consola cp1252 | Los scripts fuerzan UTF-8 ([`utf8_stdout`](../demo/lib.py#L27)); usar Windows Terminal o WSL |
+| Caracteres raros en Windows | Consola cp1252 | Los scripts fuerzan UTF-8 ([`utf8_stdout`](../demo/lib.py#L28)); usar Windows Terminal o WSL |
 | `python: command not found` en WSL | venv sin activar | `source .venv/bin/activate` antes de lanzar `claude` |
 | Faltan temas en GraphRAG | No está `community_labels.json` | Copiarlo de `/kg-refresh` a `data/kg/output/` |
