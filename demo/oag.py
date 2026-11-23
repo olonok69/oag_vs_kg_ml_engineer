@@ -35,22 +35,37 @@ from collections import Counter, defaultdict
 
 import lib
 
+# A test file cited anywhere in the corpus, and the ticket encoded in its name (tests/test_tkt_104_x.py).
 TEST_RE = re.compile(r"tests/test_[a-z0-9_]+\.py")
 TEST_TICKET_RE = re.compile(r"tests/test_(sst|tkt)_(\d{3,5})_")
 
 
 def load_ontology() -> dict:
+    """Read ``demo/oag/ontology.yaml``: classes, relations, constraints, components and extraction rules."""
     import yaml
     with open(lib.ONTOLOGY, encoding="utf-8") as f:
         return yaml.safe_load(f)
 
 
 def alt_regex(labels: list[str]) -> re.Pattern:
+    """Case-insensitive regex for any of ``labels``, longest first so "letter end" beats "letter"."""
     return re.compile("|".join(re.escape(x) for x in sorted(labels, key=len, reverse=True)), re.IGNORECASE)
 
 
 def components_in(text: str, onto: dict, min_hits: int = 1, schema: int = 2) -> list[str]:
-    """Components named in the text through their altLabels (and Spanish ones from schema v3)."""
+    """Ontology components that ``text`` names through their altLabels.
+
+    Args:
+        text: a document (build) or the question (query).
+        onto: the ontology.
+        min_hits: how many label matches a component needs; build uses ``touches_min_mentions`` so a
+            ticket that names a component once in passing does not "touch" it.
+        schema: ontology version; from the version in ``labels.alt_labels_es.since`` (v3) the
+            Spanish labels count too.
+
+    Returns:
+        Component ids, in ontology order.
+    """
     es = schema >= onto.get("labels", {}).get("alt_labels_es", {}).get("since", 99)
     out = []
     for cid, c in onto["components"].items():
@@ -81,7 +96,15 @@ def components_semantic(text: str, onto: dict, min_sim: float, model: str | None
 
 # ----------------------------------------------------------------------------- build
 def parse_invariants(doc: lib.Doc, q: dict) -> list[dict]:
-    """Rows of the invariant index table and '- **SST-NNNN ...**' bullets of SHARP_EDGES."""
+    """Extract invariants from SHARP_EDGES without an LLM.
+
+    Two shapes are recognised: rows of the invariant index table (name | ticket of origin | rule) and
+    bullets that start with a bold ticket id (``- **<ticket> - rule ...**``).
+
+    Returns:
+        One dict per invariant: ``text`` (name and rule, up to 400 characters) and ``origin`` (the
+        ticket ids that introduced it).
+    """
     invs = []
     for line in doc.text.splitlines():
         s = line.strip()
@@ -96,7 +119,28 @@ def parse_invariants(doc: lib.Doc, q: dict) -> list[dict]:
 
 
 def build(q: dict, onto: dict) -> dict:
-    docs = lib.load_corpus(q)
+    """Turn the corpus into typed facts and validate them against the ontology. No LLM.
+
+    Extraction, per document:
+
+    - ticket writeup (``<ticket>__*.md``): a Ticket node; ``touches`` to each component it names at
+      least ``touches_min_mentions`` times; for every other ticket on a line, ``must_not_break`` if the
+      line has a cue ("do not break", "regression"...) and ``mentions`` otherwise;
+    - SHARP_EDGES: an Invariant node per rule, ``originates`` from its ticket and ``guards`` to the
+      components its text names;
+    - any document: ``verified_by`` from a ticket to each test file named after it;
+    - the ontology itself: ``calls`` between components.
+
+    Validation, in the spirit of SHACL: an edge is kept only if its relation is declared, its source
+    and target have the classes the relation requires, and it has a source file. Nodes are checked
+    against their class's ``id_pattern`` and ``required`` fields. ``mentions`` is not in the schema on
+    purpose, so generic co-mentions are rejected and counted.
+
+    Returns:
+        ``{"nodes", "edges", "report"}``. The report counts candidates, accepted and rejected edges by
+        reason, node issues, nodes by class and edges by relation; ``main`` prints it.
+    """
+    docs = lib.load_corpus(q)                       # corpus minus the hold-out
     rules = onto["extraction"]
     cue_re = re.compile("|".join(re.escape(c) for c in rules["must_not_break_cues"]), re.IGNORECASE)
 
@@ -104,6 +148,7 @@ def build(q: dict, onto: dict) -> dict:
     cand: list[dict] = []   # candidate edges before validation
 
     def node(nid: str, cls: str, **attrs) -> None:
+        """Create a node, or add attributes it does not have yet (the first source wins)."""
         if nid not in nodes:
             nodes[nid] = {"id": nid, "class": cls, **attrs}
         else:
@@ -152,6 +197,7 @@ def build(q: dict, onto: dict) -> dict:
                 cand.append({"rel": "verified_by", "from": tid, "to": test, "source": d.name})
 
     # --------------------------------------------------------------- validation (SHACL-like)
+    # Every candidate edge is checked against the relation's declared domain (from) and range (to).
     rels = onto["relations"]
     classes = onto["classes"]
     accepted, rejected = [], Counter()
@@ -192,7 +238,34 @@ def build(q: dict, onto: dict) -> dict:
 # ----------------------------------------------------------------------------- query
 def query(q: dict, onto: dict, facts: dict, text: str, schema: int = 2, comps: list[str] | None = None
           ) -> tuple[list[dict], list[str], list[dict]]:
+    """Answer a question with the smallest set of fact blocks that covers the relevant facts.
+
+    Steps:
+
+    1. Map the question to components (``components_in``, or ``comps`` when the caller chose them
+       by meaning). No component means no facts: OAG says so instead of guessing.
+    2. Relevant nodes: the invariants that ``guards`` those components; from v2, also the invariants
+       of a called component that pin the called symbols (``calls``); and the tickets that writeups
+       touching the components name as ``must_not_break``. From v2, the constraint
+       ``must_not_break_same_component`` keeps only protected tickets on the same components.
+    3. One fact block per ticket: the ticket plus the invariants it originates.
+    4. Greedy set cover, as in OG-RAG: repeatedly take the block that covers most uncovered relevant
+       nodes, until nothing is left or no block helps.
+
+    Args:
+        q: the question. Not used: the hold-out was already applied by ``build``.
+        onto: the ontology.
+        facts: the output of ``build``.
+        text: the question text, used to find components when ``comps`` is ``None``.
+        schema: ontology version; edges and constraints with a later ``since`` are ignored.
+        comps: components chosen by the caller (``--semantic``), or ``None``.
+
+    Returns:
+        ``(fact_blocks, comps, uncovered)``: the chosen blocks as JSON-ready dicts with their source
+        file, the components used, and the relevant nodes no block covered.
+    """
     nodes = {n["id"]: n for n in facts["nodes"]}
+    # Edge indexes by source and by target, without relations added after the requested schema.
     out_e, in_e = defaultdict(list), defaultdict(list)
     for e in facts["edges"]:
         if schema < onto["relations"].get(e["rel"], {}).get("since", 1):
@@ -217,6 +290,7 @@ def query(q: dict, onto: dict, facts: dict, text: str, schema: int = 2, comps: l
     protected = {e["to"] for t in touching for e in out_e[t] if e["rel"] == "must_not_break"}
     if schema >= onto.get("constraints", {}).get("must_not_break_same_component", {}).get("since", 99):
         def on_component(t: str) -> bool:
+            """True if ticket ``t`` touches, or originates an invariant that guards, a queried component."""
             own = {e["to"] for e in out_e[t] if e["rel"] == "touches"}
             own |= {g["to"] for e in out_e[t] if e["rel"] == "originates" for g in out_e[e["to"]] if g["rel"] == "guards"}
             return bool(own & set(comps))
@@ -231,6 +305,7 @@ def query(q: dict, onto: dict, facts: dict, text: str, schema: int = 2, comps: l
         cover = {tid} | {e["to"] for e in out_e[tid] if e["rel"] == "originates"}
         blocks[tid] = cover & relevant
 
+    # Greedy set cover; ties are broken by ticket id so the result is deterministic.
     chosen, uncovered = [], set(relevant)
     while uncovered:
         best = max(blocks, key=lambda b: (len(blocks[b] & uncovered), b), default=None)
@@ -239,6 +314,7 @@ def query(q: dict, onto: dict, facts: dict, text: str, schema: int = 2, comps: l
         chosen.append(best)
         uncovered -= blocks[best]
 
+    # Render each chosen block as the typed fact the model receives, always with its source file.
     fact_blocks = []
     for tid in chosen:
         n = nodes[tid]
@@ -262,6 +338,7 @@ def query(q: dict, onto: dict, facts: dict, text: str, schema: int = 2, comps: l
 
 
 def main() -> None:
+    """``build``: write and report the facts. ``query``: answer the question, score and save the run."""
     lib.utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("cmd", choices=["build", "query"])

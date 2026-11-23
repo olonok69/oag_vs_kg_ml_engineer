@@ -31,17 +31,26 @@ import lib
 
 
 def run(script: list[str]) -> None:
+    """Run another demo script quietly (``python demo/<script> ... --quiet``); fail if it fails."""
     subprocess.run([sys.executable, os.path.join(lib.ROOT, "demo", script[0]), *script[1:], "--quiet"],
                    check=True, stdout=subprocess.DEVNULL)
 
 
 def read_run(q: dict, key: str) -> dict:
+    """Load the result a technique saved in ``data/runs/<id>/<key>.json``."""
     with open(os.path.join(lib.run_dir(q), f"{key}.json"), encoding="utf-8") as f:
         return json.load(f)
 
 
 def linked_to(facts: dict, comps: list[str]) -> dict[str, str]:
-    """ticket -> how the ontology links it to the question's components (classes and relations only)."""
+    """Tickets linked to the question's components by classes and relations alone (filter a).
+
+    A ticket is linked if it ``touches`` one of the components, or ``originates`` an invariant that
+    ``guards`` one. The ontology's rules (constraints, ``calls``) are not applied here; they are filter b.
+
+    Returns:
+        Map ticket id -> the link, as text, to print next to each kept ticket.
+    """
     guards = {e["from"] for e in facts["edges"] if e["rel"] == "guards" and e["to"] in comps}
     link = {}
     for e in facts["edges"]:
@@ -53,6 +62,7 @@ def linked_to(facts: dict, comps: list[str]) -> dict[str, str]:
 
 
 def main() -> None:
+    """Run GraphRAG and OAG, route the question, filter or pass through, score and save the run."""
     lib.utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--hops", type=int, default=2, help="GraphRAG depth for the candidate list (default 2)")
@@ -69,6 +79,7 @@ def main() -> None:
     if not os.path.exists(lib.facts_path(q)):
         subprocess.run([sys.executable, os.path.join(lib.ROOT, "demo", "oag.py"), "build", "--q", q["id"]],
                        check=True, stdout=subprocess.DEVNULL)
+    # Step 1 and the OAG query, with the same flags, so the hybrid reuses their exact results.
     run(["graphrag.py", "--hops", str(a.hops), *common])
     run(["oag.py", "query", "--schema", str(a.schema), *common])
     g = read_run(q, lib.run_key("graphrag" if a.hops == 1 else f"graphrag_{a.hops}h", a.lang, a.semantic))
@@ -82,10 +93,11 @@ def main() -> None:
         f"{' | pregunta en castellano' if a.lang == 'es' else ''}\n")
     out(f"1. Candidatos de GraphRAG: {len(cand)} tickets.")
 
+    # Routing: the question is in the ontology if OAG mapped it to at least one component.
     if comps:
         link = linked_to(facts, comps)
         soft = [t for t in cand if t in link or t in o["found"]]
-        strict = [t for t in cand if t in o["found"]]
+        strict = [t for t in cand if t in o["found"]]   # filter b = what the OAG query keeps
         added = [t for t in o["found"] if t not in cand]
         found = strict + added
         route = "ontology"
