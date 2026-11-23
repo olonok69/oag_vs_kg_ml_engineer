@@ -24,7 +24,7 @@ OUT = os.path.join(DOCS, "pdf")
 REPO_URL = "https://github.com/olonok69/oag_vs_kg_ml_engineer/blob/main/"
 GUIDES = ["GUIA_DEMO.md", "DEMO_GUIDE.md", "EJECUTAR_DEMO.md", "RUN_DEMO.md",
           "GUIA_TECNICA.md", "TECHNICAL_GUIDE.md", "OAG_VS_KG.md",
-          "GUION_PRESENTACION.md", "PRESENTATION_SCRIPT.md"]
+          "GUION_PRESENTACION.md", "PRESENTATION_SCRIPT.md", "HANDOVER_LAMBDA.md"]
 MERMAID_JS = os.environ.get("MERMAID_JS", "https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js")
 
 CSS = """

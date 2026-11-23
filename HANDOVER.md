@@ -258,6 +258,7 @@ Regla: si una relación no responde una pregunta del set de la línea base, fuer
 |---|---|
 | `HANDOVER.md` | Este documento |
 | `docs/OAG_VS_KG.md` | Informe de investigación |
+| `docs/HANDOVER_LAMBDA.md` | Traspaso al equipo y al agente del repo lambda (`document-parser-lambda`): lecciones, plan por fases y evaluación |
 | `docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md` | Guía de la presentación y la demo (ES, EN) |
 | `docs/GUION_PRESENTACION.md`, `docs/PRESENTATION_SCRIPT.md` | Guion slide a slide (ES, EN); se genera con el deck desde `presentacion/speaker_notes.py`, que también rellena las notas del orador |
 | `docs/EJECUTAR_DEMO.md`, `docs/RUN_DEMO.md` | Cómo ejecutar la demo en Claude Code, comando a comando (ES, EN) |
