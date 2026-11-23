@@ -149,9 +149,12 @@ Ninguna técnica llama a un LLM para recuperar, salvo Agentic RAG.
 13. **F1 esconde lo que importa.** Por F1, Naive RAG queda casi a la par de OAG v2 en la pregunta A, pero se
     deja 2 de los 7. En «qué no romper» un olvido es una regresión: hay que mirar qué tickets faltan, no solo
     cuántos.
-14. **Sin esquema, cada refresh reinventa los tipos.** Por eso casi ninguna etiqueta de
-    `community_labels.json` sobrevive a una reconstrucción. IDs de nodo estables por clase y ticket lo
-    arreglan.
+14. **Sin esquema, cada refresh reinventa los tipos.** En lambda, aun con la convención de IDs del prompt,
+    solo sobrevive entre el 35 % y el 54 % de los IDs de un refresh al siguiente, y nombrar las comunidades
+    cuesta una hora por refresh. Los IDs que salen de un parser determinista son estables por construcción.
+15. **La densidad de la extracción LLM depende del modelo y del brief.** Un refresh de lambda necesitó tres
+    ejecuciones hasta dar un número de nodos razonable. Todo lo que pase al parser deja de depender de eso; lo
+    que quede en el LLM hay que vigilarlo comparando los recuentos por clase con el grafo anterior.
 
 ---
 
@@ -160,17 +163,60 @@ Ninguna técnica llama a un LLM para recuperar, salvo Agentic RAG.
 Principio: pequeño, reversible y medible, como los gates de la metodología. Cada fase se puede revertir sin
 tocar las demás y tiene su criterio de aceptación.
 
-### Qué hay hoy y qué cambia
+### Lo que ya existe en lambda (revisado en local el 2026-11-23)
 
-| Pieza actual | Qué hace | Cambio propuesto |
+El grafo de lambda está más avanzado que la copia sanitizada que usó la investigación. Ya es en parte
+schema-first, aunque sin las clases y relaciones de dominio que dan valor a OAG. Todo vive en
+`data/knowledge-graph/` (fuera de git); el procedimiento completo está en `KG_PROCEDURES.md` y el reparto de
+papeles en `REFRESH_OWNERSHIP.md`.
+
+| Pieza | Qué hace hoy | Qué tiene ya de OAG |
 |---|---|---|
-| `build_manifest.py`, `stage_corpus.py` | Eligen y aplanan el corpus en `_corpus/` | Nada |
-| `/graphify` (subagentes LLM) | Extrae nodos y aristas, tipos emergentes | Fase C: recibe `ontology.yaml` y solo emite clases y relaciones del esquema |
-| `kg_refresh.sh finalize` | Copia artefactos y hace el leak-check | Fase B: añade la validación contra el esquema y su informe |
-| `output/graph.json` | Grafo NetworkX | Se mantiene; los hechos tipados se añaden como aristas con `relation` del esquema (o en `facts.json` aparte) |
-| `community_labels.json` | Nombres de comunidad, a mano | Fase C: IDs estables para que sobrevivan |
-| `kg_query.sh` (`explain`, `path`, `find`) | Consulta determinista, lista de lectura | Fase D: añade `facts <tema>` |
-| Plantillas de ticket y SHARP_EDGES | Formato de los writeups | Fase B: frontmatter YAML |
+| `build_manifest.py`, `stage_corpus.py` | Eligen y aplanan el corpus (420 ficheros el 20-11). Desde finales de octubre no entra la memoria de los agentes; sí los knowledge items compartidos de `data/changes/knowledge/`. El manifest para si un fichero no está en el registro sincronizado | Corpus reproducible y con procedencia |
+| `EXTRACTION_PROMPT_20261009.md` y el brief por chunks `EXTRACTION_PROMPT_chunks_20261117.md` | Fijan cómo extraen los subagentes: convención de IDs por tipo (`ticket_<proyecto>_<n>`, `sym_<nombre>`, `cfg_`, `hub__`, `knowledge__`, `rationale_`, `concept_`), vocabulario de relaciones (`calls`, `implements`, `references`, `cites`, `rationale_for`...) y relaciones tipadas de las tablas de STATUS (`implemented_by`, `is_blocked_by`, `has_parent`, `has_subtask`) | Un esquema ligero: clases implícitas en el prefijo del ID y vocabulario de relaciones cerrado. Faltan las clases y relaciones de dominio: Invariant, Test, Component, `guards`, `originates`, `touches`, `verified_by` |
+| `kg_merge_canonical.py` | Fusiona los fragmentos de los chunks, canoniza IDs duplicados y hace un censo de IDs fuera de convención y de fugas de `_corpus` | Una validación al estilo SHACL, pero solo sobre los IDs, no sobre las relaciones ni sus clases de origen y destino |
+| Comprobación de procedencia por chunk | Cada nodo tiene `source_file` dentro de su chunk y todos los ficheros quedan cubiertos | Atribución verificada |
+| `kg_refresh.sh` (`prepare`, `finalize`, `request`) | Prepara el scratch, copia artefactos, hace el leak-check y la copia de seguridad previa. Solo refresca la máquina publicadora; las demás piden un refresh con `request` | El sitio natural para validar contra la ontología |
+| `kg_labels.py` y `community_labels.json` | Nombres de comunidad, re-anclados en cada refresh (`remap`, `check`, `inject-html`) | Nada: es el coste que el esquema reduciría |
+| `kg_query.sh` | `explain`, `path`, `find`, con el nombre de comunidad como zona de peligro | Recuperación determinista, sin LLM |
+| `kg_domain_noise.py` | Mide cuánto estorban los nodos de metodología en las consultas de producto | Una métrica de calidad del grafo ya en uso |
+| `kg_paths.py` / `kg_paths.sh` | Rutas por `KG_DATA_ROOT` y `KG_WORK_DIR`, para correr fuera del repo (pipeline nocturno previsto) | Facilita un `run_eval.py` que lea el mismo grafo |
+| Tests del grafo | `test_kg_*.py` (unos 50 tests) | Donde añadir los de la validación y de `facts` |
+
+Fuentes del registro que ya están casi tipadas y que un parser puede leer sin LLM:
+
+- `data/changes/SHARP_EDGES.md`: una tabla de invariantes («Load-bearing invariants») y entradas con su ticket
+  de origen, el porqué y el test que las fija. El índice de nombres de invariantes también está al final de
+  `CLAUDE.md`, agrupado por área (fin de carta, títulos...). Es la fuente de Invariant, `originates` y
+  `guards`.
+- `data/changes/TEST_MAP.md`: qué test protege qué ticket, agrupado por variante de extractor. Es la fuente de
+  `verified_by`. Ojo: se desfasa (en octubre cubría 110 de 123 ficheros de test).
+- El índice de casos del contrato de extracción (`_case_index.md`, generado): cada caso con el test que lo
+  fija. Es otra fuente de hechos tipados.
+- Las tablas de `STATUS_Tickets.md` y `STATUS_CR_PLAT.md`, con los enlaces entre tickets de Jira, que ya entran
+  como relaciones tipadas.
+
+Lo que enseña el historial de refrescos (`KG_PROCEDURES.md`, tabla «Naming cost»):
+
+- Aun con la convención de IDs fijada en el prompt, solo sobrevive entre el 35 % y el 54 % de los IDs de nodo
+  de un refresh al siguiente. Se conservan entre el 25 % y el 46 % de los nombres de comunidad, y cada refresh
+  cuesta en torno a una hora de nombrar y auditar.
+- La densidad de la extracción depende del modelo y del brief. Un refresh necesitó tres ejecuciones: con otro
+  modelo salió la mitad de nodos y con una instrucción de «ser exhaustivo», el doble. Por eso hoy se comparan
+  los recuentos por tipo con el grafo anterior antes de nombrar.
+- Las dos cosas apuntan a lo mismo: lo que se pueda extraer de forma determinista no depende del modelo ni
+  del día, y sus IDs son estables por construcción.
+
+### Qué cambia con la propuesta
+
+| Pieza | Cambio | Fase |
+|---|---|---|
+| `data/knowledge-graph/ontology.yaml` (nuevo) | Clases y relaciones de dominio, con los componentes y sus altLabels | A |
+| Parser determinista (nuevo, p. ej. `kg_facts_build.py`) | Lee SHARP_EDGES, TEST_MAP, el índice de casos y los writeups; emite nodos y aristas tipados con IDs por construcción (`invariant_<slug>`, `test_<fichero>`) | B |
+| `kg_refresh.sh finalize` | Valida el grafo contra la ontología (relación permitida, clase de origen y destino, `source_file`) y escribe un informe de rechazos | B |
+| Prompt de extracción | Añade al vocabulario las relaciones de la ontología y deja a los subagentes solo lo que el parser no ve | C |
+| `kg_query.sh facts <tema>` (nuevo) | Fact blocks por set cover, con caída a `explain` si el tema no está en la ontología | D |
+| `kg_labels.py` | Nada al principio; mejora sola si sube la supervivencia de IDs | - |
 
 ### Paso 0. Línea base (primero, antes de tocar nada)
 
@@ -194,25 +240,40 @@ Detalle en la sección 6. Entregable: `data/knowledge-graph/eval/questions.yaml`
 
 ### Fase B. Backbone determinista y validación
 
-- Frontmatter YAML en las plantillas de ticket y de SHARP_EDGES (id, componentes que toca, invariantes que
-  origina, tests). Solo en los nuevos; los antiguos se cubren con el parser.
-- Parser sin LLM: frontmatter, tablas de invariantes de SHARP_EDGES, citas a tickets y nombres de tests, que
-  se convierten en nodos y aristas tipados. La función `build` de `demo/oag.py` hace exactamente esto y se
-  puede portar casi tal cual.
-- Validación en `kg_refresh.sh finalize`: rechazar aristas cuya relación no esté en el esquema o con origen y
-  destino de clase equivocada, y nodos sin fichero fuente o con un ID que no cumpla el patrón. Escribir un
-  informe con lo rechazado por motivo.
-- **Aceptación:** el informe de validación sale en cada refresh; las preguntas de reglas del set no pierden
-  recall respecto a la línea base.
+- Parser sin LLM (`kg_facts_build.py`, junto a los demás scripts del grafo y con rutas por `kg_paths`): lee la
+  tabla «Load-bearing invariants» y las entradas de `SHARP_EDGES.md`, `TEST_MAP.md`, el índice de casos del
+  contrato de extracción y las citas a tickets de los writeups. Emite nodos y aristas tipados con IDs según la
+  convención de prefijos que ya fija el prompt (`invariant_<slug>`, `test_<fichero>`, `component_<slug>`, y
+  `ticket_<proyecto>_<n>` para enlazar con lo existente). La función `build` de `demo/oag.py` hace esto sobre la
+  copia sanitizada y se puede portar casi tal cual.
+- Estos hechos se fusionan con los de los subagentes en `kg_merge_canonical.py`, como una fuente más, antes de
+  la canonización. Si un subagente emite el mismo nodo, gana el del parser.
+- Validación: ampliar el censo que ya hace `kg_merge_canonical.py` (IDs fuera de convención, fugas de
+  `_corpus`) a las relaciones. Una arista se rechaza si su relación no está en el vocabulario o si la clase de
+  origen o destino, deducida del prefijo del ID, no es la que pide la ontología. El informe de rechazos por
+  motivo lo copia `kg_refresh.sh finalize` junto a los demás artefactos.
+- Frontmatter YAML en las plantillas nuevas de ticket y de SHARP_EDGES (componentes que toca, invariantes que
+  origina, tests) solo si el parser no llega con las tablas actuales. No hace falta para empezar.
+- Respetar el reparto actual: el refresh solo corre en la máquina publicadora y, cuando exista, en el pipeline
+  nocturno. El parser no necesita LLM, así que encaja en ese pipeline sin coste.
+- Tests junto a los `test_kg_*.py`: parser sobre ficheros de ejemplo, validación con aristas buenas y malas.
+- **Aceptación:** el informe de validación sale en cada refresh; los IDs del parser sobreviven al 100 % entre
+  dos refrescos sin cambios en el registro; las preguntas de reglas del set no pierden recall respecto a la
+  línea base.
 
 ### Fase C. Extracción guiada
 
-- Pasar `ontology.yaml` a los subagentes de graphify, para que solo emitan clases y relaciones del esquema.
-  INFERRED queda para lo que el parser no ve.
-- IDs de nodo estables del tipo `Invariant:<ticket>`, para que las etiquetas de comunidad sobrevivan al
-  refresh.
-- **Aceptación:** baja el porcentaje de aristas genéricas, las etiquetas de comunidad sobreviven a un refresh
-  y el coste del refresh es igual o menor.
+- El prompt de extracción ya fija la convención de IDs y un vocabulario de relaciones. Esta fase no lo
+  reescribe: añade las relaciones de la ontología (`touches`, `guards`, `originates`, `verified_by`,
+  `must_not_break`) y le dice a los subagentes que no emitan lo que ya produce el parser (invariantes, tests y
+  sus enlaces). Se versiona como un prompt fechado nuevo, igual que hoy.
+- INFERRED queda para lo que el parser no ve: qué componente toca un ticket cuando no lo dice una tabla,
+  relaciones entre símbolos, lecciones.
+- Comparar los recuentos por clase con el grafo anterior antes de nombrar, como ya se hace, y añadir el
+  informe de rechazos de la Fase B a esa revisión.
+- **Aceptación:** baja el porcentaje de aristas genéricas, sube la supervivencia de IDs y de nombres de
+  comunidad respecto a la tabla «Naming cost» de `KG_PROCEDURES.md`, y la hora de nombrar se mantiene o
+  baja.
 
 ### Fase D. Consumo
 
@@ -270,8 +331,10 @@ Detalle en la sección 6. Entregable: `data/knowledge-graph/eval/questions.yaml`
 - Preguntas de exploración: una regla objetiva (por ejemplo, los writeups cuyo título menciona el área), no
   una lista elegida a mano.
 - **Hold-out completo:** excluir de todas las técnicas el writeup reservado y todo lo que derive de él:
-  viñetas de SHARP_EDGES que describan su arreglo, notas de memoria, nodos del grafo cuyo fichero fuente sea
-  alguno de esos. Comprobarlo buscando el ID y las palabras clave del arreglo en el corpus antes de medir.
+  viñetas de SHARP_EDGES que describan su arreglo, knowledge items de `data/changes/knowledge/` y notas de
+  memoria que lo cuenten, filas de TEST_MAP y del índice de casos que nombren su test, y nodos del grafo cuyo
+  fichero fuente sea alguno de esos. En lambda la memoria de los agentes ya no entra en el corpus, pero los
+  knowledge items sí. Comprobarlo buscando el ID y las palabras clave del arreglo en el corpus antes de medir.
 - La referencia es un mínimo, no un techo: anotar quién la escribió y qué no puede mostrar.
 
 ### Métricas
@@ -335,9 +398,12 @@ Si no, se revierte esa fase y se anota por qué.
 ### Checklist para empezar
 
 - [ ] Leer este documento y, en el repo de investigación, `docs/OAG_VS_KG.md` y `docs/GUIA_TECNICA.md`.
-- [ ] Leer la documentación del grafo en el repo lambda (la guía del grafo y los documentos de diseño de
-      `data/knowledge-graph/`; en el repo de investigación hay una copia sanitizada en `reference/`).
-- [ ] Confirmar con juan dónde están el corpus y el grafo vigentes y que se pueden leer.
+- [ ] Leer en lambda `data/knowledge-graph/KG_PROCEDURES.md`, `REFRESH_OWNERSHIP.md`, los dos prompts de
+      extracción vigentes y la skill `kg-refresh`. En el repo de investigación hay una copia sanitizada más
+      antigua en `reference/`.
+- [ ] Leer `data/changes/SHARP_EDGES.md`, `TEST_MAP.md` y el índice de casos: son la entrada del parser.
+- [ ] Confirmar con juan qué máquina publica el grafo y en qué estado está el pipeline nocturno. No lanzar
+      un refresh desde otra máquina: pedirlo con `kg_refresh.sh request`.
 - [ ] Escribir el set de preguntas del Paso 0 con juan y medir la línea base.
 - [ ] Proponer `ontology.yaml` y esperar el visto bueno antes de cambiar la extracción.
 - [ ] Una fase cada vez, con su medición y su criterio de keep o revert.
@@ -356,6 +422,8 @@ Plan y lecciones en `docs/HANDOVER_LAMBDA.md` del repo `oag_vs_kg_ml_engineer`.
   `data/knowledge-graph/eval/questions.yaml`.
 - Tras cambiar la ontología o la extracción: `kg_refresh.sh finalize` debe dar el informe de validación sin
   rechazos inesperados, y `run_eval.py` no debe perder recall en ninguna pregunta.
+- Los hechos de invariantes y tests los produce `kg_facts_build.py` sin LLM; el prompt de extracción no debe
+  volver a emitirlos.
 - Nada de `data/` va a git.
 ```
 
