@@ -18,6 +18,7 @@ import lib
 
 
 def main() -> None:
+    """Write ``data/holdout/<id>/`` (replacing it) plus ``_holdout_report.json`` and print a summary."""
     lib.utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     lib.add_question_arg(ap)

@@ -18,6 +18,7 @@ from collections import Counter
 
 import lib
 
+# Tokeniser for TF-IDF: lower-case words (code identifiers keep their underscores), minus stop words.
 WORD = re.compile(r"[a-z0-9_]+")
 STOP = set("""a an the and or of to in on for is are was were be been it its this that with as by at from
 not no but if then than so do does did into out up can could should would will may might has have had
@@ -25,10 +26,19 @@ which who whom what when where why how all any each other such only own same too
 
 
 def tokens(text: str) -> list[str]:
+    """Lower-case word tokens of ``text`` without stop words or one-letter tokens."""
     return [w for w in WORD.findall(text.lower()) if w not in STOP and len(w) > 1]
 
 
 def chunk(doc: lib.Doc, words: int, overlap: int) -> list[dict]:
+    """Split a document into windows of ``words`` words that overlap by ``overlap`` words.
+
+    The split ignores Markdown structure on purpose: this is the baseline that knows nothing about
+    tickets or sections.
+
+    Returns:
+        One dict per chunk: ``source`` (file name), ``pos`` (index of its first word) and ``text``.
+    """
     ws = doc.text.split()
     out, step = [], max(1, words - overlap)
     for i in range(0, max(1, len(ws)), step):
@@ -41,12 +51,18 @@ def chunk(doc: lib.Doc, words: int, overlap: int) -> list[dict]:
 
 
 def tfidf_rank(chunks: list[dict], query: str) -> list[tuple[float, dict]]:
+    """Rank chunks by TF-IDF cosine similarity with the query, best first.
+
+    Term frequency is log-scaled (1 + log tf) and IDF is smoothed (log((1 + n) / (1 + df)) + 1), as in
+    scikit-learn. Vectors are L2-normalised, so the dot product is the cosine.
+    """
     docs_tok = [Counter(tokens(c["text"])) for c in chunks]
     n = len(chunks)
     df = Counter(t for d in docs_tok for t in d)
     idf = {t: math.log((1 + n) / (1 + df[t])) + 1 for t in df}
 
     def vec(tf: Counter) -> dict:
+        """Sparse, unit-length TF-IDF vector of one bag of words."""
         v = {t: (1 + math.log(c)) * idf.get(t, 0.0) for t, c in tf.items()}
         norm = math.sqrt(sum(x * x for x in v.values())) or 1.0
         return {t: x / norm for t, x in v.items()}
@@ -60,11 +76,13 @@ def tfidf_rank(chunks: list[dict], query: str) -> list[tuple[float, dict]]:
 
 
 def embed_rank(chunks: list[dict], query: str, model: str | None = None) -> list[tuple[float, dict]]:
+    """Rank chunks by cosine similarity of multilingual embeddings (``--embed``), best first."""
     import semantic  # optional dependency group `embed`
     return [(s, chunks[i]) for s, i in semantic.rank(query, [c["text"] for c in chunks], model)]
 
 
 def main() -> None:
+    """Retrieve the top-k chunks for the question, print them, score them and save the run."""
     lib.utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--k", type=int, default=5)
@@ -80,11 +98,13 @@ def main() -> None:
 
     q = lib.load_question(a.qid)
     query = a.query or (lib.spanish_question(q) if a.lang == "es" else q["query"])
-    docs = lib.load_corpus(q)
+    docs = lib.load_corpus(q)                                   # corpus minus the hold-out
     chunks = [c for d in docs for c in chunk(d, a.chunk_words, a.overlap)]
+    # The whole technique: rank every chunk against the question and keep the k best.
     ranked = (embed_rank(chunks, query, a.model) if a.embed else tfidf_rank(chunks, query))[: a.k]
 
     context = "\n\n".join(f"[{i}] {c['source']} (word {c['pos']})\n{c['text']}" for i, (_, c) in enumerate(ranked, 1))
+    # What the technique "returns" is every ticket id that appears in the retrieved text.
     found = lib.ticket_ids(context, q)
 
     if not a.quiet:

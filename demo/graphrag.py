@@ -38,22 +38,33 @@ def load_graph(q: dict, full: bool) -> tuple[dict, list[dict]]:
     A node goes if its source file is excluded (the reserved files and the notes about the reserved
     ticket), if its id or label names the reserved ticket or one of those notes, or if every
     neighbour it had was removed (a fact that only made sense next to the reserved ticket).
+
+    Args:
+        q: the question, for its hold-out.
+        full: keep nodes from any source file; by default only nodes whose source file is in the
+            demo corpus, so GraphRAG sees the same documents as the other techniques.
+
+    Returns:
+        ``(nodes, links)``: nodes by id, and the graph.json links whose two ends survived.
     """
     with open(lib.GRAPH, encoding="utf-8") as f:
         g = json.load(f)
     excluded = lib.excluded_files(q)
     pat = lib.holdout_pattern(q)
     norm = lambda s: re.sub(r"[^a-z0-9]", "", s.lower())
+    # graphify names a note's node after its file (knowledge__<author>_<slug>), so the file stem finds it.
     stems = [norm(n.split("__", 1)[-1][:-3]) for n in excluded]
     corpus = {d.name for d in lib.load_corpus(q)}
 
     def held(n: dict) -> bool:
+        """True if the node comes from, or names, something in the hold-out."""
         src = n.get("source_file") or ""
         hay = f"{n.get('id', '')} {n.get('label', '')}"
         return src in excluded or bool(pat and pat.search(hay.replace("_", "-"))) \
             or any(st and st in norm(hay) for st in stems)
 
     gone = {n["id"] for n in g["nodes"] if held(n)}
+    # Second pass: nodes whose every neighbour is gone, e.g. a symbol only the reserved fix introduced.
     nbrs: dict[str, set] = {}
     for e in g["links"]:
         nbrs.setdefault(e["source"], set()).add(e["target"])
@@ -67,7 +78,11 @@ def load_graph(q: dict, full: bool) -> tuple[dict, list[dict]]:
 
 
 def community_names() -> dict[str, str]:
-    """node id -> hand-named community (community_labels.json from /kg-refresh), if present."""
+    """Map node id -> hand-written community name, from /kg-refresh's ``community_labels.json``.
+
+    Returns an empty dict when the file is missing. The names give the "themes" of a neighbourhood,
+    which is what makes GraphRAG useful for exploration questions.
+    """
     path = os.path.join(os.path.dirname(lib.GRAPH), "community_labels.json")
     if not os.path.exists(path):
         return {}
@@ -77,7 +92,12 @@ def community_names() -> dict[str, str]:
 
 
 def resolve(nodes: dict, links: list[dict], topic: str) -> str | None:
-    """Exact id/label first, then substring; ties go to the best-connected node."""
+    """Pick the seed node for a topic, as /kg does: by name, not by meaning.
+
+    Exact id or label match first, then substring match ignoring punctuation and case. Ties go to the
+    node with most edges. Returns ``None`` when no node is named like the topic, which is why a topic
+    in Spanish finds nothing in an English graph.
+    """
     t = topic.lower().strip()
     deg = Counter([e["source"] for e in links] + [e["target"] for e in links])
     exact = [i for i, n in nodes.items() if t in (i.lower(), n.get("label", "").lower())]
@@ -90,7 +110,12 @@ def resolve(nodes: dict, links: list[dict], topic: str) -> str | None:
 
 def resolve_semantic(nodes: dict, topic: str, model: str | None = None, show: int = 5
                      ) -> tuple[str | None, list[tuple[float, str]]]:
-    """Seed = the node whose label is most similar in meaning to the topic, plus the runners-up."""
+    """Pick the seed by meaning (``--semantic``): the node whose label is closest to the topic.
+
+    Returns:
+        ``(seed, top)``: the seed id and the ``show`` best ``(similarity, id)`` pairs, printed so the
+        audience can see why that node was chosen.
+    """
     import semantic  # optional dependency group `embed`
     ids = sorted(nodes)
     ranked = semantic.rank(topic, [nodes[i].get("label") or i for i in ids], model)
@@ -99,6 +124,7 @@ def resolve_semantic(nodes: dict, topic: str, model: str | None = None, show: in
 
 
 def main() -> None:
+    """Resolve the seed, walk its neighbourhood, print the reading list, score and save the run."""
     lib.utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--topic", help="override the topic from data/questions.yaml")
@@ -140,11 +166,13 @@ def main() -> None:
                               "sources": [], "themes": []})
         return
 
+    # Undirected adjacency: /kg explain shows edges in both directions.
     adj: dict[str, list[tuple[str, dict]]] = {}
     for e in links:
         adj.setdefault(e["source"], []).append((e["target"], e))
         adj.setdefault(e["target"], []).append((e["source"], e))
 
+    # Breadth-first walk up to --hops. Each row is (hop, relation, confidence, neighbour node).
     frontier, seen, rows = [seed], {seed}, []
     for hop in range(1, a.hops + 1):
         nxt = []
@@ -157,12 +185,13 @@ def main() -> None:
                 rows.append((hop, e["relation"], e.get("confidence", ""), nodes[v]))
         frontier = nxt
 
+    # The context /kg would give the model: one line per neighbour with its relation and source file.
     lines = [f"{nodes[seed]['label']}  <- {nodes[seed].get('source_file')}"]
     for hop, rel, conf, n in rows:
         lines.append(f"  {'  ' * (hop - 1)}--{rel} [{conf}]--> {n.get('label', '')[:90]}  <- {n.get('source_file')}")
     context = "\n".join(lines)
     reading = sorted({n.get("source_file") for *_, n in rows if n.get("source_file")})
-    found = lib.ticket_ids(context, q)
+    found = lib.ticket_ids(context, q)               # returned = ticket ids in the neighbourhood
     names = community_names()
     themes = Counter(names[n["id"]] for *_, n in rows if n["id"] in names).most_common(8)
 

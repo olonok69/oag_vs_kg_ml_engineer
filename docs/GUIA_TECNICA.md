@@ -66,7 +66,7 @@ source .venv/bin/activate                # activar antes de lanzar claude: las s
 ```
 
 **Datos.** Todo lo real vive en `data/`, que está en [`.gitignore`](../.gitignore). Las rutas se definen en
-[`lib.py`, líneas 16-23](../demo/lib.py#L16).
+[`lib.py`, líneas 23-30](../demo/lib.py#L23).
 
 | Ruta | Origen | Lo usa |
 |---|---|---|
@@ -100,19 +100,19 @@ source .venv/bin/activate                # activar antes de lanzar claude: las s
 
 Funciones implicadas:
 
-- [`add_question_arg`](../demo/lib.py#L37) añade `--q` a cada script (también se puede usar la variable de
+- [`add_question_arg`](../demo/lib.py#L45) añade `--q` a cada script (también se puede usar la variable de
   entorno `DEMO_Q`).
-- [`list_questions`](../demo/lib.py#L61) y [`load_question`](../demo/lib.py#L80) leen el fichero. Aceptan el
+- [`list_questions`](../demo/lib.py#L76) y [`load_question`](../demo/lib.py#L103) leen el fichero. Aceptan el
   formato antiguo de una sola pregunta.
-- [`add_lang_arg`](../demo/lib.py#L42) añade `--lang en|es`; [`spanish_question`](../demo/lib.py#L47) y
-  [`spanish_topic`](../demo/lib.py#L52) devuelven `pregunta_llana` y `tema`, y
-  [`run_key`](../demo/lib.py#L56) nombra el resultado según la variante (`naive_rag_es_sem`, `oag_v3_es`...).
-- [`holdout_view`](../demo/lib.py#L184) es el corpus que ven todas las técnicas: quita `holdout_files`, las
-  notas cuyo título o `tickets:` nombran el ticket reservado ([`derived_file`](../demo/lib.py#L111)) y, en el
-  resto, cada sección, fila de tabla, viñeta o párrafo que lo menciona ([`redact`](../demo/lib.py#L123)).
-  Devuelve también un informe de lo quitado. [`load_corpus`](../demo/lib.py#L214) la usa, y
+- [`add_lang_arg`](../demo/lib.py#L51) añade `--lang en|es`; [`spanish_question`](../demo/lib.py#L57) y
+  [`spanish_topic`](../demo/lib.py#L62) devuelven `pregunta_llana` y `tema`, y
+  [`run_key`](../demo/lib.py#L67) nombra el resultado según la variante (`naive_rag_es_sem`, `oag_v3_es`...).
+- [`holdout_view`](../demo/lib.py#L219) es el corpus que ven todas las técnicas: quita `holdout_files`, las
+  notas cuyo título o `tickets:` nombran el ticket reservado ([`derived_file`](../demo/lib.py#L142)) y, en el
+  resto, cada sección, fila de tabla, viñeta o párrafo que lo menciona ([`redact`](../demo/lib.py#L158)).
+  Devuelve también un informe de lo quitado. [`load_corpus`](../demo/lib.py#L262) la usa, y
   `python demo/holdout.py --q <id>` la escribe en `data/holdout/<id>/` para Agentic RAG.
-- [`ticket_ids`](../demo/lib.py#L218) extrae IDs con [`TICKET_RE`](../demo/lib.py#L25) y quita los del
+- [`ticket_ids`](../demo/lib.py#L267) extrae IDs con [`TICKET_RE`](../demo/lib.py#L33) y quita los del
   `holdout`. Así ninguna técnica puede «acertar» citando la hoja de respuestas.
 
 Las dos preguntas actuales y por qué se eligieron están en la
@@ -127,15 +127,15 @@ Las dos preguntas actuales y por qué se eligieron están en la
 python demo/naive_rag.py [--q <id>] [--k 5] [--chunk-words 180] [--overlap 30] [--embed] [--lang es]
 ```
 
-1. Carga el corpus sin el hold-out ([`main`](../demo/naive_rag.py#L67)).
+1. Carga el corpus sin el hold-out ([`main`](../demo/naive_rag.py#L84)).
 2. Parte cada documento en trozos de 180 palabras con 30 de solape
-   ([`chunk`](../demo/naive_rag.py#L31)).
+   ([`chunk`](../demo/naive_rag.py#L33)).
 3. Ordena los trozos por similitud con `query` (o con `pregunta_llana` si `--lang es`,
-   [línea 82](../demo/naive_rag.py#L82)): TF-IDF en Python puro, determinista y sin red
-   ([`tfidf_rank`](../demo/naive_rag.py#L43)), o embeddings multilingües con `--embed`
-   ([`embed_rank`](../demo/naive_rag.py#L62), apartado 8).
-4. Se queda con los `k` mejores ([línea 85](../demo/naive_rag.py#L85)) y los imprime con su fichero y posición.
-5. Devuelto = los IDs de ticket que aparecen en esos trozos ([línea 88](../demo/naive_rag.py#L88)).
+   [línea 100](../demo/naive_rag.py#L100)): TF-IDF en Python puro, determinista y sin red
+   ([`tfidf_rank`](../demo/naive_rag.py#L53)), o embeddings multilingües con `--embed`
+   ([`embed_rank`](../demo/naive_rag.py#L78), apartado 8).
+4. Se queda con los `k` mejores ([línea 104](../demo/naive_rag.py#L104)) y los imprime con su fichero y posición.
+5. Devuelto = los IDs de ticket que aparecen en esos trozos ([línea 108](../demo/naive_rag.py#L108)).
 
 Salida: `data/runs/<id>/naive_rag.json` (o `naive_rag_sem`, `naive_rag_es`, `naive_rag_es_sem`). Lo que enseña: la unidad de recuperación es un trozo de texto, sin
 noción de ticket, componente ni relación.
@@ -171,15 +171,15 @@ en Python para aplicar el hold-out y limitarla al corpus de la demo.
    cuyo id o etiqueta nombre el ticket reservado o una nota excluida, y los que se quedan sin ningún vecino
    al quitar los anteriores. `--full` usa el grafo entero.
 2. Resuelve el tema a un nodo semilla: coincidencia exacta de id o etiqueta y, si no, por subcadena; en caso
-   de empate, el nodo con más aristas ([`resolve`](../demo/graphrag.py#L79)). Con `--semantic`, el nodo cuya
-   etiqueta más se parece al tema ([`resolve_semantic`](../demo/graphrag.py#L91), apartado 8). Si no hay
-   semilla, guarda un resultado vacío en lugar de fallar ([línea 133](../demo/graphrag.py#L133)).
-3. Recorre los vecinos por anchura hasta `--hops` saltos ([línea 148](../demo/graphrag.py#L148)), guardando
+   de empate, el nodo con más aristas ([`resolve`](../demo/graphrag.py#L94)). Con `--semantic`, el nodo cuya
+   etiqueta más se parece al tema ([`resolve_semantic`](../demo/graphrag.py#L111), apartado 8). Si no hay
+   semilla, guarda un resultado vacío en lugar de fallar ([línea 159](../demo/graphrag.py#L159)).
+3. Recorre los vecinos por anchura hasta `--hops` saltos ([línea 176](../demo/graphrag.py#L176)), guardando
    relación y confianza de cada arista.
 4. Construye el contexto (semilla y vecinos con su fichero de origen) y la lista de lectura
-   ([líneas 163-164](../demo/graphrag.py#L163)).
+   ([líneas 192-193](../demo/graphrag.py#L192)).
 5. Agrupa los vecinos en temas con los nombres de comunidad de `community_labels.json`
-   ([`community_names`](../demo/graphrag.py#L69), [línea 167](../demo/graphrag.py#L167)). Es lo que responde
+   ([`community_names`](../demo/graphrag.py#L80), [línea 196](../demo/graphrag.py#L196)). Es lo que responde
    «en qué temas se agrupan» en la pregunta de exploración.
 6. Imprime el reparto de relaciones y cuántas son genéricas (`references`, `relates_to`...).
 7. Devuelto = los IDs de ticket del contexto.
@@ -215,21 +215,21 @@ reproduce la primera ontología. La explicación divulgativa de v1 y v2 está en
 
 ### 7.2 `build`: del corpus a hechos validados
 
-[`build`](../demo/oag.py#L98) recorre el corpus y propone aristas candidatas; después las valida.
+[`build`](../demo/oag.py#L121) recorre el corpus y propone aristas candidatas; después las valida.
 
 1. **Componentes** de la ontología como nodos, y las aristas `calls` declaradas en ella
-   ([línea 116](../demo/oag.py#L116)).
+   ([línea 161](../demo/oag.py#L161)).
 2. **Writeups de ticket** (`sst-NNNN__*.md`): el ticket es un nodo; `touches` si el texto nombra un componente
-   al menos 3 veces ([`components_in`](../demo/oag.py#L52)); cada otro ticket citado en una línea genera
+   al menos 3 veces ([`components_in`](../demo/oag.py#L55)); cada otro ticket citado en una línea genera
    `must_not_break` si la línea contiene una frase de aviso, o `mentions` si no
-   ([líneas 122-133](../demo/oag.py#L122)).
+   ([líneas 167-178](../demo/oag.py#L167)).
 3. **`SHARP_EDGES`**: cada fila del índice de invariantes y cada viñeta `- **TKT-NNN ...**` es un `Invariant`,
    con `originates` desde su ticket de origen y `guards` hacia los componentes que nombra
-   ([`parse_invariants`](../demo/oag.py#L83), [línea 134](../demo/oag.py#L134)).
+   ([`parse_invariants`](../demo/oag.py#L98), [línea 179](../demo/oag.py#L179)).
 4. **Tests**: cada `tests/test_tkt_NNN_*.py` citado da `verified_by` desde su ticket
-   ([línea 144](../demo/oag.py#L144)).
+   ([línea 189](../demo/oag.py#L189)).
 5. **Validación** al estilo de SHACL, el estándar del W3C para validar grafos contra un esquema (definición en
-   la [guía de la demo](GUIA_DEMO.md#2-conceptos-principales)) ([línea 154](../demo/oag.py#L154)): se rechaza toda arista cuya relación no
+   la [guía de la demo](GUIA_DEMO.md#2-conceptos-principales)) ([línea 199](../demo/oag.py#L199)): se rechaza toda arista cuya relación no
    esté en la ontología (las `mentions`), o cuyo dominio o rango no sea el declarado, o que no tenga fuente. Se
    avisa de los nodos cuyo id no cumple el patrón o a los que les falta un campo obligatorio.
 6. Escribe `data/oag/<id>/facts.json` con nodos, aristas aceptadas y un informe (aceptadas y rechazadas por
@@ -237,41 +237,41 @@ reproduce la primera ontología. La explicación divulgativa de v1 y v2 está en
 
 ### 7.3 `query`: de la pregunta a fact blocks
 
-[`query`](../demo/oag.py#L193):
+[`query`](../demo/oag.py#L239):
 
 1. Mapea la pregunta (`topic` + `query`, o `pregunta_llana` con `--lang es`) a componentes de la ontología
-   por sus sinónimos ([`components_in`](../demo/oag.py#L52); desde la v3 también los de `alt_labels_es`). Con
-   `--semantic` los elige por similitud ([`components_semantic`](../demo/oag.py#L63), apartado 8). Si no
+   por sus sinónimos ([`components_in`](../demo/oag.py#L55); desde la v3 también los de `alt_labels_es`). Con
+   `--semantic` los elige por similitud ([`components_semantic`](../demo/oag.py#L78), apartado 8). Si no
    encuentra ninguno, no hay hechos que dar: es lo que pasa en la pregunta de exploración.
 2. Relevantes = invariantes que vigilan esos componentes (`guards`).
 3. **v2, `calls`**: sigue la dependencia hasta el componente llamado y añade solo los invariantes que nombran el
-   símbolo llamado (`get_titles`), anotando `reached_via` ([líneas 207-215](../demo/oag.py#L207)).
+   símbolo llamado (`get_titles`), anotando `reached_via` ([líneas 280-288](../demo/oag.py#L280)).
 4. Tickets que los writeups del componente piden no romper (`must_not_break`). **v2, restricción:** solo cuentan
-   si tocan el componente u originan un invariante que lo vigila ([líneas 217-223](../demo/oag.py#L217)).
+   si tocan el componente u originan un invariante que lo vigila ([líneas 290-297](../demo/oag.py#L290)).
 5. **Set cover voraz**, como en OG-RAG: cada ticket es un bloque que cubre a sí mismo y a sus invariantes; se
-   eligen bloques hasta cubrir todo lo relevante ([líneas 226-240](../demo/oag.py#L226)).
+   eligen bloques hasta cubrir todo lo relevante ([líneas 300-315](../demo/oag.py#L300)).
 6. Cada fact block lleva el ticket, sus invariantes (texto, origen, componentes, `reached_via`), quién lo nombra
-   como «no romper», sus tests y la fuente ([línea 242](../demo/oag.py#L242)).
+   como «no romper», sus tests y la fuente ([línea 318](../demo/oag.py#L318)).
 7. Devuelto = sujeto de cada bloque + orígenes de sus invariantes. Los tickets que solo figuran como procedencia
-   (`named_as_must_not_break_by`) no cuentan ([línea 314](../demo/oag.py#L314)).
+   (`named_as_must_not_break_by`) no cuentan ([línea 391](../demo/oag.py#L391)).
 
 Salida: `data/runs/<id>/oag.json` (v2), `oag_v1.json` u `oag_v3.json`, con los sufijos `_es` y `_sem` según la
 variante.
 
 ### 7.4 El híbrido: GraphRAG propone, la ontología filtra
 
-[`demo/hybrid.py`](../demo/hybrid.py) ([`main`](../demo/hybrid.py#L55)) no recupera nada por su cuenta: combina
+[`demo/hybrid.py`](../demo/hybrid.py) ([`main`](../demo/hybrid.py#L64)) no recupera nada por su cuenta: combina
 las dos técnicas anteriores, sin LLM.
 
 1. Lanza `graphrag.py` a 2 saltos y `oag.py query` con los mismos flags (`--q`, `--lang`, `--semantic`) y lee sus
-   resultados de `data/runs/<id>/` ([líneas 72-73](../demo/hybrid.py#L72)). Así las cifras son exactamente las
+   resultados de `data/runs/<id>/` ([líneas 83-84](../demo/hybrid.py#L83)). Así las cifras son exactamente las
    de cada técnica.
-2. Si la pregunta se asocia a algún componente de la ontología ([línea 85](../demo/hybrid.py#L85)), filtra los
+2. Si la pregunta se asocia a algún componente de la ontología ([línea 97](../demo/hybrid.py#L97)), filtra los
    candidatos del grafo en dos pasos: primero los que la ontología conecta con el componente, por clases y
-   relaciones ([`linked_to`](../demo/hybrid.py#L43)), y después los que cumplen sus reglas, que son los que
-   devuelve la consulta de OAG v2 ([líneas 87-89](../demo/hybrid.py#L87)). Informa de los tickets que OAG
+   relaciones ([`linked_to`](../demo/hybrid.py#L45)), y después los que cumplen sus reglas, que son los que
+   devuelve la consulta de OAG v2 ([líneas 99-101](../demo/hybrid.py#L99)). Informa de los tickets que OAG
    encuentra y el grafo no propuso.
-3. Si no se asocia a ninguno ([línea 104](../demo/hybrid.py#L104)), la respuesta es la lista de GraphRAG sin
+3. Si no se asocia a ninguno ([línea 116](../demo/hybrid.py#L116)), la respuesta es la lista de GraphRAG sin
    tocar, y las comunidades del vecindario se imprimen como propuesta para ampliar la ontología. La propuesta
    no se aplica: la revisa una persona.
 
@@ -293,10 +293,10 @@ interpretación en la [guía de la demo](GUIA_DEMO.md#la-misma-pregunta-en-caste
 
 - Modelo por defecto `paraphrase-multilingual-MiniLM-L12-v2` ([línea 27](../demo/semantic.py#L27)): más de 50
   idiomas, vectores de 384 dimensiones, unos 470 MB, en CPU. Se cambia con `--model` o `DEMO_EMBED_MODEL`.
-- [`encode`](../demo/semantic.py#L47) devuelve vectores normalizados y los guarda en `data/cache/embeddings/`
+- [`encode`](../demo/semantic.py#L49) devuelve vectores normalizados y los guarda en `data/cache/embeddings/`
   con una clave que depende del texto y del modelo, así que el corpus y las etiquetas del grafo solo se
   calculan una vez.
-- [`similarities`](../demo/semantic.py#L63) y [`rank`](../demo/semantic.py#L69) dan el coseno de la pregunta
+- [`similarities`](../demo/semantic.py#L74) y [`rank`](../demo/semantic.py#L80) dan el coseno de la pregunta
   con cada texto.
 - Se importa solo cuando se pide (`--embed`, `--semantic`): sin el grupo `embed` el resto de la demo funciona
   igual.
@@ -305,10 +305,10 @@ interpretación en la [guía de la demo](GUIA_DEMO.md#la-misma-pregunta-en-caste
 
 | Técnica | Opción | Qué compara | Código |
 |---|---|---|---|
-| Naive RAG | `--embed` | La pregunta con cada trozo de 180 palabras | [`embed_rank`](../demo/naive_rag.py#L62) |
-| GraphRAG | `--semantic` | El tema con la etiqueta de cada nodo (3.977); semilla = el más parecido, e imprime los cinco primeros | [`resolve_semantic`](../demo/graphrag.py#L91) |
-| OAG | `--semantic` | Cada cláusula de la pregunta con la descripción de cada componente (`label` y `alt_labels` en inglés); entran los que superan `--min-sim` | [`components_semantic`](../demo/oag.py#L63), [línea 307](../demo/oag.py#L307) |
-| OAG | `--schema 3` | Sin modelo: los sinónimos en castellano de la ontología, por coincidencia de texto | [`components_in`](../demo/oag.py#L52), [`labels`](../demo/oag/ontology.yaml#L43) |
+| Naive RAG | `--embed` | La pregunta con cada trozo de 180 palabras | [`embed_rank`](../demo/naive_rag.py#L78) |
+| GraphRAG | `--semantic` | El tema con la etiqueta de cada nodo (3.977); semilla = el más parecido, e imprime los cinco primeros | [`resolve_semantic`](../demo/graphrag.py#L111) |
+| OAG | `--semantic` | Cada cláusula de la pregunta con la descripción de cada componente (`label` y `alt_labels` en inglés); entran los que superan `--min-sim` | [`components_semantic`](../demo/oag.py#L78), [línea 384](../demo/oag.py#L384) |
+| OAG | `--schema 3` | Sin modelo: los sinónimos en castellano de la ontología, por coincidencia de texto | [`components_in`](../demo/oag.py#L55), [`labels`](../demo/oag/ontology.yaml#L43) |
 
 En OAG la pregunta se parte en cláusulas porque una pregunta larga diluye cualquier concepto. El umbral por
 defecto (0,42) se calibró con las dos preguntas de la demo; con más preguntas hay que fijarlo con preguntas
@@ -320,23 +320,23 @@ download.pytorch.org (y download-r2.pytorch.org). Después se puede trabajar sin
 
 ## 9. Métricas y comparativa
 
-**Puntuación** ([`score`](../demo/lib.py#L229)): recall = esperados encontrados / esperados; precisión =
-esperados encontrados / devueltos. F1 se calcula en [`compare.py`](../demo/compare.py#L70). Tokens de contexto =
-caracteres / 4 ([`approx_tokens`](../demo/lib.py#L241)).
+**Puntuación** ([`score`](../demo/lib.py#L281)): recall = esperados encontrados / esperados; precisión =
+esperados encontrados / devueltos. F1 se calcula en [`compare.py`](../demo/compare.py#L78). Tokens de contexto =
+caracteres / 4 ([`approx_tokens`](../demo/lib.py#L301)).
 
 **Qué cuenta como devuelto** depende de lo que cada técnica afirma: los IDs de los trozos (Naive RAG), los del
 contexto del grafo (GraphRAG), los sujetos y orígenes de los fact blocks (OAG) y los que Claude da como respuesta
 (Agentic RAG). El criterio y sus límites están en la [guía de la demo, sección 6](GUIA_DEMO.md#6-cómo-evaluamos).
 
-**`compare.py`** ([`main`](../demo/compare.py#L96)), para cada pregunta o solo `--q`:
+**`compare.py`** ([`main`](../demo/compare.py#L106)), para cada pregunta o solo `--q`:
 
-1. Relanza Naive RAG, GraphRAG a 1 y 2 saltos, OAG v1 y v2 y el híbrido ([líneas 107-115](../demo/compare.py#L107)); si no hay
+1. Relanza Naive RAG, GraphRAG a 1 y 2 saltos, OAG v1 y v2 y el híbrido ([líneas 118-126](../demo/compare.py#L118)); si no hay
    hechos, ejecuta antes `oag.py build`. Después, las variantes en castellano llano sin modelo y, si está
-   instalado el grupo `embed` ([`has_embed`](../demo/compare.py#L56)), las semánticas
-   ([líneas 116-125](../demo/compare.py#L116)).
+   instalado el grupo `embed` ([`has_embed`](../demo/compare.py#L58)), las semánticas
+   ([líneas 127-136](../demo/compare.py#L127)).
 2. Lee `data/runs/<id>/*.json`, incluidos Agentic RAG y las respuestas registradas de Claude
-   ([`table`](../demo/compare.py#L75)).
-3. Imprime dos tablas por pregunta, en inglés y en castellano llano ([`order_es`](../demo/compare.py#L41)), y
+   ([`table`](../demo/compare.py#L84)).
+3. Imprime dos tablas por pregunta, en inglés y en castellano llano ([`order_es`](../demo/compare.py#L42)), y
    las guarda en `data/runs/compare.md`.
 
 `record_answer.py` añade a cada resultado la respuesta final de Claude (`answer`, `answer_score`), que aparece en
@@ -372,11 +372,11 @@ si llama a otro), reconstruir los hechos y comprobar en el informe de `build` qu
 haría que OAG respondiera la pregunta de exploración.
 
 **Añadir un idioma.** Escribir `pregunta_llana` y `tema` en ese idioma (o un campo nuevo y su opción en
-[`add_lang_arg`](../demo/lib.py#L42)) y, para OAG sin modelo, sus sinónimos en la ontología. El modelo por
+[`add_lang_arg`](../demo/lib.py#L51)) y, para OAG sin modelo, sus sinónimos en la ontología. El modelo por
 defecto ya es multilingüe.
 
 **Cambiar la ontología sin romper la comparación.** Marcar lo nuevo con `since: <versión>` y ampliar `choices`
-de `--schema` en [`oag.py`](../demo/oag.py#L269). Así la demo puede enseñar el antes y el después.
+de `--schema` en [`oag.py`](../demo/oag.py#L346). Así la demo puede enseñar el antes y el después.
 
 **Llevarlo a `/kg`.** El mapa de qué pieza va a cada fase (Paso 0 y Fases A a D) está en la
 [guía de la demo, sección 8](GUIA_DEMO.md#8-lecciones-para-los-skills-de-la-metodología) y en
@@ -392,6 +392,6 @@ de `--schema` en [`oag.py`](../demo/oag.py#L269). Así la demo puede enseñar el
 | `The semantic layer needs sentence-transformers` | Falta el grupo `embed` | `uv sync --group embed` |
 | Error al descargar el modelo (403, `Cannot reach`) | La red no permite huggingface.co o `*.hf.co` | Permitir esos dominios, o copiar `~/.cache/huggingface` de otra máquina y usar `HF_HUB_OFFLINE=1` |
 | Los resultados no cambian tras actualizar el corpus | Hechos antiguos | Volver a ejecutar `build` para cada pregunta |
-| Caracteres raros en Windows | Consola cp1252 | Los scripts fuerzan UTF-8 ([`utf8_stdout`](../demo/lib.py#L28)); usar Windows Terminal o WSL |
+| Caracteres raros en Windows | Consola cp1252 | Los scripts fuerzan UTF-8 ([`utf8_stdout`](../demo/lib.py#L36)); usar Windows Terminal o WSL |
 | `python: command not found` en WSL | venv sin activar | `source .venv/bin/activate` antes de lanzar `claude` |
 | Faltan temas en GraphRAG | No está `community_labels.json` | Copiarlo de `/kg-refresh` a `data/kg/output/` |

@@ -26,6 +26,7 @@ import sys
 
 import lib
 
+# Rows of the main table: (run key in data/runs/<id>/, technique, what it returns).
 ORDER = [
     ("naive_rag", "Naive RAG", "trozos de texto por similitud"),
     ("agentic_rag", "Agentic RAG", "Claude busca y lee en bucle"),
@@ -39,6 +40,7 @@ ORDER = [
 
 
 def order_es(q: dict) -> list[tuple[str, str, str]]:
+    """Rows of the plain-Spanish table. GraphRAG uses the question's ``hops``, so its keys depend on it."""
     g = "graphrag" if q.get("hops", 1) == 1 else f"graphrag_{q['hops']}h"
     h = f"{q.get('hops', 1)} salto{'s' if q.get('hops', 1) > 1 else ''}"
     return [
@@ -54,6 +56,7 @@ def order_es(q: dict) -> list[tuple[str, str, str]]:
 
 
 def has_embed() -> bool:
+    """True if the ``embed`` group is installed, so the semantic-layer variants can run."""
     try:
         import sentence_transformers  # noqa: F401
         return True
@@ -62,17 +65,24 @@ def has_embed() -> bool:
 
 
 def run(qid: str, script: list[str], check: bool = True) -> bool:
+    """Run a technique script for one question with ``--quiet``; it saves its own result.
+
+    ``check=False`` is used for the semantic variants, which may fail without network on first use.
+    Returns True if the script exited cleanly.
+    """
     r = subprocess.run([sys.executable, os.path.join(lib.ROOT, "demo", script[0]), *script[1:], "--q", qid, "--quiet"],
                        check=check, stdout=subprocess.DEVNULL)
     return r.returncode == 0
 
 
 def f1(s: dict) -> float:
+    """Harmonic mean of recall and precision. Used to sort mentally, not to decide on its own."""
     r, p = s.get("recall", 0), s.get("precision", 0)
     return 2 * r * p / (r + p) if r + p else 0.0
 
 
 def table(q: dict, order: list[tuple[str, str, str]]) -> str:
+    """Markdown table for one question from the saved runs; a missing run shows as not executed."""
     head = ("| Técnica | Qué devuelve | Recall | Precisión | F1 | IDs | Tokens de contexto "
             "| LLM al recuperar | Recall respuesta Claude |")
     rows = [head, "|" + "---|" * 9]
@@ -94,6 +104,7 @@ def table(q: dict, order: list[tuple[str, str, str]]) -> str:
 
 
 def main() -> None:
+    """Re-run every deterministic variant (unless ``--no-run``), print the tables and write compare.md."""
     lib.utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--no-run", action="store_true", help="only read existing results")

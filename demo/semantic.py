@@ -27,14 +27,16 @@ import lib
 DEFAULT_MODEL = "paraphrase-multilingual-MiniLM-L12-v2"
 CACHE = os.path.join(lib.DATA, "cache", "embeddings")
 
-_models: dict = {}
+_models: dict = {}  # loaded SentenceTransformer models, by name (loading takes seconds)
 
 
 def model_name(override: str | None = None) -> str:
+    """Model to use: ``--model``, else $DEMO_EMBED_MODEL, else ``DEFAULT_MODEL``."""
     return override or os.environ.get("DEMO_EMBED_MODEL") or DEFAULT_MODEL
 
 
 def _model(name: str):
+    """Load the model once per process, on CPU. Exits with the install hint if the group is missing."""
     if name not in _models:
         try:
             from sentence_transformers import SentenceTransformer
@@ -45,13 +47,22 @@ def _model(name: str):
 
 
 def encode(texts: list[str], name: str | None = None, cache: bool = True):
-    """Unit-normalised embeddings (numpy array, one row per text). Cached on disk by content."""
+    """Unit-normalised embeddings, one row per text.
+
+    The cache key is a hash of all the texts plus the model name, so the corpus is embedded once and
+    any change to the corpus or the model recomputes it. Queries are encoded with ``cache=False``.
+
+    Returns:
+        A numpy array of shape (len(texts), dimensions). Rows have length 1, so a dot product is
+        the cosine similarity.
+    """
     import numpy as np
     name = model_name(name)
     key = hashlib.sha1(("\x00".join(texts) + "\x01" + name).encode("utf-8")).hexdigest()[:16]
     path = os.path.join(CACHE, name.replace("/", "_"), f"{key}.npy")
     if cache and os.path.exists(path):
         return np.load(path)
+    # normalize_embeddings=True makes every row unit-length; similarities() relies on it.
     emb = _model(name).encode(texts, batch_size=64, normalize_embeddings=True,
                               convert_to_numpy=True, show_progress_bar=len(texts) > 500)
     if cache:

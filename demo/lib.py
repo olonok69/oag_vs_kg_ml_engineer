@@ -1,9 +1,15 @@
 """Shared helpers for the Naive RAG -> OAG demo.
 
-Paths, corpus loading with hold-out, ticket-id extraction and scoring.
-All techniques read the same corpus (data/corpus) minus the hold-out: the reserved
-files, the notes written about the reserved ticket, and every passage that mentions it
-(see holdout_view). Their results are therefore comparable and free of the answer sheet.
+Every technique script imports this module, so they all share:
+
+- paths to the data in ``data/`` (git-ignored) and to the ontology in ``demo/oag/``;
+- the questions in ``data/questions.yaml`` (``list_questions``, ``load_question``);
+- the corpus as each technique sees it (``holdout_view``, ``load_corpus``): the reserved files,
+  the notes written about the reserved ticket and every passage that mentions it are removed,
+  so no technique can score by quoting the answer sheet;
+- ticket-id extraction (``ticket_ids``) and scoring against the expected answer (``score``);
+- where results go (``save_run`` writes ``data/runs/<question id>/<technique>.json``, which
+  ``compare.py`` reads back).
 """
 from __future__ import annotations
 
@@ -13,6 +19,7 @@ import re
 import sys
 from dataclasses import dataclass
 
+# Repository layout. Everything under DATA comes from the real project and stays out of git.
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(ROOT, "data")
 CORPUS = os.path.join(DATA, "corpus")
@@ -22,6 +29,7 @@ RUNS = os.path.join(DATA, "runs")
 OAG_DIR = os.path.join(DATA, "oag")
 ONTOLOGY = os.path.join(ROOT, "demo", "oag", "ontology.yaml")
 
+# A ticket id: SST-1234 in the real corpus, TKT-123 in the sanitised examples.
 TICKET_RE = re.compile(r"(?<![A-Za-z0-9])(?:SST|TKT)-\d{3,5}(?!\d)", re.IGNORECASE)
 
 
@@ -35,11 +43,13 @@ def utf8_stdout() -> None:
 
 
 def add_question_arg(ap) -> None:
+    """Add ``--q <id>`` to an argparse parser. Defaults to $DEMO_Q, then to the file's ``default``."""
     ap.add_argument("--q", dest="qid", default=os.environ.get("DEMO_Q"),
                     help="question id in data/questions.yaml (default: the file's `default`)")
 
 
 def add_lang_arg(ap) -> None:
+    """Add ``--lang en|es``. ``es`` asks the plain-Spanish version of the question (no code names)."""
     ap.add_argument("--lang", choices=["en", "es"], default="en",
                     help="es: ask in Spanish without code names (pregunta_llana, tema), as a user would")
 
@@ -50,16 +60,29 @@ def spanish_question(q: dict) -> str:
 
 
 def spanish_topic(q: dict) -> str:
+    """The topic in plain Spanish (``tema``), used as the graph seed with ``--lang es``."""
     return (q.get("tema") or spanish_question(q)).strip()
 
 
 def run_key(base: str, lang: str = "en", semantic: bool = False) -> str:
-    """naive_rag, naive_rag_sem, naive_rag_es, naive_rag_es_sem, ..."""
+    """Name of the result file for a technique variant.
+
+    Examples: ``naive_rag``, ``naive_rag_sem``, ``naive_rag_es``, ``naive_rag_es_sem``. ``compare.py``
+    looks the variants up by these names.
+    """
     return base + ("_es" if lang == "es" else "") + ("_sem" if semantic else "")
 
 
 def list_questions(path: str = QUESTIONS) -> list[dict]:
-    """All questions. data/questions.yaml holds either one question or `questions: [...]`."""
+    """Read every question from ``data/questions.yaml``.
+
+    The file holds either one question or ``questions: [...]`` with an optional ``default`` id.
+    Ticket ids are upper-cased and missing lists become empty, so callers can use ``q["holdout"]``,
+    ``q["holdout_files"]`` and ``q["esperado"]`` without checks.
+
+    Returns:
+        A list of question dicts with the fields of the file plus ``_default``.
+    """
     try:
         import yaml
     except ImportError:
@@ -78,6 +101,7 @@ def list_questions(path: str = QUESTIONS) -> list[dict]:
 
 
 def load_question(qid: str | None = None, path: str = QUESTIONS) -> dict:
+    """Return one question by id, or the default one. Exits with the available ids if not found."""
     qs = list_questions(path)
     want = qid or qs[0]["_default"]
     for q in qs:
@@ -87,21 +111,28 @@ def load_question(qid: str | None = None, path: str = QUESTIONS) -> dict:
 
 
 def run_dir(q: dict) -> str:
+    """Folder for the results of one question: ``data/runs/<id>/``."""
     return os.path.join(RUNS, q["id"])
 
 
 def facts_path(q: dict) -> str:
+    """Where ``oag.py build`` writes the validated facts of one question."""
     return os.path.join(OAG_DIR, q["id"], "facts.json")
 
 
 @dataclass
 class Doc:
+    """One corpus file: its file name (used as the source in every citation) and its text."""
     name: str
     text: str
 
 
 def holdout_pattern(q: dict | None) -> re.Pattern | None:
-    """Matches a hold-out ticket by id (TKT-104) or by bare number in a list (104/157)."""
+    """Regex that finds a mention of a hold-out ticket.
+
+    It matches the full id (``TKT-104``) and also the bare number, because notes often list tickets
+    as ``104/157`` or ``(104, 157)``. Returns ``None`` when the question has no hold-out.
+    """
     nums = [h.split("-")[-1] for h in (q or {}).get("holdout", [])]
     if not nums:
         return None
@@ -109,7 +140,11 @@ def holdout_pattern(q: dict | None) -> re.Pattern | None:
 
 
 def derived_file(text: str, pat: re.Pattern) -> bool:
-    """A note written about the hold-out ticket: its frontmatter `tickets:` or its title names it."""
+    """True if the whole file is a note about the hold-out ticket.
+
+    Such a note is dropped entirely, not just redacted: its frontmatter ``tickets:`` or ``title:``
+    names the ticket, or its first Markdown heading does. Only the first 1,500 characters are read.
+    """
     head = text[:1500]
     if head.startswith("---"):
         fm = head.split("---", 2)[1] if head.count("---") >= 2 else head
@@ -182,8 +217,21 @@ def redact(text: str, pat: re.Pattern) -> tuple[str, int]:
 
 
 def holdout_view(q: dict | None = None) -> tuple[list[Doc], dict]:
-    """The corpus every technique sees: hold-out files out, notes about the hold-out ticket out,
-    and every passage that mentions it removed from the rest. Returns the docs and a report."""
+    """The corpus every technique sees for question ``q``.
+
+    Three rules, applied in order:
+
+    1. files listed in ``holdout_files`` are skipped;
+    2. files that are notes about the hold-out ticket are skipped (``derived_file``);
+    3. in every other file, each passage that mentions the ticket is removed (``redact``).
+
+    Args:
+        q: the question; ``None`` loads the whole corpus.
+
+    Returns:
+        ``(docs, report)``. ``report`` lists the skipped files and, per redacted file, how many
+        passages were removed. ``holdout.py`` writes it next to the view.
+    """
     if not os.path.isdir(CORPUS):
         sys.exit(f"No corpus at {CORPUS}. Copy the .md files into data/corpus/.")
     skip = set(q["holdout_files"]) if q else set()
@@ -195,7 +243,7 @@ def holdout_view(q: dict | None = None) -> tuple[list[Doc], dict]:
             continue
         with open(os.path.join(CORPUS, name), encoding="utf-8", errors="replace") as f:
             text = f.read()
-        if pat and pat.search(text):
+        if pat and pat.search(text):          # only files that mention the ticket need work
             if derived_file(text, pat):
                 report["derived_files"].append(name)
                 continue
@@ -212,11 +260,15 @@ def excluded_files(q: dict | None) -> set[str]:
 
 
 def load_corpus(q: dict | None = None) -> list[Doc]:
+    """The documents of ``holdout_view`` without the report. Used by every technique script."""
     return holdout_view(q)[0]
 
 
 def ticket_ids(text: str, q: dict | None = None) -> list[str]:
-    """Ticket ids in order of first appearance, hold-out removed."""
+    """Ticket ids in ``text`` in order of first appearance, upper-cased and de-duplicated.
+
+    The hold-out ids of ``q`` are dropped, as a second line of defence after ``holdout_view``.
+    """
     hold = set(q["holdout"]) if q else set()
     seen: list[str] = []
     for m in TICKET_RE.findall(text):
@@ -227,6 +279,14 @@ def ticket_ids(text: str, q: dict | None = None) -> list[str]:
 
 
 def score(found: list[str], expected: list[str]) -> dict:
+    """Compare returned ticket ids with the expected answer.
+
+    Recall = expected found / expected (what was missed). Precision = expected found / returned
+    (the noise). The expected list is a minimum, not a ceiling, so precision is a lower bound.
+
+    Returns:
+        ``found`` (how many ids were returned), ``hits``, ``missed``, ``recall`` and ``precision``.
+    """
     f, e = set(found), set(expected)
     hit = sorted(f & e)
     return {
@@ -239,10 +299,17 @@ def score(found: list[str], expected: list[str]) -> dict:
 
 
 def approx_tokens(text: str) -> int:
+    """Rough token count (characters / 4) of the context a technique would hand to the model."""
     return max(1, len(text) // 4)
 
 
 def save_run(q: dict, technique: str, payload: dict) -> str:
+    """Write a technique's result to ``data/runs/<id>/<technique>.json`` and return the path.
+
+    ``technique`` is a ``run_key`` such as ``oag_v1_es``. ``compare.py`` builds its tables from these
+    files, so the payload should carry ``technique``, ``found``, ``score``, ``context_tokens`` and
+    ``llm_calls_retrieval``.
+    """
     os.makedirs(run_dir(q), exist_ok=True)
     path = os.path.join(run_dir(q), f"{technique}.json")
     with open(path, "w", encoding="utf-8") as f:
@@ -251,6 +318,7 @@ def save_run(q: dict, technique: str, payload: dict) -> str:
 
 
 def print_score(q: dict, found: list[str]) -> dict:
+    """Score ``found`` against the question's expected answer, print it and return the score."""
     s = score(found, q["esperado"])
     print(f"\nRecall {s['recall']:.0%} ({len(s['hits'])}/{len(q['esperado'])})"
           f" | precision {s['precision']:.0%} | ids devueltos: {s['found']}")

@@ -18,6 +18,12 @@ import lib
 
 
 def main() -> None:
+    """Score the ids in Claude's answer and store them in the technique's run file.
+
+    For Agentic RAG the answer is also the retrieval result, so a new run file is written with the
+    tool calls and tokens Claude reported. For the other techniques the script result already exists
+    and the answer is added to it as ``answer`` and ``answer_score``.
+    """
     lib.utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("technique", help="naive_rag, agentic_rag, graphrag, oag or a variant such as oag_v3_es")
