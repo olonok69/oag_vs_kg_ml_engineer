@@ -266,7 +266,7 @@ Dos preguntas, dos ganadores. Eso es exactamente lo que queríamos enseñar.
 
 ## Slide 27 · Pregunta A: reglas sobre un componente modelado (1,5 min)
 
-La pregunta A en detalle. Siete tickets esperados, corpus completo de 452 ficheros.
+La pregunta A en detalle. Siete tickets esperados, corpus completo de 453 ficheros.
 
 Naive RAG encuentra cinco de los siete, con buena precisión. GraphRAG a un salto, lo mismo con menos contexto. A dos saltos lo encuentra todo, pero entre 53 tickets: la precisión cae al 13 %. OAG con la primera ontología, seis de siete. Con la ontología corregida, los siete en 15 tickets.
 

@@ -28,6 +28,7 @@ Investigación sobre Ontology-Augmented Generation (OAG) frente al grafo de cono
 |---|---|
 | `HANDOVER.md` | Traspaso completo: pregunta, fuentes, comparación, plan (Paso 0 y Fases A a D), reglas |
 | `docs/OAG_VS_KG.md` | Informe de investigación |
+| `docs/HANDOVER_LAMBDA.md` | Traspaso al equipo y al agente del repo lambda: lecciones, cómo aplicar OAG y cómo evaluarlo |
 | `docs/GUIA_DEMO.md`, `docs/DEMO_GUIDE.md` | Guía de la demo en ES y EN |
 | `docs/GUION_PRESENTACION.md`, `docs/PRESENTATION_SCRIPT.md` | Guion para presentar slide a slide; se genera con el deck desde `presentacion/speaker_notes.py` y va en las notas del orador |
 | `docs/EJECUTAR_DEMO.md`, `docs/RUN_DEMO.md` | Cómo ejecutar la demo en Claude Code: comandos y qué debe salir |
@@ -88,7 +89,8 @@ python demo/oag.py build --q comment-memo-landscape
 
 Origen de los datos: `D:\repos3\ILS_2\document-parser-lambda\data\knowledge-graph\` (`_corpus/` y
 `output/graph.json`). La pregunta y la respuesta esperada están en `data/questions.yaml`; el ticket que
-sirve de hoja de respuestas se excluye de todas las técnicas (`holdout`).
+sirve de hoja de respuestas se excluye de todas las técnicas (`holdout`), junto con las notas escritas sobre él
+y cada pasaje que lo menciona (`lib.holdout_view`; `python demo/holdout.py` escribe esa vista para Agentic RAG).
 
 Si cambias el código de la demo, actualiza los enlaces a líneas (`#L`) de `docs/GUIA_TECNICA.md` y
 `docs/TECHNICAL_GUIDE.md`.

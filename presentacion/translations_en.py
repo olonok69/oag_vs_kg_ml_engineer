@@ -191,8 +191,8 @@ PLAIN = {
     "en directo": "live",
     "variable": "variable",
     "varios pasos": "several steps",
-    "Corpus completo: 452 ficheros. Al crecer el corpus, Naive RAG pierde recall y OAG lo mantiene. Respuesta esperada de 7 tickets; una pregunta es una demostración, no una evaluación.":
-        "Full corpus: 452 files. As the corpus grows, Naive RAG loses recall and OAG keeps it. Expected answer of 7 tickets; one question is a demonstration, not an evaluation.",
+    "Corpus completo: 453 ficheros. Al crecer el corpus, Naive RAG pierde recall y OAG lo mantiene. Respuesta esperada de 7 tickets; una pregunta es una demostración, no una evaluación.":
+        "Full corpus: 453 files. As the corpus grows, Naive RAG loses recall and OAG keeps it. Expected answer of 7 tickets; one question is a demonstration, not an evaluation.",
     "Con 14 ficheros (R / P)": "With 14 files (R / P)",
     "~1.600": "~1,600",
     "~7.000": "~7,000",
@@ -381,8 +381,8 @@ PLAIN.update({
     "3.977 · 8.076 · 213": "3,977 · 8,076 · 213", "93% / 7%": "93% / 7%",
     "0,67": "0.67", "0,59": "0.59", "0,23": "0.23", "0,50": "0.50", "0,64": "0.64",
     "0,19": "0.19", "0,32": "0.32", "0,56": "0.56", "~1.100": "~1,100", "~2.500": "~2,500",
-    "7 tickets esperados, escritos por quien resolvió el bug. Corpus completo: 452 ficheros. Por F1 Naive RAG queda a la par, pero se deja dos de los siete: en «qué no romper», un olvido es una regresión.":
-        "7 expected tickets, written by whoever solved the bug. Full corpus: 452 files. On F1 Naive RAG is level, but it misses two of the seven: in a \"what must not break\" question, a miss is a regression.",
+    "7 tickets esperados, escritos por quien resolvió el bug. Corpus completo: 453 ficheros. Por F1 Naive RAG queda a la par, pero se deja dos de los siete: en «qué no romper», un olvido es una regresión.":
+        "7 expected tickets, written by whoever solved the bug. Full corpus: 453 files. On F1 Naive RAG is level, but it misses two of the seven: in a \"what must not break\" question, a miss is a regression.",
     "29 esperados por una regla objetiva: los writeups cuyo título menciona el área. GraphRAG agrupa el resultado en temas con las comunidades del grafo; OAG no encuentra ningún componente de su ontología en la pregunta y no devuelve nada.":
         "29 expected by an objective rule: the writeups whose title mentions the area. GraphRAG groups the result into themes with the graph's communities; OAG finds no component of its ontology in the question and returns nothing.",
     "PARTE 4 · DE OAG V1 A V2": "PART 4 · FROM OAG V1 TO V2",
@@ -442,7 +442,7 @@ PLAIN.update({
     "Sinónimos en inglés": "English synonyms",
     "Sinónimos en castellano": "Spanish synonyms",
     "Significado del componente": "Meaning of the component",
-    "14% / 25%": "14% / 25%", "0% / 0%": "0% / 0%", "43% / 38%": "43% / 38%", "10% / 50%": "10% / 50%",
+    "14% / 25%": "14% / 25%", "0% / 0%": "0% / 0%", "43% / 30%": "43% / 30%", "10% / 50%": "10% / 50%",
     "43% / 75%": "43% / 75%", "59% / 25%": "59% / 25%", "100% / 47%": "100% / 47%",
     "Sin capa semántica caen las tres, en silencio. GraphRAG llega a la zona correcta, no al nodo central. Modelo multilingüe pequeño en CPU; el umbral de OAG está calibrado con estas dos preguntas.":
         "Without a semantic layer all three fail, silently. GraphRAG reaches the right area, not the central node. Small multilingual model on CPU; OAG's threshold is calibrated on these two questions.",

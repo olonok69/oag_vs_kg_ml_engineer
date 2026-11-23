@@ -289,7 +289,9 @@ ontología: una pregunta de exploración que nombre un componente se filtraría 
 - **Respuesta esperada**: en la pregunta A, los tickets que el writeup del bug manda respetar (7); en la
   B, los writeups cuyo título menciona el área (29), una regla objetiva y no una lista elegida a mano.
 - **Hold-out**: en la pregunta A, el writeup y sus notas se excluyen del corpus, del grafo y de los
-  hechos. La B no tiene hoja de respuestas que esconder.
+  hechos, y también todo lo que deriva del ticket reservado: las notas escritas sobre él y cada pasaje
+  que lo menciona en el resto del corpus (una viñeta de SHARP_EDGES, filas de STATUS, una línea del índice
+  de memoria). La B no tiene hoja de respuestas que esconder.
 - **Recall** = esperados encontrados / esperados. **Precisión** = esperados encontrados / devueltos.
   **F1** = media armónica de las dos. Explicación y ejemplo justo debajo.
 - **Qué cuenta como devuelto**: en Naive RAG, los tickets que aparecen en los trozos; en GraphRAG, los de
@@ -335,7 +337,7 @@ Tres matices para leer las tablas:
   lista. Por eso la precisión de la demo es una cota baja y conviene mirar qué tickets sobran, no solo
   cuántos.
 
-Resultados con el corpus completo (452 ficheros tras el hold-out) y el grafo reconstruido el 20 de
+Resultados con el corpus completo (453 ficheros; 450 en la pregunta A tras el hold-out) y el grafo reconstruido el 20 de
 noviembre.
 
 ![Dos preguntas, dos ganadores](img/scenarios.es.svg)
@@ -376,7 +378,7 @@ Cómo leerlos:
   de cadena, cabeceras de tabla...). OAG no devuelve nada, porque la pregunta no menciona ningún
   componente de su ontología: no falla con ruido, falla en silencio. Naive RAG acierta en lo poco que
   devuelve, pero un top-5 no puede responder «todo lo que hay sobre X».
-- **Naive RAG pierde recall al crecer el corpus** (100 % con 14 ficheros, 71 % con 452). Con pocos
+- **Naive RAG pierde recall al crecer el corpus** (100 % con 14 ficheros, 71 % con 450). Con pocos
   ficheros entraba el índice de `SHARP_EDGES`, que ya es una ontología implícita escrita a mano.
 - **Dos preguntas no son una evaluación.** La lista esperada es un mínimo y OAG v2 se corrigió tras ver el
   fallo. La evaluación seria es el Paso 0 del `HANDOVER.md`: entre 15 y 20 preguntas con respuesta
@@ -405,7 +407,7 @@ Después se añade una capa semántica: un modelo de embeddings multilingüe
 | Técnica | Recall | Precisión | F1 | IDs |
 |---|---|---|---|---|
 | Naive RAG, TF-IDF | 14 % | 25 % | 0,18 | 4 |
-| Naive RAG, embeddings | 43 % | 38 % | 0,40 | 8 |
+| Naive RAG, embeddings | 43 % | 30 % | 0,35 | 10 |
 | GraphRAG (1 salto), semilla por nombre | 0 % | - | 0 | 0 |
 | GraphRAG (1 salto), semilla por similitud | 43 % | 75 % | 0,55 | 4 |
 | OAG v2, etiquetas en inglés | 0 % | - | 0 | 0 |
@@ -435,7 +437,7 @@ Cómo leerlos:
   0,89) en lugar de `CommentMemoExtractor`, y se queda en 59 % frente al 83 % de la semilla elegida a mano.
   El modelo entiende el tema; saber cuál es el nodo central sigue siendo conocimiento del dominio.
 - **Los embeddings no son mejores en todo.** En castellano, Naive RAG mejora claramente; en inglés, en la
-  pregunta A, los embeddings dan 57 % frente al 71 % de TF-IDF (en la B, 28 % frente a 10 %). En un corpus
+  pregunta A, los embeddings dan 43 % frente al 71 % de TF-IDF (en la B, 28 % frente a 10 %). En un corpus
   técnico lleno de identificadores, la coincidencia exacta de palabras pesa.
 - **En la pregunta B, OAG sigue vacío también con la capa semántica, y es lo correcto.** El umbral impide
   asociar el memo de comentarios a un componente que no lo es (la similitud máxima es 0,35). La capa

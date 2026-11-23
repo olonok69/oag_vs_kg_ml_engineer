@@ -33,20 +33,35 @@ import lib
 
 
 def load_graph(q: dict, full: bool) -> tuple[dict, list[dict]]:
+    """The graph minus the hold-out, with the same rule as lib.holdout_view.
+
+    A node goes if its source file is excluded (the reserved files and the notes about the reserved
+    ticket), if its id or label names the reserved ticket or one of those notes, or if every
+    neighbour it had was removed (a fact that only made sense next to the reserved ticket).
+    """
     with open(lib.GRAPH, encoding="utf-8") as f:
         g = json.load(f)
-    hold_files = set(q["holdout_files"])
-    hold_ids = [h.lower() for h in q["holdout"]]
+    excluded = lib.excluded_files(q)
+    pat = lib.holdout_pattern(q)
+    norm = lambda s: re.sub(r"[^a-z0-9]", "", s.lower())
+    stems = [norm(n.split("__", 1)[-1][:-3]) for n in excluded]
     corpus = {d.name for d in lib.load_corpus(q)}
 
-    def keep(n: dict) -> bool:
+    def held(n: dict) -> bool:
         src = n.get("source_file") or ""
-        hay = f"{n.get('id', '')} {n.get('label', '')} {src}".lower().replace("-", "")
-        if src in hold_files or any(h.replace("-", "") in hay for h in hold_ids):
-            return False
-        return full or src in corpus
+        hay = f"{n.get('id', '')} {n.get('label', '')}"
+        return src in excluded or bool(pat and pat.search(hay.replace("_", "-"))) \
+            or any(st and st in norm(hay) for st in stems)
 
-    nodes = {n["id"]: n for n in g["nodes"] if keep(n)}
+    gone = {n["id"] for n in g["nodes"] if held(n)}
+    nbrs: dict[str, set] = {}
+    for e in g["links"]:
+        nbrs.setdefault(e["source"], set()).add(e["target"])
+        nbrs.setdefault(e["target"], set()).add(e["source"])
+    gone |= {nid for nid, ns in nbrs.items() if nid not in gone and ns and ns <= gone}
+
+    nodes = {n["id"]: n for n in g["nodes"]
+             if n["id"] not in gone and (full or (n.get("source_file") or "") in corpus)}
     links = [e for e in g["links"] if e["source"] in nodes and e["target"] in nodes]
     return nodes, links
 

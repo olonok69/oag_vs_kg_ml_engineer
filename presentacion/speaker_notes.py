@@ -6,7 +6,7 @@ The generator writes `es` or `en` into the notes of each slide and renders the w
 docs/GUION_PRESENTACION.md (ES) and docs/PRESENTATION_SCRIPT.md (EN), so the deck and the guide never
 drift apart. Lines that start with "[DEMO]" are actions in Claude Code, not text to read.
 
-Figures are those of the deck (full corpus, 452 files after the hold-out). If a result changes, change
+Figures are those of the deck (full corpus, 453 files, 450 in question A after the hold-out). If a result changes, change
 it here as well.
 """
 
@@ -421,7 +421,7 @@ Two questions, two winners. That is exactly what we wanted to show.
 [DEMO] Question B: /clear and /demo-graphrag comment-memo-landscape; /clear and /demo-oag comment-memo-landscape. Stress that OAG returns zero facts and why."""},
     # ------------------------------------------------------------------ 27
     {"title": {"es": "Pregunta A: reglas sobre un componente modelado", "en": "Question A: rules about a modelled component"},
-     "es": """La pregunta A en detalle. Siete tickets esperados, corpus completo de 452 ficheros.
+     "es": """La pregunta A en detalle. Siete tickets esperados, corpus completo de 453 ficheros.
 
 Naive RAG encuentra cinco de los siete, con buena precisión. GraphRAG a un salto, lo mismo con menos contexto. A dos saltos lo encuentra todo, pero entre 53 tickets: la precisión cae al 13 %. OAG con la primera ontología, seis de siete. Con la ontología corregida, los siete en 15 tickets.
 
@@ -430,7 +430,7 @@ Un matiz importante: por F1, que mezcla recall y precisión, Naive RAG queda cas
 La última columna es la versión anterior con solo 14 ficheros: con poco corpus todo parece funcionar. Con el corpus completo es cuando se ven las diferencias.
 
 Y Agentic RAG lo vemos en directo, porque cada ejecución es distinta.""",
-     "en": """Question A in detail. Seven expected tickets, full corpus of 452 files.
+     "en": """Question A in detail. Seven expected tickets, full corpus of 453 files.
 
 Naive RAG finds five of the seven, with good precision. GraphRAG at one hop, the same with less context. At two hops it finds everything, but among 53 tickets: precision drops to 13%. OAG with the first ontology, six out of seven. With the corrected ontology, all seven in 15 tickets.
 

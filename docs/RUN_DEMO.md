@@ -16,6 +16,7 @@ uv sync --group embed                        # environment with the semantic lay
 source .venv/bin/activate                    # required: the skills call `python`
 python demo/oag.py build --q letter-end-runin
 python demo/oag.py build --q comment-memo-landscape
+python demo/holdout.py --q letter-end-runin    # view without the answer key, for Agentic RAG
 python demo/compare.py                       # checks everything answers and warms the cache
 claude                                       # Claude Code, from the repo root with the venv active
 ```

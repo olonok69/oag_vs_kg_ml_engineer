@@ -52,11 +52,12 @@ data/
   kg/kg_query.sh         wrapper de /kg, solo para --native
   questions.yaml         preguntas, respuestas esperadas y hold-out (plantilla: demo/questions.example.yaml)
   oag/<id>/facts.json    hechos generados por `oag.py build --q <id>`
+  holdout/<id>/          vista del corpus sin la hoja de respuestas, de `holdout.py --q <id>` (Agentic RAG)
   runs/<id>/*.json       resultados de cada técnica; runs/compare.md con las tablas
   cache/embeddings/      embeddings del corpus y del grafo (capa semántica), se regeneran solos
 ```
 
-El corpus es el `_corpus/` completo de `/kg` (452 ficheros tras el hold-out). Tras actualizarlo hay que
+El corpus es el `_corpus/` completo de `/kg` (453 ficheros; 450 en la pregunta A tras el hold-out). Tras actualizarlo hay que
 volver a ejecutar `python demo/oag.py build --q <id>` para cada pregunta. Los scripts no dependen del
 número de ficheros.
 
@@ -65,7 +66,11 @@ número de ficheros.
 **`letter-end-runin`** es un bug real ya investigado. Su writeup contiene una sección de "do-not-break" y una
 batería de regresión escritas por quien lo resolvió: esa es la respuesta esperada. El writeup y las
 notas que lo resumen se declaran como `holdout` en `questions.yaml` y se excluyen de todas las técnicas
-(corpus, grafo y hechos), de modo que la pregunta se responde como si el bug fuera nuevo.
+(corpus, grafo y hechos), de modo que la pregunta se responde como si el bug fuera nuevo. También se excluye
+todo lo que deriva del ticket reservado: las notas cuyo título o `tickets:` lo nombran y, en el resto del
+corpus, cada pasaje que lo menciona (sección, fila de tabla, viñeta o párrafo). Lo hace `lib.holdout_view`;
+`python demo/holdout.py --q <id>` escribe esa vista en `data/holdout/<id>/` para Agentic RAG, que lee con
+Grep y Read, y deja en `_holdout_report.json` qué se quitó.
 
 **`comment-memo-landscape`** es la pregunta de quien entra en un área que no conoce. La respuesta esperada
 sale de una regla objetiva, no de una lista elegida a mano: todos los writeups de tickets cuyo título
@@ -157,7 +162,7 @@ red (`HF_HUB_OFFLINE=1`). Para usar otro modelo: `--model <nombre>` o `DEMO_EMBE
 - OAG v2 se escribió después de ver qué fallaba en la primera pregunta. Hay que validarlo con preguntas
   nuevas antes de atribuirle el resultado.
 - Con pocos documentos, Naive RAG lo tiene fácil, sobre todo si entra un hub como `SHARP_EDGES`, que ya es
-  un índice escrito a mano. Con el corpus completo (452 ficheros) su recall baja del 100 % al 71 % (ver
+  un índice escrito a mano. Con el corpus completo (453 ficheros) su recall baja del 100 % al 71 % (ver
   `docs/GUIA_DEMO.md`, sección 6).
 - La extracción de OAG es determinista (frontmatter, tablas, citas y sinónimos). En producción se
   completaría con extracción guiada por LLM (Fase C), siempre validada contra la misma ontología.
