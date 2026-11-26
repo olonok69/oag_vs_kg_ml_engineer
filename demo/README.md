@@ -1,7 +1,7 @@
 # Demo: de Naive RAG a OAG sobre la memoria de tickets
 
-Cuatro técnicas de recuperación responden a las mismas preguntas reales sobre el mismo corpus, y una
-quinta skill las compara. Cada técnica es una skill de Claude Code que se ejecuta en directo.
+Cinco enfoques de recuperación responden a las mismas preguntas reales sobre el mismo corpus, y una
+sexta skill los compara. Cada técnica es una skill de Claude Code que se ejecuta en directo.
 
 La demo tiene dos escenarios, elegidos para enseñar dónde gana cada técnica:
 
@@ -23,9 +23,9 @@ en distinta medida.
 | `/demo-oag` | OAG | Hechos tipados, validados contra `demo/oag/ontology.yaml`, seleccionados por set cover | `demo/oag.py` |
 | `/demo-hybrid` | Híbrido | GraphRAG propone y la ontología filtra si la pregunta cae en ella; si no, lista del grafo y propuesta para la ontología | `demo/hybrid.py` |
 | `/demo-compare` | Comparativa | Recall, precisión, F1, tokens de contexto y llamadas LLM, por escenario e idioma | `demo/compare.py` |
-| (todas) | Capa semántica | Embeddings multilingües compartidos por las tres técnicas deterministas | `demo/semantic.py` |
+| (Naive RAG, GraphRAG, OAG e híbrido) | Capa semántica | Embeddings multilingües; el híbrido transmite la opción a GraphRAG y OAG | `demo/semantic.py` |
 
-Todas las skills y scripts aceptan el id de la pregunta (`/demo-oag comment-memo-landscape`,
+Los comandos de recuperación aceptan el id de la pregunta (`/demo-oag comment-memo-landscape`,
 `python demo/oag.py query --q comment-memo-landscape`); sin id se usa la pregunta por defecto.
 
 Cómo lanzarla dentro de Claude Code, comando a comando y con lo que debe salir:
@@ -120,16 +120,81 @@ script, responde usando solo lo que ha recuperado y registra la respuesta.
 Los scripts también funcionan sin Claude Code:
 
 ```bash
-python demo/naive_rag.py [--q <id>] [--k 5] [--embed] [--lang es]
-python demo/graphrag.py [--q <id>] [--hops 2] [--lang es] [--semantic] [--full] [--native]
-python demo/oag.py query [--q <id>] [--schema 1|2|3] [--lang es] [--semantic] [--min-sim 0.42]
-python demo/hybrid.py [--q <id>] [--hops 2] [--lang es] [--semantic]
-python demo/compare.py [--q <id>]
+python demo/holdout.py [--q <id>]
+python demo/naive_rag.py [--q <id>] [--k 5] [--chunk-words 180] [--overlap 30] [--embed] [--model <nombre>] [--lang en|es] [--query "..."] [--quiet]
+python demo/graphrag.py [--q <id>] [--topic <tema>] [--hops <n>] [--lang en|es] [--semantic] [--model <nombre>] [--full] [--native] [--quiet]
+python demo/oag.py build [--q <id>]
+python demo/oag.py query [--q <id>] [--query "..."] [--schema 1|2|3] [--lang en|es] [--semantic] [--min-sim 0.42] [--model <nombre>] [--quiet]
+python demo/hybrid.py [--q <id>] [--hops <n>] [--schema 1|2|3] [--lang en|es] [--semantic] [--quiet]
+python demo/record_answer.py [--q <id>] <tecnica> "<ids>" [--tool-calls <n>] [--tokens <n>]
+python demo/compare.py [--q <id>] [--no-run]
 ```
 
 La capa semántica necesita el grupo `embed` y, la primera vez, acceso a huggingface.co y a su CDN
 (`*.hf.co`) para descargar `paraphrase-multilingual-MiniLM-L12-v2` (unos 470 MB). Después funciona sin
-red (`HF_HUB_OFFLINE=1`). Para usar otro modelo: `--model <nombre>` o `DEMO_EMBED_MODEL`.
+red (`HF_HUB_OFFLINE=1`). Para usar otro modelo: `--model <nombre>` en los comandos compatibles o
+`DEMO_EMBED_MODEL`.
+
+## Referencia completa de los scripts
+
+Todos los comandos se lanzan desde la raíz del repositorio. `--q <id>` selecciona una entrada de
+`data/questions.yaml`; si se omite, se usa su valor `default` (o `DEMO_Q` si está definida). Los
+comandos de recuperación guardan su JSON bajo `data/runs/<id>/`; los detalles de sus algoritmos y
+funciones están en [`docs/GUIA_TECNICA.md`](../docs/GUIA_TECNICA.md) y
+[`docs/TECHNICAL_GUIDE.md`](../docs/TECHNICAL_GUIDE.md).
+
+| Script | Para qué sirve | Lee | Escribe o efecto |
+|---|---|---|---|
+| [`holdout.py`](holdout.py) | Prepara la vista que puede leer Agentic RAG, sin la respuesta reservada | Corpus y `questions.yaml` | Sustituye `data/holdout/<id>/` por los Markdown filtrados y `_holdout_report.json` |
+| [`naive_rag.py`](naive_rag.py) | Divide el corpus en ventanas y recupera las `k` más similares por TF-IDF o embeddings | Corpus filtrado y texto de pregunta | Imprime chunks y puntuación; guarda `naive_rag*.json` |
+| [`graphrag.py`](graphrag.py) | Resuelve una semilla y recorre el grafo por anchura; muestra vecindario, fuentes y comunidades | `graph.json`, corpus, pregunta y, si existe, `community_labels.json` | Imprime contexto y puntuación; guarda `graphrag*.json`. `--native` solo llama a `kg_query.sh` y no guarda una ejecución |
+| [`oag.py`](oag.py) | `build` extrae y valida hechos; `query` selecciona fact blocks mediante set cover | Corpus, pregunta y `oag/ontology.yaml`; `query` lee además los hechos construidos | `build` escribe `data/oag/<id>/facts.json`; `query` imprime y guarda `oag*.json` |
+| [`hybrid.py`](hybrid.py) | Ejecuta GraphRAG y OAG, y usa los componentes de la ontología para filtrar o dejar pasar el resultado del grafo | Entradas de GraphRAG y OAG, pregunta y hechos OAG | Guarda `hybrid*.json` con la ruta elegida (`ontology` o `graphrag`) |
+| [`record_answer.py`](record_answer.py) | Puntúa los IDs de la respuesta final de Claude y los añade a una ejecución | IDs, pregunta y, si existe, el JSON previo de la técnica | Agentic RAG crea `agentic_rag*.json`; para otra técnica añade `answer` y `answer_score` o crea un JSON mínimo |
+| [`compare.py`](compare.py) | Ejecuta las variantes deterministas y genera tablas con resultados guardados, incluida la respuesta de Claude si se registró | Preguntas y `data/runs/<id>/*.json` | Imprime y escribe `data/runs/compare.md`; `--no-run` solo lee resultados existentes |
+| [`lib.py`](lib.py) | Funciones compartidas; no es un comando independiente | Configuración, corpus, preguntas y resultados | Define rutas, filtra el hold-out, extrae IDs, calcula métricas y serializa ejecuciones |
+| [`semantic.py`](semantic.py) | Funciones opcionales de embeddings; no es un comando independiente | Textos y modelo multilingüe | Devuelve similitudes ordenadas y cachea vectores en `data/cache/embeddings/` |
+
+### Opciones y comportamiento por comando
+
+- **`holdout.py`** acepta `--q`. El informe enumera ficheros reservados, notas derivadas excluidas
+  y pasajes redactados. Vuelve a crear únicamente la carpeta generada `data/holdout/<id>/`; no
+  modifica `data/corpus/`.
+- **`naive_rag.py`** acepta `--k`, `--chunk-words`, `--overlap`, `--embed`, `--model`, `--lang`,
+  `--query` y `--quiet`. `--embed` cambia TF-IDF por similitud de embeddings. `--query` prevalece
+  sobre el texto definido en la pregunta; `--lang es` usa su versión en castellano llano.
+- **`graphrag.py`** acepta `--topic`, `--hops`, `--lang`, `--semantic`, `--model`, `--full`,
+  `--native` y `--quiet`. De forma normal limita el grafo a fuentes del corpus de la demo y aplica
+  el hold-out. `--full` amplía el ámbito al grafo completo; `--native` delega en el wrapper `/kg`
+  instalado y no forma parte del resultado puntuado.
+- **`oag.py build`** reconstruye los hechos usando la ontología y no llama a un LLM.
+  **`oag.py query`** acepta `--query`, `--schema`, `--lang`, `--semantic`, `--min-sim`, `--model`
+  y `--quiet`. `--schema` reproduce las versiones 1, 2 o 3; `--semantic` selecciona componentes
+  por similitud y requiere el grupo `embed`.
+- **`hybrid.py`** acepta `--hops`, `--schema`, `--lang`, `--semantic` y `--quiet`. Si la pregunta
+  se asigna a componentes, devuelve los tickets filtrados por OAG; si no, mantiene los candidatos
+  de GraphRAG y presenta comunidades como propuestas para revisión humana. Construye los hechos si
+  aún no existen.
+- **`record_answer.py`** acepta como técnica `naive_rag`, `agentic_rag`, `graphrag`, `oag` o una
+  clave de variante, por ejemplo `oag_v3_es`. Los IDs pueden separarse por cualquier delimitador.
+  `--tool-calls` y `--tokens` registran el coste aproximado de recuperación de Agentic RAG.
+- **`compare.py`** acepta `--q` y `--no-run`. Sin `--q` procesa todas las preguntas; por defecto
+  vuelve a ejecutar las variantes deterministas, construye los hechos OAG que falten y omite las
+  variantes semánticas si no está instalado `sentence-transformers`. `--no-run` evita esas
+  ejecuciones y compone las tablas únicamente con los JSON ya guardados.
+
+`lib.py` no tiene CLI. `add_question_arg` y `load_question` resuelven `--q`, `DEMO_Q` y el valor
+por defecto; `add_lang_arg`, `spanish_question` y `spanish_topic` proporcionan la variante en
+castellano; `run_key`, `run_dir` y `facts_path` construyen las rutas de resultados. `holdout_pattern`,
+`derived_file`, `redact`, `holdout_view`, `excluded_files` y `load_corpus` producen la misma vista
+filtrada para todas las técnicas; `ticket_ids` extrae IDs y elimina los reservados. `score` y
+`print_score` calculan recall y precisión, `approx_tokens` estima caracteres/4 y `save_run` guarda el
+JSON común.
+
+`semantic.py` tampoco es un comando: `model_name` resuelve el modelo, `encode` carga y cachea
+embeddings normalizados, `similarities` calcula cosenos y `rank` devuelve los índices ordenados.
+El modelo se carga en CPU bajo demanda; las técnicas sin `--embed` o `--semantic` no necesitan esa
+dependencia.
 
 ## Qué muestra cada paso
 
@@ -145,15 +210,19 @@ red (`HF_HUB_OFFLINE=1`). Para usar otro modelo: `--model <nombre>` o `DEMO_EMBE
    La extracción solo puede producir lo que el esquema permite, y la validación rechaza el resto
    (las menciones genéricas entre tickets). La pregunta se mapea a un componente y el set cover devuelve
    el mínimo de hechos que la cubren, cada uno con su fuente.
-5. **De OAG v1 a v2.** La primera ontología fallaba de dos formas: traía tickets "no romper" de otras
+5. **Híbrido GraphRAG + OAG.** GraphRAG aporta candidatos amplios. Si la pregunta se asocia a un
+   componente de la ontología, OAG filtra esa lista; si no, se conserva GraphRAG y sus comunidades se
+   muestran como propuestas que una persona puede revisar. No modifica la ontología ni llama a un LLM.
+6. **De OAG v1 a v2.** La primera ontología fallaba de dos formas: traía tickets "no romper" de otras
    áreas (numeración, PDF) y no veía un invariante de detección de títulos que el fin de carta usa. La v2
    añade una restricción (el ticket protegido debe compartir componente) y una relación `calls` entre
    componentes. `--schema 1` reproduce la v1. Es evolución del esquema, escrita después de ver el fallo.
-6. **Pregunta en castellano llano (`--lang es`).** Las tres técnicas deterministas comparan palabras y el
-   corpus está en inglés: sin capa semántica no encuentran nada. Con ella, cada una usa embeddings
-   multilingües solo en el primer paso: Naive RAG ordena los trozos por significado, GraphRAG elige la
-   semilla por similitud y OAG elige los componentes por similitud (`--semantic`). La v3 de la ontología
-   es la alternativa sin modelo: sinónimos en castellano para cada componente (`--schema 3`).
+7. **Pregunta en castellano llano (`--lang es`).** El corpus está en inglés, por lo que la búsqueda
+   por palabras de Naive RAG, GraphRAG y OAG v2 no resuelve la diferencia de idioma. La capa semántica
+   usa embeddings multilingües en el primer paso de cada técnica: Naive RAG ordena los trozos por
+   significado, GraphRAG elige la semilla por similitud y OAG elige los componentes (`--semantic`).
+   OAG v3 ofrece una alternativa sin modelo: sinónimos en castellano para cada componente
+   (`--schema 3`).
 
 ## Limitaciones
 

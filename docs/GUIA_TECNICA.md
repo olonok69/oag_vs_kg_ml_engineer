@@ -15,6 +15,9 @@ la versión actual del repo.
 flowchart LR
     Q[data/questions.yaml] --> L[demo/lib.py]
     C[data/corpus/*.md] --> L
+    L --> HO[holdout.py]
+    HO --> V[data/holdout/&lt;id&gt;/]
+    V --> A[Claude: Grep/Read]
     L --> N[naive_rag.py]
     L --> G[graphrag.py]
     L --> O[oag.py]
@@ -28,16 +31,17 @@ flowchart LR
     N --> R[data/runs/&lt;id&gt;/*.json]
     G --> R
     O --> R
-    G -.-> H[hybrid.py]
-    O -.-> H
-    H --> R
-    A[Claude: Grep/Read] -- record_answer.py --> R
+    G -.-> HY[hybrid.py]
+    O -.-> HY
+    HY --> R
+    A -- record_answer.py --> R
     R --> CMP[compare.py] --> MD[data/runs/compare.md]
 ```
 
-Cuatro técnicas leen el mismo corpus y la misma pregunta, y cada una deja su resultado en el mismo formato.
-`compare.py` las vuelve a lanzar y las pone en una tabla. Ninguna técnica llama a un LLM para recuperar; el
-único LLM es Claude, que en cada skill lee lo recuperado y responde.
+Las cuatro técnicas deterministas (Naive RAG, GraphRAG, OAG e híbrido) comparten el corpus y la pregunta;
+Agentic RAG es el quinto enfoque y Claude busca y lee directamente. `compare.py` vuelve a lanzar las variantes
+deterministas y reúne sus resultados con los de Claude en una tabla. Las técnicas deterministas no llaman a un
+LLM durante la recuperación; Agentic RAG sí usa Claude para buscar y leer.
 
 | Pieza | Fichero | Qué hace |
 |---|---|---|
@@ -48,7 +52,8 @@ Cuatro técnicas leen el mismo corpus y la misma pregunta, y cada una deja su re
 | Híbrido | [`demo/hybrid.py`](../demo/hybrid.py) | GraphRAG propone y la ontología filtra si la pregunta cae en ella; si no, propone qué modelar |
 | Ontología | [`demo/oag/ontology.yaml`](../demo/oag/ontology.yaml) | Clases, relaciones, restricciones, componentes con sinónimos y reglas de extracción |
 | Agentic RAG | [`.claude/skills/demo-agentic-rag/SKILL.md`](../.claude/skills/demo-agentic-rag/SKILL.md) | Claude busca y lee con Grep/Read; registra su respuesta |
-| Capa semántica | [`demo/semantic.py`](../demo/semantic.py) | Embeddings multilingües con caché; los usan las tres técnicas deterministas con `--embed` o `--semantic` |
+| Vista de hold-out | [`demo/holdout.py`](../demo/holdout.py) | Escribe el corpus filtrado que lee Agentic RAG y un informe de exclusiones |
+| Capa semántica | [`demo/semantic.py`](../demo/semantic.py) | Embeddings multilingües con caché; Naive RAG, GraphRAG y OAG los usan con `--embed` o `--semantic`, y el híbrido transmite esta opción a GraphRAG y OAG |
 | Registro de respuestas | [`demo/record_answer.py`](../demo/record_answer.py) | Guarda los IDs que Claude da como respuesta final |
 | Comparativa | [`demo/compare.py`](../demo/compare.py) | Relanza las técnicas deterministas y genera las tablas |
 | Skills | [`.claude/skills/demo-*`](../.claude/skills/) | Guion de cada paso para Claude Code |
@@ -70,7 +75,7 @@ source .venv/bin/activate                # activar antes de lanzar claude: las s
 
 | Ruta | Origen | Lo usa |
 |---|---|---|
-| `data/corpus/*.md` | `_corpus/` de `/kg` en el repo lambda (453 ficheros; 450 en la pregunta A tras el hold-out) | Las cuatro técnicas |
+| `data/corpus/*.md` | `_corpus/` de `/kg` en el repo lambda (453 ficheros; 450 en la pregunta A tras el hold-out) | Técnicas basadas en corpus; GraphRAG y el híbrido consultan el grafo filtrado con la misma vista |
 | `data/kg/output/graph.json` | `output/graph.json` de `/kg-refresh` | `graphrag.py` |
 | `data/kg/output/community_labels.json` | `community_labels.json` de `/kg-refresh` | `graphrag.py` (temas) |
 | `data/kg/kg_query.sh` | wrapper de `/kg` | `graphrag.py --native` |
@@ -154,13 +159,17 @@ python demo/record_answer.py [--q <id>] agentic_rag "<ids>" --tool-calls <n> --t
 [`record_answer.py`](../demo/record_answer.py#L20) guarda los IDs como resultado de recuperación y como
 respuesta. Es la única técnica cuyo resultado cambia entre ejecuciones.
 
+`holdout.py [--q <id>]` reutiliza `lib.holdout_view`, escribe los documentos filtrados en
+`data/holdout/<id>/` y deja allí `_holdout_report.json` con los ficheros y pasajes excluidos. Regenera
+esa carpeta de salida para la pregunta elegida; no modifica el corpus fuente.
+
 ## 6. GraphRAG (nuestro `/kg`)
 
 **Skill:** [`/demo-graphrag`](../.claude/skills/demo-graphrag/SKILL.md). **Script:**
 [`demo/graphrag.py`](../demo/graphrag.py).
 
 ```bash
-python demo/graphrag.py [--q <id>] [--topic <tema>] [--hops 1|2] [--lang es] [--semantic] [--full] [--native]
+python demo/graphrag.py [--q <id>] [--topic <tema>] [--hops <n>] [--lang es] [--semantic] [--full] [--native]
 ```
 
 Es la misma consulta que hace `/kg` (`kg_query.sh <tema>`, equivalente a `graphify explain`), reimplementada
@@ -284,10 +293,12 @@ Salida: `data/runs/<id>/hybrid.json`, con `route` (`ontology` o `graphrag`), `ca
 
 ## 8. La capa semántica (pregunta en castellano)
 
-El corpus está en inglés y las tres técnicas deterministas comparan palabras. Con `--lang es` reciben la
-pregunta en castellano llano y, sin más, no encuentran nada. La capa semántica es un modelo de embeddings
-multilingüe que cada técnica usa solo en el paso donde compara la pregunta con el corpus. Resultados e
-interpretación en la [guía de la demo](GUIA_DEMO.md#la-misma-pregunta-en-castellano-llano-la-capa-semántica).
+El corpus está en inglés y las técnicas base (Naive RAG, GraphRAG y OAG) comparan palabras. Con `--lang es`
+reciben la pregunta en castellano llano y, sin más, no encuentran nada. El híbrido hereda las opciones
+semánticas de GraphRAG y OAG. La capa semántica es un modelo de embeddings multilingüe que cada técnica
+usa solo en su primer paso de selección: chunks en Naive RAG, semilla en GraphRAG y componentes en OAG.
+Resultados e interpretación en la
+[guía de la demo](GUIA_DEMO.md#la-misma-pregunta-en-castellano-llano-la-capa-semántica).
 
 **El módulo** ([`demo/semantic.py`](../demo/semantic.py)):
 
@@ -308,6 +319,7 @@ interpretación en la [guía de la demo](GUIA_DEMO.md#la-misma-pregunta-en-caste
 | Naive RAG | `--embed` | La pregunta con cada trozo de 180 palabras | [`embed_rank`](../demo/naive_rag.py#L78) |
 | GraphRAG | `--semantic` | El tema con la etiqueta de cada nodo (3.977); semilla = el más parecido, e imprime los cinco primeros | [`resolve_semantic`](../demo/graphrag.py#L111) |
 | OAG | `--semantic` | Cada cláusula de la pregunta con la descripción de cada componente (`label` y `alt_labels` en inglés); entran los que superan `--min-sim` | [`components_semantic`](../demo/oag.py#L78), [línea 384](../demo/oag.py#L384) |
+| Híbrido | `--semantic` | Pasa la opción a GraphRAG y OAG; no añade otra comparación semántica | [`main`](../demo/hybrid.py#L52) |
 | OAG | `--schema 3` | Sin modelo: los sinónimos en castellano de la ontología, por coincidencia de texto | [`components_in`](../demo/oag.py#L55), [`labels`](../demo/oag/ontology.yaml#L43) |
 
 En OAG la pregunta se parte en cláusulas porque una pregunta larga diluye cualquier concepto. El umbral por
